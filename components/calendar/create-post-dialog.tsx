@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PlatformSelector } from "@/components/platform-selector";
-import { ContentEditor } from "@/components/content-editor";
+import { ContentEditor } from "@/components/distribution/content-editor";
 import { UploadMedia } from "@/components/upload-media";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
@@ -114,9 +114,7 @@ export function CreatePostDialog({
           <Input
             placeholder="Post title"
             value={newPost.title}
-            onChange={(e) =>
-              setNewPost({ ...newPost, title: e.target.value })
-            }
+            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
           />
           <div className="grid grid-cols-2 gap-2">
             <Input
@@ -135,9 +133,7 @@ export function CreatePostDialog({
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">
-              Content
-            </label>
+            <label className="text-sm font-medium mb-2 block">Content</label>
             <ContentEditor
               content={newPost.content}
               onContentChange={handleContentChange}

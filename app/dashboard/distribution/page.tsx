@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ContentEditor } from "@/components/content-editor";
-import { UploadMedia } from "@/components/upload-media";
-import { PlatformSelector } from "@/components/platform-selector";
+import { ContentEditor } from "@/components/distribution/content-editor";
+import { UploadMedia } from "@/components/distribution/upload-media";
+import { PlatformSelector } from "@/components/distribution/platform-selector";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -142,7 +142,7 @@ export default function CreatePostPage() {
   };
 
   const handlePublishClick = () => {
-    console.log("handle publish click")
+    console.log("handle publish click");
     if (!content.trim()) {
       toast({
         title: "Content required",
@@ -423,7 +423,6 @@ export default function CreatePostPage() {
             </div>
           </CardContent>
         </Card>
-
       </div>
 
       {/* Publish Confirmation Dialog */}
