@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,6 +35,11 @@ const routes = [
     label: "Distribution",
     icon: Share2,
     href: "/dashboard/distribution",
+  },
+  {
+    label: "Analytics",
+    icon: BarChart3,
+    href: "/dashboard/analytics",
   },
   {
     label: "AI Assistant",
