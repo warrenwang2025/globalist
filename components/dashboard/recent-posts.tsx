@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Avatar } from "@/components/ui/avatar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const recentPosts = [
   {
@@ -10,7 +10,8 @@ const recentPosts = [
     platform: "LinkedIn",
     date: "2h ago",
     engagement: "324",
-    image: "https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=140&auto=format&fit=crop"
+    image:
+      "https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=140&auto=format&fit=crop",
   },
   {
     id: "2",
@@ -18,7 +19,8 @@ const recentPosts = [
     platform: "Instagram",
     date: "5h ago",
     engagement: "1.2k",
-    image: "https://images.unsplash.com/photo-1664575600397-88e8b7258a7e?q=80&w=140&auto=format&fit=crop"
+    image:
+      "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=100&h=100&fit=crop",
   },
   {
     id: "3",
@@ -26,9 +28,10 @@ const recentPosts = [
     platform: "X",
     date: "1d ago",
     engagement: "456",
-    image: "https://images.unsplash.com/photo-1664575600850-c4b712e6e2bf?q=80&w=140&auto=format&fit=crop"
+    image:
+      "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=100&h=100&fit=crop",
   },
-]
+];
 
 export function RecentPosts() {
   return (
@@ -52,5 +55,5 @@ export function RecentPosts() {
         ))}
       </div>
     </ScrollArea>
-  )
+  );
 }

@@ -31,7 +31,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Import types
 import type { Event, ScheduledPost } from "@/types/calendar";
 
 export default function SchedulePage() {
@@ -75,7 +74,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
       <CalendarHeader
         onExportSchedule={handleExportSchedule}
@@ -130,14 +129,14 @@ export default function SchedulePage() {
       <CalendarView events={filteredEvents} scheduledPosts={filteredPosts} />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredEvents.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{filteredEvents.length}</div>
             <p className="text-xs text-muted-foreground">
               {events.filter((e) => e.date > new Date()).length} upcoming
             </p>
@@ -152,7 +151,7 @@ export default function SchedulePage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredPosts.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{filteredPosts.length}</div>
             <p className="text-xs text-muted-foreground">
               {
                 scheduledPosts.filter((p) => p.scheduledDate > new Date())
@@ -169,7 +168,7 @@ export default function SchedulePage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {(() => {
                 const now = new Date();
                 const weekStart = new Date(
@@ -200,7 +199,7 @@ export default function SchedulePage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {filteredEvents.filter((e) => e.type === "meeting").length}
             </div>
             <p className="text-xs text-muted-foreground">total meetings</p>

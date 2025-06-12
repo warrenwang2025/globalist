@@ -54,7 +54,6 @@ export default function PricingPage() {
       buttonVariant: "default" as const,
       popular: true,
       onClick: () => {
-        // Here you could add upgrade logic, then navigate to AI page
         console.log("Upgrading to Plus plan...")
         handleNavigateToAI()
       }
@@ -79,17 +78,16 @@ export default function PricingPage() {
       buttonVariant: "outline" as const,
       popular: false,
       onClick: () => {
-        // Here you could add contact sales logic
         console.log("Contacting sales...")
       }
     }
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 md:mb-12">
           <Button 
             variant="ghost" 
             className="mb-6"
@@ -99,13 +97,13 @@ export default function PricingPage() {
             Back
           </Button>
           
-          <h1 className="text-4xl font-bold mb-4">Choose Your Plan</h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Plan</h1>
+          <p className="text-lg md:text-xl text-muted-foreground mb-6 md:mb-8">
             Unlock the full potential of AI-powered content creation
           </p>
 
           {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex items-center justify-center gap-4 mb-6 md:mb-8">
             <span className={`text-sm ${!isAnnual ? 'font-semibold' : 'text-muted-foreground'}`}>
               Monthly
             </span>
@@ -133,11 +131,11 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid gap-8 md:grid-cols-3 max-w-6xl mx-auto">
+        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <Card 
               key={plan.name} 
-              className={`relative p-8 ${
+              className={`relative p-6 md:p-8 ${
                 plan.popular 
                   ? 'border-2 border-primary shadow-lg scale-105' 
                   : 'border shadow-sm'
@@ -156,12 +154,12 @@ export default function PricingPage() {
                 <div className="flex justify-center mb-4">
                   {plan.icon}
                 </div>
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-2">{plan.name}</h3>
                 <p className="text-muted-foreground mb-4">{plan.description}</p>
                 
                 <div className="mb-4">
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-4xl font-bold">
+                    <span className="text-3xl md:text-4xl font-bold">
                       ${plan.price}
                     </span>
                     <div className="text-left">
@@ -200,24 +198,24 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+        <div className="mt-12 md:mt-16 max-w-3xl mx-auto">
+          <h2 className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8">Frequently Asked Questions</h2>
           <div className="space-y-6">
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <h3 className="font-semibold mb-2">Can I change my plan anytime?</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm md:text-base">
                 Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.
               </p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm md:text-base">
                 We accept all major credit cards, PayPal, and bank transfers for annual plans.
               </p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <h3 className="font-semibold mb-2">Is there a free trial?</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-sm md:text-base">
                 Yes, all paid plans come with a 14-day free trial. No credit card required to start.
               </p>
             </Card>
@@ -225,18 +223,20 @@ export default function PricingPage() {
         </div>
 
         {/* CTA Section */}
-        <div className="mt-16 text-center">
-          <Card className="p-8 bg-primary/5 border-primary/20">
-            <h2 className="text-2xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-muted-foreground mb-6">
+        <div className="mt-12 md:mt-16 text-center">
+          <Card className="p-6 md:p-8 bg-primary/5 border-primary/20">
+            <h2 className="text-xl md:text-2xl font-bold mb-4">Ready to get started?</h2>
+            <p className="text-muted-foreground mb-6 text-sm md:text-base">
               Join thousands of content creators who trust Media Suite for their AI-powered content needs.
             </p>
-            <Button size="lg" className="mr-4" onClick={handleNavigateToAI}>
-              Start Free Trial
-            </Button>
-            <Button variant="outline" size="lg">
-              Contact Sales
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" onClick={handleNavigateToAI} className="w-full sm:w-auto">
+                Start Free Trial
+              </Button>
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                Contact Sales
+              </Button>
+            </div>
           </Card>
         </div>
       </div>

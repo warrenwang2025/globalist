@@ -28,9 +28,9 @@ export default function AIPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">AI Assistant</h1>
+    <div className="p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold">AI Assistant</h1>
 
         <Button variant="default" onClick={handleGetPlus}>
           <Crown className="mr-2 h-4 w-4" />
@@ -39,9 +39,9 @@ export default function AIPage() {
       </div>
 
       {/* Top Grid: Content + Tools */}
-      <div className="grid gap-8 grid-cols-1 lg:grid-cols-[2fr_1fr] items-start">
+      <div className="grid gap-6 md:gap-8 grid-cols-1 lg:grid-cols-[2fr_1fr] items-start">
         {/* Left column */}
-        <Card className="p-6 h-full">
+        <Card className="p-4 md:p-6 h-full">
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">Content Topic</label>
@@ -53,7 +53,7 @@ export default function AIPage() {
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button className="flex-1" onClick={generateSuggestions}>
                 <Brain className="mr-2 h-4 w-4" />
                 Generate Ideas
@@ -67,7 +67,7 @@ export default function AIPage() {
         </Card>
 
         {/* Right column */}
-        <Card className="p-6 h-full">
+        <Card className="p-4 md:p-6 h-full">
           <div>
             <h2 className="text-lg font-semibold mb-4">Quick Tools</h2>
             <div className="space-y-2">
@@ -86,7 +86,7 @@ export default function AIPage() {
 
       {/* Suggestions Section */}
       {suggestions.length > 0 && (
-        <Card className="mt-8 p-6">
+        <Card className="mt-6 md:mt-8 p-4 md:p-6">
           <h2 className="text-lg font-semibold mb-4">Suggestions</h2>
           <div className="space-y-3">
             {suggestions.map((suggestion, index) => (

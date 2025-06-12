@@ -38,12 +38,11 @@ export function PlatformSelector({ selectedPlatforms, onPlatformToggle }: Platfo
               key={platform.id}
               variant="outline"
               size="sm"
-              className={`flex-1 sm:flex-none ${isSelected ? "bg-primary text-primary-foreground" : ""}`}
+              className={`${isSelected ? "bg-gray-300" : ""}`}
               onClick={() => onPlatformToggle(platform.id)}
             >
               <IconComponent className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">{platform.name}</span>
-              <span className="sm:hidden">{platform.name.slice(0, 3)}</span>
+              {platform.name}
             </Button>
           );
         })}
