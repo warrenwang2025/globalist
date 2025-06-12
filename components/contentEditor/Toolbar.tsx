@@ -40,10 +40,12 @@ export function Toolbar({ selectedBlock, onBlockUpdate, className }: ToolbarProp
   }
 
   return (
-    <div className={cn(
-      "flex items-center gap-1 p-2 bg-muted/50 rounded-lg",
-      className
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-1 p-2 bg-muted/50 rounded-lg",
+        className
+      )}
+    >
       {/* Text Formatting */}
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -57,7 +59,7 @@ export function Toolbar({ selectedBlock, onBlockUpdate, className }: ToolbarProp
         </Button>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <div className="w-px h-6 bg-border" />
 
       {/* Alignment */}
       <div className="flex items-center gap-1">
@@ -72,7 +74,7 @@ export function Toolbar({ selectedBlock, onBlockUpdate, className }: ToolbarProp
         </Button>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <div className="w-px h-6 bg-border" />
 
       {/* Additional Tools */}
       <div className="flex items-center gap-1">
@@ -87,7 +89,7 @@ export function Toolbar({ selectedBlock, onBlockUpdate, className }: ToolbarProp
         </Button>
       </div>
 
-      <Separator orientation="vertical" className="h-6" />
+      <div className="w-px h-6 bg-border" />
 
       {/* Lists */}
       <div className="flex items-center gap-1">

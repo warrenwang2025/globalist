@@ -329,7 +329,7 @@ export function ContentEditor({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <Separator orientation="vertical" className="h-6" />
+          <div className="w-px h-6 bg-border" />
           {/* Alignment */}
           <div className="flex items-center gap-1">
             <Button
@@ -365,7 +365,7 @@ export function ContentEditor({
               <AlignRight className="h-4 w-4" />
             </Button>
           </div>
-          <Separator orientation="vertical" className="h-6" />
+          <div className="w-px h-6 bg-border" />
           {/* Lists */}
           <div className="flex items-center gap-1">
             <Button
@@ -385,7 +385,7 @@ export function ContentEditor({
               <ListOrdered className="h-4 w-4" />
             </Button>
           </div>
-          <Separator orientation="vertical" className="h-6" />
+          <div className="w-px h-6 bg-border" />
           {/* Special Elements */}
           <div className="flex items-center gap-1">
             <Button
@@ -405,7 +405,7 @@ export function ContentEditor({
               <Code className="h-4 w-4" />
             </Button>
           </div>
-          <Separator orientation="vertical" className="h-6" />
+          <div className="w-px h-6 bg-border" />
           {/* Style Tools */}
           <div className="flex items-center gap-1">
             <DropdownMenu>
