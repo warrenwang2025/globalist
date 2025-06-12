@@ -24,8 +24,8 @@ export default function PricingPage() {
       icon: <Star className="h-6 w-6" />,
       features: [
         "Basic AI content suggestions",
-        "5 content generations per month",
-        "Basic templates",
+        "Smart Headline Generator",
+        "Schedule Management",
         "Community support",
         "Standard analytics"
       ],
@@ -43,11 +43,9 @@ export default function PricingPage() {
       features: [
         "Advanced AI content generation",
         "Unlimited content generations",
-        "Premium templates & tools",
         "SEO optimization tools",
         "Priority support",
         "Advanced analytics",
-        "Content calendar",
         "Brand voice customization"
       ],
       buttonText: "Upgrade to Plus",
@@ -66,7 +64,6 @@ export default function PricingPage() {
       icon: <Zap className="h-6 w-6" />,
       features: [
         "Everything in Plus",
-        "Team collaboration tools",
         "White-label solutions",
         "API access",
         "Custom integrations",

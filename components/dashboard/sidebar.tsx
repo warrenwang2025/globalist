@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   Palette,
+  Crown,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,31 +31,37 @@ const routes = [
     label: "Dashboard",
     icon: Layout,
     href: "/dashboard",
+    premium: false,
   },
   {
     label: "Calendar",
     icon: Calendar,
     href: "/dashboard/calendar",
+    premium: false,
   },
   {
     label: "Distribution",
     icon: Share2,
     href: "/dashboard/distribution",
+    premium: false,
   },
   {
-    label: "Analytics",
+    label: "Analytics ",
     icon: BarChart3,
     href: "/dashboard/analytics",
+    premium: true, // Analytics is premium only
   },
   {
     label: "AI Assistant",
     icon: Brain,
     href: "/dashboard/ai",
+    premium: false,
   },
   {
     label: "Settings",
     icon: Settings,
     href: "/dashboard/settings",
+    premium: false,
   },
 ];
 
@@ -65,6 +72,7 @@ export function Sidebar() {
     name: "Loading...",
     email: "",
     avatar: "/avatars/default-avatar.jpg",
+    isPremium: false, // Add premium status
   });
   const [imageError, setImageError] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -80,6 +88,7 @@ export function Sidebar() {
           name: "John Doe",
           email: "john.doe@globalistmedia.com",
           avatar: "/avatars/user-avatar.jpg",
+          isPremium: false, // Set this based on your user's subscription status
         };
         setUser(userData);
       } catch (error) {
@@ -92,9 +101,9 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log("User signed out successfully");
       router.push("/");
     } catch (error) {
@@ -119,6 +128,19 @@ export function Sidebar() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleRouteClick = (route: (typeof routes)[0], e: React.MouseEvent) => {
+    // Check if route requires premium and user is not premium
+    if (route.premium && !user.isPremium) {
+      e.preventDefault();
+      router.push("/pricing");
+      closeMobileMenu();
+      return;
+    }
+
+    // For non-premium routes or premium users, proceed normally
+    closeMobileMenu();
+  };
+
   return (
     <>
       {/* Mobile Menu Button */}
@@ -139,49 +161,67 @@ export function Sidebar() {
 
       {/* Mobile Overlay */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
           onClick={closeMobileMenu}
         />
       )}
 
       {/* Sidebar */}
-      <div className={cn(
-        "h-full fixed inset-y-0 z-40 flex flex-col bg-background border-r transition-transform duration-300 ease-in-out",
-        "w-72",
-        "md:translate-x-0",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}>
+      <div
+        className={cn(
+          "h-full fixed inset-y-0 z-40 flex flex-col bg-background border-r transition-transform duration-300 ease-in-out",
+          "w-72",
+          "md:translate-x-0",
+          isMobileMenuOpen
+            ? "translate-x-0"
+            : "-translate-x-full md:translate-x-0"
+        )}
+      >
         <div className="space-y-4 py-4 flex flex-col h-full">
           <div className="px-3 py-2 flex-1">
             {/* Logo */}
-            <Link href="/dashboard" className="flex items-center pl-3 mb-8 mt-12 md:mt-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center pl-3 mb-8 mt-12 md:mt-4"
+            >
               <h1 className="text-xl md:text-2xl font-bold">Media Suite</h1>
+              {user.isPremium && (
+                <Crown className="h-5 w-5 ml-2 text-yellow-500" />
+              )}
             </Link>
 
             {/* Navigation */}
             <div className="space-y-1">
-              {routes.map((route) => (
-                <Link
-                  key={route.href}
-                  href={route.href}
-                  onClick={closeMobileMenu}
-                  className={cn(
-                    "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition",
-                    pathname === route.href
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  <div className="flex items-center flex-1">
-                    <route.icon className="h-5 w-5 mr-3" />
-                    {route.label}
-                  </div>
-                </Link>
-              ))}
+              {routes.map((route) => {
+                const isPremiumRoute = route.premium && !user.isPremium;
+
+                return (
+                  <Link
+                    key={route.href}
+                    href={isPremiumRoute ? "#" : route.href}
+                    onClick={(e) => handleRouteClick(route, e)}
+                    className={cn(
+                      "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition relative",
+                      pathname === route.href
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground",
+                      isPremiumRoute && "opacity-60"
+                    )}
+                  >
+                    <div className="flex items-center flex-1">
+                      <route.icon className="h-5 w-5 mr-3" />
+                      {route.label}
+                      {isPremiumRoute && (
+                        <Crown className="h-4 w-4 ml-auto text-yellow-500" />
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
-          
+
           {/* Theme Toggle Section */}
           <div className="px-3 border-t pt-4">
             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
@@ -255,11 +295,23 @@ export function Sidebar() {
                       <UserCircle className="h-6 w-6 text-gray-400" />
                     </div>
                   )}
+                  {user.isPremium && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                      <Crown className="h-2.5 w-2.5 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col items-start min-w-0 flex-1">
-                  <span className="font-medium text-sm truncate w-full">
-                    {user.name}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium text-sm truncate">
+                      {user.name}
+                    </span>
+                    {user.isPremium && (
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full font-medium">
+                        PRO
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-muted-foreground truncate w-full">
                     {user.email}
                   </span>

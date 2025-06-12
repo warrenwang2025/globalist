@@ -36,7 +36,7 @@ const platformData = [
   { name: "LinkedIn", value: 25, color: "#0077B5" },
   { name: "Instagram", value: 20, color: "#E4405F" },
   { name: "YouTube", value: 15, color: "#FF0000" },
-  { name: "TikTok", value: 5, color: "#000000" },
+  { name: "TikTok", value: 5, color: "#00FFFF" },
 ];
 
 const contentTypeData = [
@@ -119,7 +119,10 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
             </div>
             <div className="mt-4 space-y-2">
               {platformData.map((platform, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
+                <div
+                  key={index}
+                  className="flex items-center justify-between text-sm"
+                >
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
@@ -146,16 +149,27 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
                 <XAxis dataKey="type" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="engagement" fill="#8884d8" name="Engagement Rate %" />
+                <Bar
+                  dataKey="engagement"
+                  fill="#8884d8"
+                  name="Engagement Rate %"
+                />
               </BarChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">
               {contentTypeData.map((content, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
+                <div
+                  key={index}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span>{content.type}</span>
                   <div className="flex gap-4">
-                    <span className="text-muted-foreground">{content.posts} posts</span>
-                    <span className="font-medium">{content.engagement}% engagement</span>
+                    <span className="text-muted-foreground">
+                      {content.posts} posts
+                    </span>
+                    <span className="font-medium">
+                      {content.engagement}% engagement
+                    </span>
                   </div>
                 </div>
               ))}

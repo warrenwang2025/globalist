@@ -70,7 +70,7 @@ const platformIcons = {
     color: "bg-gradient-to-r from-purple-500 to-pink-500",
   },
   4: { icon: Youtube, name: "YouTube", color: "bg-red-600" },
-  5: { icon: SiTiktok, name: "TikTok", color: "bg-black" },
+  5: { icon: SiTiktok, name: "TikTok", color: "bg-blue-300" },
   6: { icon: Globe, name: "Personal", color: "bg-gray-600" },
 };
 

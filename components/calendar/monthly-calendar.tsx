@@ -52,13 +52,20 @@ interface MonthlyCalendarProps {
 const platformIcons = {
   1: { icon: Twitter, name: "X", color: "bg-black" },
   2: { icon: Linkedin, name: "LinkedIn", color: "bg-blue-600" },
-  3: { icon: Instagram, name: "Instagram", color: "bg-gradient-to-r from-purple-500 to-pink-500" },
+  3: {
+    icon: Instagram,
+    name: "Instagram",
+    color: "bg-gradient-to-r from-purple-500 to-pink-500",
+  },
   4: { icon: Youtube, name: "YouTube", color: "bg-red-600" },
-  5: { icon: SiTiktok, name: "TikTok", color: "bg-black" },
-  6: { icon: Globe, name: "Personal", color: "bg-gray-600" }
+  5: { icon: SiTiktok, name: "TikTok", color: "bg-blue-300" },
+  6: { icon: Globe, name: "Personal", color: "bg-gray-600" },
 };
 
-export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps) {
+export function MonthlyCalendar({
+  events,
+  scheduledPosts,
+}: MonthlyCalendarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
@@ -121,9 +128,7 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
         {/* Daily Content */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">
-            {date
-              ? `Events for ${date.toLocaleDateString()}`
-              : "Select a date"}
+            {date ? `Events for ${date.toLocaleDateString()}` : "Select a date"}
           </h2>
 
           {date && (
@@ -132,8 +137,8 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
               <div className="space-y-3">
                 <h3 className="text-lg font-medium">Events</h3>
                 {getEventsForDate(date).map((event) => (
-                  <Card 
-                    key={event.id} 
+                  <Card
+                    key={event.id}
                     className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => handleEventClick(event)}
                   >
@@ -154,9 +159,7 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
                               {event.attendees}
                             </span>
                           )}
-                          {event.duration && (
-                            <span>{event.duration} min</span>
-                          )}
+                          {event.duration && <span>{event.duration} min</span>}
                         </div>
                       </div>
                       <Badge
@@ -177,8 +180,8 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
               <div className="space-y-3">
                 <h3 className="text-lg font-medium">Scheduled Posts</h3>
                 {getScheduledPostsForDate(date).map((post) => (
-                  <Card 
-                    key={post.id} 
+                  <Card
+                    key={post.id}
                     className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                     onClick={() => handlePostClick(post)}
                   >
@@ -253,11 +256,7 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
               <CardTitle className="text-xl">
                 {selectedEvent ? "Event Details" : "Post Details"}
               </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeDetails}
-              >
+              <Button variant="ghost" size="sm" onClick={closeDetails}>
                 <ChevronUp className="h-4 w-4" />
                 Hide Details
               </Button>
@@ -267,11 +266,14 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
             {selectedEvent && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">{selectedEvent.title}</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {selectedEvent.title}
+                  </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {selectedEvent.date.toLocaleDateString()} at {formatTime(selectedEvent.date)}
+                      {selectedEvent.date.toLocaleDateString()} at{" "}
+                      {formatTime(selectedEvent.date)}
                     </span>
                     {selectedEvent.duration && (
                       <span className="flex items-center gap-1">
@@ -285,16 +287,22 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
                       </span>
                     )}
                   </div>
-                  <Badge variant={selectedEvent.type === "meeting" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      selectedEvent.type === "meeting" ? "default" : "secondary"
+                    }
+                  >
                     {selectedEvent.type}
                   </Badge>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div>
                   <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-muted-foreground">{selectedEvent.description}</p>
+                  <p className="text-muted-foreground">
+                    {selectedEvent.description}
+                  </p>
                 </div>
               </div>
             )}
@@ -302,11 +310,14 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
             {selectedPost && (
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">{selectedPost.title}</h3>
+                  <h3 className="font-semibold text-lg mb-2">
+                    {selectedPost.title}
+                  </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      {selectedPost.scheduledDate.toLocaleDateString()} at {formatTime(selectedPost.scheduledDate)}
+                      {selectedPost.scheduledDate.toLocaleDateString()} at{" "}
+                      {formatTime(selectedPost.scheduledDate)}
                     </span>
                     <Badge variant="outline">{selectedPost.status}</Badge>
                   </div>
@@ -322,10 +333,13 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
                 </div>
 
                 <div>
-                  <h4 className="font-medium mb-2">Platforms ({selectedPost.platforms.length})</h4>
+                  <h4 className="font-medium mb-2">
+                    Platforms ({selectedPost.platforms.length})
+                  </h4>
                   <div className="flex items-center gap-3">
                     {selectedPost.platforms.map((platformId) => {
-                      const platform = platformIcons[platformId as keyof typeof platformIcons];
+                      const platform =
+                        platformIcons[platformId as keyof typeof platformIcons];
                       if (!platform) return null;
                       const IconComponent = platform.icon;
                       return (
@@ -334,7 +348,9 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
                           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-white ${platform.color}`}
                         >
                           <IconComponent className="h-4 w-4" />
-                          <span className="text-sm font-medium">{platform.name}</span>
+                          <span className="text-sm font-medium">
+                            {platform.name}
+                          </span>
                         </div>
                       );
                     })}
@@ -343,7 +359,9 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
 
                 {selectedPost.mediaCount > 0 && (
                   <div>
-                    <h4 className="font-medium mb-2">Media Files ({selectedPost.mediaCount})</h4>
+                    <h4 className="font-medium mb-2">
+                      Media Files ({selectedPost.mediaCount})
+                    </h4>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       {selectedPost.mediaTypes.includes("image") && (
                         <div className="flex items-center gap-1">
@@ -367,4 +385,4 @@ export function MonthlyCalendar({ events, scheduledPosts }: MonthlyCalendarProps
       )}
     </div>
   );
-} 
+}
