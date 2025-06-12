@@ -9,17 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default function SettingsPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Settings</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Settings</h1>
 
       <Tabs defaultValue="notifications" className="space-y-6">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="integrations">Integrations</TabsTrigger>
         </TabsList>
+        
         <TabsContent value="notifications">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Notification Preferences</h2>
+          <Card className="p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold mb-6">Notification Preferences</h2>
             
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -46,65 +47,68 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="integrations">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Connected Accounts</h2>
+          <Card className="p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-semibold mb-6">Connected Accounts</h2>
             
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label>X (Twitter)</Label>
                   <p className="text-sm text-muted-foreground">
                     Connect your X account
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label>LinkedIn</Label>
                   <p className="text-sm text-muted-foreground">
                     Connect your LinkedIn profile
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label>Instagram</Label>
                   <p className="text-sm text-muted-foreground">
                     Connect your Instagram account
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
-              <div className="flex items-center justify-between">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Tiktok</Label>
+                  <Label>TikTok</Label>
                   <p className="text-sm text-muted-foreground">
-                    Connect your Tiktok account
+                    Connect your TikTok account
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
-              <div className="flex items-center justify-between">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Youtube</Label>
+                  <Label>YouTube</Label>
                   <p className="text-sm text-muted-foreground">
-                    Connect your Youtube account
+                    Connect your YouTube account
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
-                            <div className="flex items-center justify-between">
+              
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <Label>Personal Website</Label>
                   <p className="text-sm text-muted-foreground">
-                    Connect your Personal Wordpress Website
+                    Connect your Personal WordPress Website
                   </p>
                 </div>
-                <Button variant="outline">Connect</Button>
+                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
               </div>
             </div>
           </Card>

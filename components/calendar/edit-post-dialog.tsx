@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PlatformSelector } from "@/components/platform-selector";
-import { ContentEditor } from "@/components/distribution/content-editor";
+import { ContentEditor } from "@/components/content-editor";
 import { UploadMedia } from "@/components/upload-media";
 import { useToast } from "@/hooks/use-toast";
 import { Trash2 } from "lucide-react";
@@ -55,7 +55,7 @@ export function EditPostDialog({
       setEditedPost({
         title: post.title,
         content: post.content,
-        scheduledDate: postDate.toISOString().split("T")[0],
+        scheduledDate: postDate.toISOString().split('T')[0],
         scheduledTime: postDate.toTimeString().slice(0, 5),
         platforms: post.platforms,
         mediaFiles: [], // Note: We can't restore actual files, only show count
@@ -99,14 +99,10 @@ export function EditPostDialog({
       content: editedPost.content,
       scheduledDate,
       platforms: editedPost.platforms,
-      mediaCount:
-        editedPost.mediaFiles.length > 0
-          ? editedPost.mediaFiles.length
-          : post.mediaCount,
-      mediaTypes:
-        editedPost.mediaFiles.length > 0
-          ? editedPost.mediaFiles.map((file) => file.type.split("/")[0])
-          : post.mediaTypes,
+      mediaCount: editedPost.mediaFiles.length > 0 ? editedPost.mediaFiles.length : post.mediaCount,
+      mediaTypes: editedPost.mediaFiles.length > 0 
+        ? editedPost.mediaFiles.map((file) => file.type.split("/")[0])
+        : post.mediaTypes,
     };
 
     onUpdatePost(updatedPost);
@@ -119,10 +115,7 @@ export function EditPostDialog({
   };
 
   const handleMediaUpload = (files: File[]) => {
-    setEditedPost({
-      ...editedPost,
-      mediaFiles: [...editedPost.mediaFiles, ...files],
-    });
+    setEditedPost({ ...editedPost, mediaFiles: [...editedPost.mediaFiles, ...files] });
   };
 
   const handlePlatformToggle = (platformId: number) => {
@@ -177,7 +170,9 @@ export function EditPostDialog({
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Content</label>
+            <label className="text-sm font-medium mb-2 block">
+              Content
+            </label>
             <ContentEditor
               content={editedPost.content}
               onContentChange={handleContentChange}
@@ -199,8 +194,7 @@ export function EditPostDialog({
             </label>
             {post.mediaCount > 0 && editedPost.mediaFiles.length === 0 && (
               <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                Current post has {post.mediaCount} media file(s). Upload new
-                files to replace them.
+                Current post has {post.mediaCount} media file(s). Upload new files to replace them.
               </div>
             )}
             <UploadMedia onMediaUpload={handleMediaUpload} />

@@ -37,7 +37,6 @@ export default function AnalyticsPage() {
   const [selectedPlatform, setSelectedPlatform] = useState("all");
 
   const handleExportReport = () => {
-    // Simulate report generation
     const reportData = {
       timeRange,
       selectedPlatform,
@@ -62,19 +61,20 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl md:text-3xl font-bold">Analytics Dashboard</h1>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base">
             Track your social media performance and audience insights
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportReport}>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={handleExportReport} className="flex-1 sm:flex-none">
             <Download className="mr-2 h-4 w-4" />
-            Export Report
+            <span className="hidden sm:inline">Export Report</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
       </div>
@@ -83,11 +83,11 @@ export default function AnalyticsPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -101,7 +101,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -123,14 +123,14 @@ export default function AnalyticsPage() {
       </Card>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Reach</CardTitle>
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">125,430</div>
+            <div className="text-xl md:text-2xl font-bold">125,430</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+12.5%</span> from last period
             </p>
@@ -143,7 +143,7 @@ export default function AnalyticsPage() {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8.5%</div>
+            <div className="text-xl md:text-2xl font-bold">8.5%</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+2.1%</span> from last period
             </p>
@@ -156,7 +156,7 @@ export default function AnalyticsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">15,420</div>
+            <div className="text-xl md:text-2xl font-bold">15,420</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+5.2%</span> from last period
             </p>
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+            <div className="text-xl md:text-2xl font-bold">45</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-blue-600">+8</span> from last period
             </p>
@@ -179,13 +179,13 @@ export default function AnalyticsPage() {
 
       {/* Main Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="platforms">Platforms</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="audience">Audience</TabsTrigger>
-          <TabsTrigger value="engagement">Engagement</TabsTrigger>
-          <TabsTrigger value="growth">Growth</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+          <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="platforms" className="text-xs md:text-sm">Platforms</TabsTrigger>
+          <TabsTrigger value="content" className="text-xs md:text-sm">Content</TabsTrigger>
+          <TabsTrigger value="audience" className="text-xs md:text-sm">Audience</TabsTrigger>
+          <TabsTrigger value="engagement" className="text-xs md:text-sm">Engagement</TabsTrigger>
+          <TabsTrigger value="growth" className="text-xs md:text-sm">Growth</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

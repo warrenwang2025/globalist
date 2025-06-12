@@ -1,6 +1,14 @@
-"use client"
+"use client";
 
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import {
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { useTheme } from "next-themes";
 
 const data = [
   {
@@ -51,27 +59,43 @@ const data = [
     name: "Dec",
     total: 4300,
   },
-]
+];
 
 export function Overview() {
+  const { theme, resolvedTheme } = useTheme();
+
+  // Determine if we're in dark mode
+  const isDark =
+    theme === "dark" || (theme === "system" && resolvedTheme === "dark");
+
+  // Set text colors based on theme
+  const textColor = isDark ? "#000000" : "#ffffff";
+  const graphcolor = isDark ? "#ffffff" : "#000000";
   return (
     <ResponsiveContainer width="100%" height={350}>
       <LineChart data={data}>
         <XAxis
           dataKey="name"
-          stroke="#888888"
+          stroke={graphcolor}
           fontSize={12}
           tickLine={false}
           axisLine={false}
         />
         <YAxis
-          stroke="#888888"
+          stroke={graphcolor}
           fontSize={12}
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `${value}`}
         />
-        <Tooltip />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: isDark ? "#1f2937" : "#ffffff",
+            border: `1px solid ${isDark ? "#374151" : "#e5e7eb"}`,
+            borderRadius: "6px",
+            color: isDark ? "#ffffff" : "#000000",
+          }}
+        />
         <Line
           type="monotone"
           dataKey="total"
@@ -81,5 +105,5 @@ export function Overview() {
         />
       </LineChart>
     </ResponsiveContainer>
-  )
+  );
 }
