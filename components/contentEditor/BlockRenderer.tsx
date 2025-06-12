@@ -83,7 +83,17 @@ function TextBlockRenderer({ block, onUpdate, isSelected }: {
     },
   });
 
-  if (!block.content?.text && !block.content?.html && !isSelected) {
+  const hasTextContent = (content: any): content is { text?: string; html?: string } => {
+    return content && ('text' in content || 'html' in content);
+  };
+
+  const textContent = hasTextContent(block.content) ? block.content : null;
+
+  if (
+    (!('text' in block.content) || !block.content.text) && 
+    (!('html' in block.content) || !block.content.html) && 
+    !isSelected
+  ) {
     return (
       <div className="text-muted-foreground italic py-4 text-center border-2 border-dashed rounded-lg">
         Click to add text content...

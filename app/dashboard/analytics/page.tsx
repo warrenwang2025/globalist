@@ -21,12 +21,9 @@ import { TopPosts } from "@/components/analytics/top-posts";
 import { GrowthMetrics } from "@/components/analytics/growth-metrics";
 import {
   BarChart3,
-  TrendingUp,
   Users,
   Eye,
   Heart,
-  MessageCircle,
-  Share2,
   Download,
   Calendar,
   Filter,
@@ -54,10 +51,11 @@ export default function AnalyticsPage() {
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `analytics-report-${timeRange}-${new Date()
-      .toISOString()
-      .split("T")[0]}.json`;
+    link.download = `analytics-report-${timeRange}-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
     link.click();
+    URL.revokeObjectURL(url); // Clean up the URL object
   };
 
   return (
@@ -65,13 +63,19 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Analytics Dashboard</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">
+            Analytics Dashboard
+          </h1>
           <p className="text-muted-foreground mt-2 text-sm md:text-base">
             Track your social media performance and audience insights
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button variant="outline" onClick={handleExportReport} className="flex-1 sm:flex-none">
+          <Button
+            variant="outline"
+            onClick={handleExportReport}
+            className="flex-1 sm:flex-none"
+          >
             <Download className="mr-2 h-4 w-4" />
             <span className="hidden sm:inline">Export Report</span>
             <span className="sm:hidden">Export</span>
@@ -100,7 +104,10 @@ export default function AnalyticsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                <Select
+                  value={selectedPlatform}
+                  onValueChange={setSelectedPlatform}
+                >
                   <SelectTrigger className="w-full sm:w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -139,7 +146,9 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Engagement Rate</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Engagement Rate
+            </CardTitle>
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -152,7 +161,9 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Followers</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Followers
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -165,7 +176,9 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Posts Published</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Posts Published
+            </CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -180,12 +193,24 @@ export default function AnalyticsPage() {
       {/* Main Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-          <TabsTrigger value="overview" className="text-xs md:text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="platforms" className="text-xs md:text-sm">Platforms</TabsTrigger>
-          <TabsTrigger value="content" className="text-xs md:text-sm">Content</TabsTrigger>
-          <TabsTrigger value="audience" className="text-xs md:text-sm">Audience</TabsTrigger>
-          <TabsTrigger value="engagement" className="text-xs md:text-sm">Engagement</TabsTrigger>
-          <TabsTrigger value="growth" className="text-xs md:text-sm">Growth</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs md:text-sm">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="platforms" className="text-xs md:text-sm">
+            Platforms
+          </TabsTrigger>
+          <TabsTrigger value="content" className="text-xs md:text-sm">
+            Content
+          </TabsTrigger>
+          <TabsTrigger value="audience" className="text-xs md:text-sm">
+            Audience
+          </TabsTrigger>
+          <TabsTrigger value="engagement" className="text-xs md:text-sm">
+            Engagement
+          </TabsTrigger>
+          <TabsTrigger value="growth" className="text-xs md:text-sm">
+            Growth
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -197,7 +222,10 @@ export default function AnalyticsPage() {
         </TabsContent>
 
         <TabsContent value="platforms" className="space-y-6">
-          <PlatformMetrics timeRange={timeRange} selectedPlatform={selectedPlatform} />
+          <PlatformMetrics
+            timeRange={timeRange}
+            selectedPlatform={selectedPlatform}
+          />
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
