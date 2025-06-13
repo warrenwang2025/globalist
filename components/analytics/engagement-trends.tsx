@@ -242,7 +242,7 @@ export function EngagementTrends({ timeRange }: EngagementTrendsProps) {
         </Card>
       </div>
 
-      {/* Engagement Rate Comparison */}
+      {/* Engagement Rate Comparison
       <Card>
         <CardHeader>
           <CardTitle>Engagement Rate by Content Type</CardTitle>
@@ -278,7 +278,7 @@ export function EngagementTrends({ timeRange }: EngagementTrendsProps) {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 }

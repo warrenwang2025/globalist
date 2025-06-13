@@ -293,6 +293,43 @@ export function ContentPerformance({ timeRange }: ContentPerformanceProps) {
               ))}
             </TableBody>
           </Table>
+                {/* Engagement Rate Comparison */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Engagement Rate by Content Type</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">15.6%</div>
+                <p className="text-sm text-muted-foreground">Video Content</p>
+                <Badge className="mt-1 bg-blue-100 text-blue-800">Highest</Badge>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-green-600">11.2%</div>
+                <p className="text-sm text-muted-foreground">Image Carousels</p>
+                <Badge className="mt-1 bg-green-100 text-green-800">Good</Badge>
+              </div>
+              <div className="text-center p-4 border rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">8.9%</div>
+                <p className="text-sm text-muted-foreground">Single Images</p>
+                <Badge className="mt-1 bg-orange-100 text-orange-800">Average</Badge>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-900 mb-2">💡 Insights & Recommendations</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Video content performs 75% better than static images</li>
+                <li>• Friday posts receive 23% more engagement than average</li>
+                <li>• Posting between 6-8 PM maximizes audience reach</li>
+                <li>• Carousel posts have 40% higher save rates</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
         </CardContent>
       </Card>
     </div>
