@@ -52,7 +52,7 @@ const routes = [
     premium: true, // Analytics is premium only
   },
   {
-    label: "AI Assistant",
+    label: "Content Editor",
     icon: Brain,
     href: "/dashboard/ai",
     premium: false,

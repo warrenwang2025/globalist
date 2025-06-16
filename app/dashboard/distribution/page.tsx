@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { PlatformSelector } from "@/components/platform-selector";
 import { UploadMedia } from "@/components/upload-media";
-import { EditorCanvas } from "@/components/contentEditor/EditorCanvas";
+import { AIContentBanner } from "@/components/ai-content-banner";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, Send, Save, Eye, Settings, Edit, Sparkles } from "lucide-react";
+import { 
+  Calendar, 
+  Clock, 
+  Send, 
+  Save, 
+  Eye, 
+  Sparkles, 
+  Brain
+} from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 
 export default function CreatePostPage() {
@@ -24,6 +32,11 @@ export default function CreatePostPage() {
   const [blocks, setBlocks] = useState<AnyBlock[]>([]);
 
   const { toast } = useToast();
+
+  const handleImportAIContent = (aiTitle: string, aiBlocks: AnyBlock[]) => {
+    setTitle(aiTitle);
+    setBlocks(aiBlocks);
+  };
 
   const handlePlatformToggle = (platformId: number) => {
     setSelectedPlatforms((prev) =>
@@ -41,14 +54,23 @@ export default function CreatePostPage() {
     });
   };
 
-  const handleContentChange = (newBlocks: AnyBlock[]) => {
-    setBlocks(newBlocks);
-  };
+
+
+
 
   const handlePreview = () => {
     const contentText = blocks
+
       .map(block => {
         switch (block.type) {
+
+
+
+
+
+
+
+
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
@@ -58,6 +80,7 @@ export default function CreatePostPage() {
           case 'list':
             return (block.content as any).items?.join(', ') || '';
           default:
+
             return '';
         }
       })
@@ -85,6 +108,7 @@ export default function CreatePostPage() {
       title,
       content: contentText,
       selectedPlatforms,
+
       uploadedFiles: uploadedFiles.map(file => ({
         name: file.name,
         type: file.type,
@@ -111,16 +135,23 @@ export default function CreatePostPage() {
 
   const handleSaveDraft = async () => {
     const contentText = blocks
+
       .map(block => {
         switch (block.type) {
+
+
+
+
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
             return (block.content as any).text || '';
           default:
+
             return '';
         }
       })
+
       .join(' ');
 
     if (!title.trim() && !contentText.trim()) {
@@ -152,16 +183,23 @@ export default function CreatePostPage() {
 
   const handlePublish = async () => {
     const contentText = blocks
+
       .map(block => {
         switch (block.type) {
+
+
+
+
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
             return (block.content as any).text || '';
           default:
+
             return '';
         }
       })
+
       .join(' ');
 
     if (!contentText.trim()) {
@@ -237,128 +275,259 @@ export default function CreatePostPage() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-2">
           <Sparkles className="h-8 w-8 text-primary" />
-          Advanced Content Creator
+
+          Content Distribution
         </h1>
         <p className="text-muted-foreground text-sm md:text-base">
-          Create rich, engaging content with our drag-and-drop editor and publish across multiple platforms
+
+
+          Publish your content across multiple platforms with scheduling and media support
         </p>
       </div>
 
-      <Tabs defaultValue="editor" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="editor" className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
-            <span className="hidden sm:inline">Content Editor</span>
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Publishing</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* AI Content Import Banner */}
+      <div className="mb-6">
 
-        <TabsContent value="editor" className="space-y-6">
-          {/* Post Title */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Post Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title (Optional)</Label>
-                <Input
-                  id="title"
-                  placeholder="Enter a compelling title for your post..."
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-            </CardContent>
-          </Card>
+        <AIContentBanner 
+          onImport={handleImportAIContent}
+          showDismiss={true}
+        />
+      </div>
 
-          {/* Content Editor */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
-                Drag & Drop Content Editor
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <EditorCanvas
-                initialBlocks={blocks}
-                onContentChange={handleContentChange}
-                className="min-h-[600px]"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      <div className="space-y-6">
+        {/* Post Title */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Post Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="title">Title (Optional)</Label>
+              <Input
+                id="title"
+                placeholder="Enter a compelling title for your post..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="mt-1"
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
+            {blocks.length === 0 && (
+              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                <Brain className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  Need content? Use our{" "}
+                  <a 
+                    href="/dashboard/ai" 
+                    className="text-primary hover:underline font-medium"
+                  >
+                    AI Assistant
+                  </a>{" "}
+                  to generate content, then import it here for publishing.
+                </span>
+              </div>
 
-        <TabsContent value="settings" className="space-y-6">
-          <div className="grid gap-6">
-            {/* Platform Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Publishing Platforms</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PlatformSelector
-                  selectedPlatforms={selectedPlatforms}
-                  onPlatformToggle={handlePlatformToggle}
-                />
-              </CardContent>
-            </Card>
 
-            {/* Media Upload */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Additional Media</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <UploadMedia onMediaUpload={handleMediaUpload} />
-              </CardContent>
-            </Card>
 
-            {/* Scheduling */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Schedule Post (Optional)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="schedule-date">Date</Label>
-                    <div className="relative mt-1">
-                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="schedule-date"
-                        type="date"
-                        value={scheduleDate}
-                        onChange={(e) => setScheduleDate(e.target.value)}
-                        className="pl-10"
-                        min={new Date().toISOString().split("T")[0]}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="schedule-time">Time</Label>
-                    <div className="relative mt-1">
-                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="schedule-time"
-                        type="time"
-                        value={scheduleTime}
-                        onChange={(e) => setScheduleTime(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+
+
+
+
+
+
+
+
+
+            )}
+            {blocks.length > 0 && (
+              <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
+                    Content Ready
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+
+
+
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  {blocks.length} content block{blocks.length !== 1 ? 's' : ''} imported and ready for publishing
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {/* Platform Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Publishing Platforms</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlatformSelector
+              selectedPlatforms={selectedPlatforms}
+              onPlatformToggle={handlePlatformToggle}
+            />
+          </CardContent>
+        </Card>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {/* Media Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Additional Media</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <UploadMedia onMediaUpload={handleMediaUpload} />
+          </CardContent>
+        </Card>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        {/* Scheduling */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Schedule Post (Optional)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="schedule-date">Date</Label>
+                <div className="relative mt-1">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="schedule-date"
+                    type="date"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    className="pl-10"
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </div>
+
+
+
+
+
+              </div>
+              <div>
+                <Label htmlFor="schedule-time">Time</Label>
+                <div className="relative mt-1">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="schedule-time"
+                    type="time"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Action Buttons */}
       <Card className="mt-6">
