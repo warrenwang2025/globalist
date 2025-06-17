@@ -54,7 +54,7 @@ const routes = [
   {
     label: "Content Editor",
     icon: Brain,
-    href: "/dashboard/ai",
+    href: "/dashboard/content-editor",
     premium: false,
   },
   {
