@@ -145,7 +145,9 @@ export function EmailListManager() {
   const [selectedList, setSelectedList] = useState<EmailList | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "paused">("all");
+  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "paused">(
+    "all"
+  );
 
   const [newListData, setNewListData] = useState({
     name: "",
@@ -167,17 +169,25 @@ export function EmailListManager() {
 
   // Filter lists based on search and status
   const filteredLists = emailLists.filter((list) => {
-    const matchesSearch = list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         list.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || list.status === filterStatus;
+    const matchesSearch =
+      list.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      list.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus =
+      filterStatus === "all" || list.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   // Filter subscribers based on search
-  const filteredSubscribers = selectedList?.subscribers.filter((subscriber) =>
-    subscriber.email.toLowerCase().includes(subscriberSearchQuery.toLowerCase()) ||
-    subscriber.name.toLowerCase().includes(subscriberSearchQuery.toLowerCase())
-  ) || [];
+  const filteredSubscribers =
+    selectedList?.subscribers.filter(
+      (subscriber) =>
+        subscriber.email
+          .toLowerCase()
+          .includes(subscriberSearchQuery.toLowerCase()) ||
+        subscriber.name
+          .toLowerCase()
+          .includes(subscriberSearchQuery.toLowerCase())
+    ) || [];
 
   const handleCreateList = () => {
     if (!newListData.name.trim()) return;
@@ -186,15 +196,15 @@ export function EmailListManager() {
     const initialSubscribers: Subscriber[] = [];
     if (newListData.initialEmails.trim()) {
       const emails = newListData.initialEmails
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && line.includes('@'));
-      
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && line.includes("@"));
+
       emails.forEach((email, index) => {
         initialSubscribers.push({
           id: Date.now() + index,
           email: email,
-          name: email.split('@')[0], // Use email prefix as default name
+          name: email.split("@")[0], // Use email prefix as default name
           status: "subscribed",
           subscribedAt: new Date().toISOString().split("T")[0],
         });
@@ -279,7 +289,7 @@ export function EmailListManager() {
 
     // Check if email already exists
     const emailExists = selectedList.subscribers.some(
-      sub => sub.email.toLowerCase() === newSubscriberData.email.toLowerCase()
+      (sub) => sub.email.toLowerCase() === newSubscriberData.email.toLowerCase()
     );
 
     if (emailExists) {
@@ -290,7 +300,7 @@ export function EmailListManager() {
     const newSubscriber: Subscriber = {
       id: Date.now(),
       email: newSubscriberData.email,
-      name: newSubscriberData.name || newSubscriberData.email.split('@')[0],
+      name: newSubscriberData.name || newSubscriberData.email.split("@")[0],
       status: "subscribed",
       subscribedAt: new Date().toISOString().split("T")[0],
     };
@@ -308,11 +318,15 @@ export function EmailListManager() {
     );
 
     // Update selectedList for immediate UI update
-    setSelectedList(prev => prev ? {
-      ...prev,
-      subscribers: [...prev.subscribers, newSubscriber],
-      subscriberCount: prev.subscribers.length + 1,
-    } : null);
+    setSelectedList((prev) =>
+      prev
+        ? {
+            ...prev,
+            subscribers: [...prev.subscribers, newSubscriber],
+            subscriberCount: prev.subscribers.length + 1,
+          }
+        : null
+    );
 
     setNewSubscriberData({ email: "", name: "" });
     setAddSubscriberDialog(false);
@@ -326,7 +340,9 @@ export function EmailListManager() {
         list.id === selectedList.id
           ? {
               ...list,
-              subscribers: list.subscribers.filter(sub => sub.id !== subscriberId),
+              subscribers: list.subscribers.filter(
+                (sub) => sub.id !== subscriberId
+              ),
               subscriberCount: list.subscribers.length - 1,
             }
           : list
@@ -334,11 +350,17 @@ export function EmailListManager() {
     );
 
     // Update selectedList for immediate UI update
-    setSelectedList(prev => prev ? {
-      ...prev,
-      subscribers: prev.subscribers.filter(sub => sub.id !== subscriberId),
-      subscriberCount: prev.subscribers.length - 1,
-    } : null);
+    setSelectedList((prev) =>
+      prev
+        ? {
+            ...prev,
+            subscribers: prev.subscribers.filter(
+              (sub) => sub.id !== subscriberId
+            ),
+            subscriberCount: prev.subscribers.length - 1,
+          }
+        : null
+    );
   };
 
   const isValidEmail = (email: string) => {
@@ -415,7 +437,9 @@ export function EmailListManager() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="initialEmails">Initial Subscribers (optional)</Label>
+                  <Label htmlFor="initialEmails">
+                    Initial Subscribers (optional)
+                  </Label>
                   <Textarea
                     id="initialEmails"
                     value={newListData.initialEmails}
@@ -429,12 +453,13 @@ export function EmailListManager() {
                     rows={5}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Enter one email address per line. You can add more subscribers later.
+                    Enter one email address per line. You can add more
+                    subscribers later.
                   </p>
                 </div>
                 <div className="flex gap-2 pt-4">
-                  <Button 
-                    onClick={handleCreateList} 
+                  <Button
+                    onClick={handleCreateList}
                     className="flex-1"
                     disabled={!newListData.name.trim()}
                   >
@@ -444,7 +469,12 @@ export function EmailListManager() {
                     variant="outline"
                     onClick={() => {
                       setNewListDialog(false);
-                      setNewListData({ name: "", description: "", tags: "", initialEmails: "" });
+                      setNewListData({
+                        name: "",
+                        description: "",
+                        tags: "",
+                        initialEmails: "",
+                      });
                     }}
                   >
                     Cancel
@@ -479,14 +509,14 @@ export function EmailListManager() {
               size="sm"
               onClick={() => setFilterStatus("active")}
             >
-              Active ({emailLists.filter(l => l.status === "active").length})
+              Active ({emailLists.filter((l) => l.status === "active").length})
             </Button>
             <Button
               variant={filterStatus === "paused" ? "default" : "outline"}
               size="sm"
               onClick={() => setFilterStatus("paused")}
             >
-              Paused ({emailLists.filter(l => l.status === "paused").length})
+              Paused ({emailLists.filter((l) => l.status === "paused").length})
             </Button>
           </div>
         </div>
@@ -498,10 +528,9 @@ export function EmailListManager() {
               <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No lists found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery || filterStatus !== "all" 
+                {searchQuery || filterStatus !== "all"
                   ? "Try adjusting your search or filter criteria"
-                  : "Create your first email list to get started"
-                }
+                  : "Create your first email list to get started"}
               </p>
               {!searchQuery && filterStatus === "all" && (
                 <Button onClick={() => setNewListDialog(true)}>
@@ -512,24 +541,29 @@ export function EmailListManager() {
             </div>
           ) : (
             filteredLists.map((list) => (
-              <div key={list.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              <div
+                key={list.id}
+                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">{list.name}</h3>
                       <Badge
-                        variant={list.status === "active" ? "default" : "secondary"}
+                        variant={
+                          list.status === "active" ? "default" : "secondary"
+                        }
                       >
                         {list.status}
                       </Badge>
                     </div>
-                    
+
                     {list.description && (
                       <p className="text-muted-foreground mb-3">
                         {list.description}
                       </p>
                     )}
-                    
+
                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
@@ -539,50 +573,58 @@ export function EmailListManager() {
                         Created: {new Date(list.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    
+
                     {list.tags.length > 0 && (
                       <div className="flex gap-1 flex-wrap">
                         {list.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2 ml-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => openSubscribersDialog(list)}
                       title="Manage Subscribers"
                     >
                       <Users className="h-4 w-4" />
                     </Button>
-                    
-                    <Button 
-                      variant="outline" 
+
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => openEditDialog(list)}
                       title="Edit List"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    
-                    <Button 
-                      variant="outline" 
+
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => toggleListStatus(list.id)}
-                      title={list.status === "active" ? "Pause List" : "Activate List"}
+                      title={
+                        list.status === "active"
+                          ? "Pause List"
+                          : "Activate List"
+                      }
                     >
                       {list.status === "active" ? "Pause" : "Activate"}
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700"
                           title="Delete List"
@@ -594,7 +636,9 @@ export function EmailListManager() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Email List</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to delete "{list.name}"? This action cannot be undone and will remove all {list.subscriberCount} subscribers from this list.
+                            Are you sure you want to delete {list.name}? This
+                            action cannot be undone and will remove all{" "}
+                            {list.subscriberCount} subscribers from this list.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -667,8 +711,8 @@ export function EmailListManager() {
               />
             </div>
             <div className="flex gap-2 pt-4">
-              <Button 
-                onClick={handleEditList} 
+              <Button
+                onClick={handleEditList}
                 className="flex-1"
                 disabled={!editListData.name.trim()}
               >
@@ -698,7 +742,7 @@ export function EmailListManager() {
               Manage Subscribers - {selectedList?.name}
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Add Subscriber and Search */}
             <div className="flex flex-col sm:flex-row gap-4">
@@ -711,7 +755,10 @@ export function EmailListManager() {
                   className="pl-10"
                 />
               </div>
-              <Dialog open={addSubscriberDialog} onOpenChange={setAddSubscriberDialog}>
+              <Dialog
+                open={addSubscriberDialog}
+                onOpenChange={setAddSubscriberDialog}
+              >
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="h-4 w-4 mr-2" />
@@ -753,10 +800,13 @@ export function EmailListManager() {
                       />
                     </div>
                     <div className="flex gap-2 pt-4">
-                      <Button 
-                        onClick={handleAddSubscriber} 
+                      <Button
+                        onClick={handleAddSubscriber}
                         className="flex-1"
-                        disabled={!newSubscriberData.email.trim() || !isValidEmail(newSubscriberData.email)}
+                        disabled={
+                          !newSubscriberData.email.trim() ||
+                          !isValidEmail(newSubscriberData.email)
+                        }
                       >
                         Add Subscriber
                       </Button>
@@ -781,13 +831,14 @@ export function EmailListManager() {
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    {subscriberSearchQuery ? "No subscribers found" : "No subscribers yet"}
+                    {subscriberSearchQuery
+                      ? "No subscribers found"
+                      : "No subscribers yet"}
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    {subscriberSearchQuery 
+                    {subscriberSearchQuery
                       ? "Try adjusting your search criteria"
-                      : "Add your first subscriber to get started"
-                    }
+                      : "Add your first subscriber to get started"}
                   </p>
                   {!subscriberSearchQuery && (
                     <Button onClick={() => setAddSubscriberDialog(true)}>
@@ -799,26 +850,38 @@ export function EmailListManager() {
               ) : (
                 <div className="divide-y">
                   {filteredSubscribers.map((subscriber) => (
-                    <div key={subscriber.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <div
+                      key={subscriber.id}
+                      className="p-4 flex items-center justify-between hover:bg-gray-50"
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium">{subscriber.name}</p>
-                          <Badge 
-                            variant={subscriber.status === "subscribed" ? "default" : "secondary"}
+                          <Badge
+                            variant={
+                              subscriber.status === "subscribed"
+                                ? "default"
+                                : "secondary"
+                            }
                             className="text-xs"
                           >
                             {subscriber.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">{subscriber.email}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {subscriber.email}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          Subscribed: {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                          Subscribed:{" "}
+                          {new Date(
+                            subscriber.subscribedAt
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className="text-red-600 hover:text-red-700"
                           >
@@ -827,15 +890,21 @@ export function EmailListManager() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Remove Subscriber
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to remove "{subscriber.email}" from this list? This action cannot be undone.
+                              Are you sure you want to remove 
+                              {subscriber.email} from this list? This action
+                              cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction
-                              onClick={() => handleRemoveSubscriber(subscriber.id)}
+                              onClick={() =>
+                                handleRemoveSubscriber(subscriber.id)
+                              }
                               className="bg-red-600 hover:bg-red-700"
                             >
                               Remove Subscriber
@@ -861,21 +930,35 @@ export function EmailListManager() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-green-600">
-                      {selectedList.subscribers.filter(s => s.status === "subscribed").length}
+                      {
+                        selectedList.subscribers.filter(
+                          (s) => s.status === "subscribed"
+                        ).length
+                      }
                     </p>
-                    <p className="text-sm font-medium text-green-800">Subscribed</p>
+                    <p className="text-sm font-medium text-green-800">
+                      Subscribed
+                    </p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-orange-600">
-                      {selectedList.subscribers.filter(s => s.status === "unsubscribed").length}
+                      {
+                        selectedList.subscribers.filter(
+                          (s) => s.status === "unsubscribed"
+                        ).length
+                      }
                     </p>
-                    <p className="text-sm font-medium text-orange-800">Unsubscribed</p>
+                    <p className="text-sm font-medium text-orange-800">
+                      Unsubscribed
+                    </p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-purple-600">
                       {filteredSubscribers.length}
                     </p>
-                    <p className="text-sm font-medium text-purple-800">Filtered</p>
+                    <p className="text-sm font-medium text-purple-800">
+                      Filtered
+                    </p>
                   </div>
                 </div>
               </div>
@@ -918,9 +1001,12 @@ export function EmailListManager() {
                 }
                 placeholder="subscriber@example.com"
               />
-              {newSubscriberData.email && !isValidEmail(newSubscriberData.email) && (
-                <p className="text-sm text-red-600 mt-1">Please enter a valid email address</p>
-              )}
+              {newSubscriberData.email &&
+                !isValidEmail(newSubscriberData.email) && (
+                  <p className="text-sm text-red-600 mt-1">
+                    Please enter a valid email address
+                  </p>
+                )}
             </div>
             <div>
               <Label htmlFor="subscriberName">Name (optional)</Label>
@@ -937,10 +1023,13 @@ export function EmailListManager() {
               />
             </div>
             <div className="flex gap-2 pt-4">
-              <Button 
-                onClick={handleAddSubscriber} 
+              <Button
+                onClick={handleAddSubscriber}
                 className="flex-1"
-                disabled={!newSubscriberData.email.trim() || !isValidEmail(newSubscriberData.email)}
+                disabled={
+                  !newSubscriberData.email.trim() ||
+                  !isValidEmail(newSubscriberData.email)
+                }
               >
                 Add Subscriber
               </Button>
@@ -962,8 +1051,8 @@ export function EmailListManager() {
       <Card className="p-4 md:p-6">
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="h-auto p-4 flex flex-col items-center gap-2"
             onClick={() => {
               // Handle bulk import functionality
@@ -973,12 +1062,14 @@ export function EmailListManager() {
             <Upload className="h-6 w-6" />
             <div className="text-center">
               <p className="font-medium">Import Contacts</p>
-              <p className="text-xs text-muted-foreground">Upload CSV file with email addresses</p>
+              <p className="text-xs text-muted-foreground">
+                Upload CSV file with email addresses
+              </p>
             </div>
           </Button>
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             className="h-auto p-4 flex flex-col items-center gap-2"
             onClick={() => {
               // Handle export functionality
@@ -988,7 +1079,9 @@ export function EmailListManager() {
             <Download className="h-6 w-6" />
             <div className="text-center">
               <p className="font-medium">Export Lists</p>
-              <p className="text-xs text-muted-foreground">Download subscriber data as CSV</p>
+              <p className="text-xs text-muted-foreground">
+                Download subscriber data as CSV
+              </p>
             </div>
           </Button>
         </div>
@@ -1004,24 +1097,28 @@ export function EmailListManager() {
             </p>
             <p className="text-sm font-medium text-blue-800">Total Lists</p>
           </div>
-          
+
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-2xl font-bold text-green-600">
-              {emailLists.filter(l => l.status === "active").length}
+              {emailLists.filter((l) => l.status === "active").length}
             </p>
             <p className="text-sm font-medium text-green-800">Active Lists</p>
           </div>
-          
+
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">
-              {emailLists.reduce((total, list) => total + list.subscriberCount, 0).toLocaleString()}
+              {emailLists
+                .reduce((total, list) => total + list.subscriberCount, 0)
+                .toLocaleString()}
             </p>
-            <p className="text-sm font-medium text-purple-800">Total Subscribers</p>
+            <p className="text-sm font-medium text-purple-800">
+              Total Subscribers
+            </p>
           </div>
-          
+
           <div className="text-center p-4 bg-orange-50 rounded-lg">
             <p className="text-2xl font-bold text-orange-600">
-              {emailLists.filter(l => l.status === "paused").length}
+              {emailLists.filter((l) => l.status === "paused").length}
             </p>
             <p className="text-sm font-medium text-orange-800">Paused Lists</p>
           </div>
