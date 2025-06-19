@@ -1,12 +1,13 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -17,17 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-
-interface Event {
-  id: number;
-  title: string;
-  date: Date;
-  type: string;
-  duration?: number;
-  attendees?: number;
-  description: string;
-}
+import { Calendar, Clock, Users } from "lucide-react";
+import type { Event } from "@/types/calendar";
 
 interface EditEventDialogProps {
   open: boolean;
@@ -42,153 +34,225 @@ export function EditEventDialog({
   event,
   onUpdateEvent,
 }: EditEventDialogProps) {
-  const { toast } = useToast();
-  const [editedEvent, setEditedEvent] = useState({
+  const [formData, setFormData] = useState({
     title: "",
+    description: "",
     date: "",
     time: "",
-    type: "meeting",
-    duration: 60,
-    attendees: 1,
-    description: "",
+    type: "event" as "event" | "meeting",
+    duration: "",
+    attendees: "",
   });
 
   useEffect(() => {
     if (event) {
       const eventDate = new Date(event.date);
-      setEditedEvent({
+      setFormData({
         title: event.title,
-        date: eventDate.toISOString().split('T')[0],
+        description: event.description || "",
+        date: eventDate.toISOString().split("T")[0],
         time: eventDate.toTimeString().slice(0, 5),
-        type: event.type,
-        duration: event.duration || 60,
-        attendees: event.attendees || 1,
-        description: event.description,
+        type: event.type as "event" | "meeting",
+        duration: event.duration?.toString() || "",
+        attendees: event.attendees?.toString() || "",
       });
     }
   }, [event]);
 
-  const handleUpdateEvent = () => {
-    if (!editedEvent.title || !editedEvent.date || !editedEvent.time) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!event || !formData.title || !formData.date || !formData.time) {
       return;
     }
 
-    if (!event) return;
+    const eventDate = new Date(`${formData.date}T${formData.time}`);
 
-    const eventDate = new Date(`${editedEvent.date}T${editedEvent.time}`);
     const updatedEvent: Event = {
       ...event,
-      title: editedEvent.title,
+      title: formData.title,
+      description: formData.description,
       date: eventDate,
-      type: editedEvent.type,
-      duration: editedEvent.duration,
-      attendees: editedEvent.attendees,
-      description: editedEvent.description,
+      type: formData.type,
+      duration: formData.duration ? parseInt(formData.duration) : undefined,
+      attendees: formData.attendees ? parseInt(formData.attendees) : undefined,
     };
 
     onUpdateEvent(updatedEvent);
-    onOpenChange(false);
-
-    toast({
-      title: "Event Updated",
-      description: `${updatedEvent.title} has been updated successfully.`,
-    });
+    onOpenChange(false); // Changed from true to false to close the dialog
   };
 
   if (!event) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Event</DialogTitle>
-          <DialogDescription>
-            Update your meeting or event details
-          </DialogDescription>
+      <DialogContent className="w-full max-w-md sm:max-w-lg mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="text-lg sm:text-xl">Edit Event</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder="Event title"
-            value={editedEvent.title}
-            onChange={(e) =>
-              setEditedEvent({ ...editedEvent, title: e.target.value })
-            }
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="date"
-              value={editedEvent.date}
-              onChange={(e) =>
-                setEditedEvent({ ...editedEvent, date: e.target.value })
+
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          {/* Event Type */}
+          <div className="space-y-2">
+            <Label htmlFor="type" className="text-sm font-medium">
+              Event Type
+            </Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value: "event" | "meeting") =>
+                setFormData((prev) => ({ ...prev, type: value }))
               }
-            />
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="event">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Event
+                  </div>
+                </SelectItem>
+                <SelectItem value="meeting">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Meeting
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title" className="text-sm font-medium">
+              Title <span className="text-red-500">*</span>
+            </Label>
             <Input
-              type="time"
-              value={editedEvent.time}
+              id="title"
+              value={formData.title}
               onChange={(e) =>
-                setEditedEvent({ ...editedEvent, time: e.target.value })
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
               }
+              placeholder="Enter event title"
+              className="w-full"
             />
           </div>
-          <Select
-            value={editedEvent.type}
-            onValueChange={(value) =>
-              setEditedEvent({ ...editedEvent, type: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Event type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="meeting">Meeting</SelectItem>
-              <SelectItem value="event">Event</SelectItem>
-              <SelectItem value="call">Call</SelectItem>
-              <SelectItem value="presentation">Presentation</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
-              placeholder="Duration (min)"
-              value={editedEvent.duration}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-sm font-medium">
+              Description
+            </Label>
+            <Textarea
+              id="description"
+              value={formData.description}
               onChange={(e) =>
-                setEditedEvent({
-                  ...editedEvent,
-                  duration: parseInt(e.target.value) || 60,
-                })
+                setFormData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
               }
-            />
-            <Input
-              type="number"
-              placeholder="Attendees"
-              value={editedEvent.attendees}
-              onChange={(e) =>
-                setEditedEvent({
-                  ...editedEvent,
-                  attendees: parseInt(e.target.value) || 1,
-                })
-              }
+              placeholder="Enter event description"
+              rows={3}
+              className="w-full resize-none"
             />
           </div>
-          <Textarea
-            placeholder="Event description"
-            value={editedEvent.description}
-            onChange={(e) =>
-              setEditedEvent({ ...editedEvent, description: e.target.value })
-            }
-          />
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateEvent}>Update Event</Button>
-        </DialogFooter>
+
+          {/* Date and Time */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="date" className="text-sm font-medium">
+                Date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, date: e.target.value }))
+                }
+                className="w-full"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time" className="text-sm font-medium">
+                Time <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="time"
+                type="time"
+                value={formData.time}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, time: e.target.value }))
+                }
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Duration and Attendees */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="duration" className="text-sm font-medium">
+                Duration (minutes)
+              </Label>
+              <Input
+                id="duration"
+                type="number"
+                value={formData.duration}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, duration: e.target.value }))
+                }
+                placeholder="60"
+                min="1"
+                className="w-full"
+              />
+            </div>
+
+            {formData.type === "meeting" && (
+              <div className="space-y-2">
+                <Label htmlFor="attendees" className="text-sm font-medium">
+                  Attendees
+                </Label>
+                <Input
+                  id="attendees"
+                  type="number"
+                  value={formData.attendees}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      attendees: e.target.value,
+                    }))
+                  }
+                  placeholder="5"
+                  min="1"
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!formData.title || !formData.date || !formData.time}
+              className="w-full sm:w-auto sm:flex-1 order-1 sm:order-2"
+            >
+              Update Event
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -2,7 +2,7 @@ export interface Event {
   id: number;
   title: string;
   date: Date;
-  type: string;
+  type: "event" | "meeting";
   duration?: number;
   attendees?: number;
   description: string;
@@ -20,16 +20,6 @@ export interface ScheduledPost {
 }
 
 export interface NewEvent {
-  title: string;
-  date: string;
-  time: string;
-  type: string;
-  duration: number;
-  attendees: number;
-  description: string;
-}
-
-export interface NewPost {
   title: string;
   content: string;
   scheduledDate: string;
