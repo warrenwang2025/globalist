@@ -27,10 +27,10 @@ export function AccountSettings() {
 
   return (
     <div className="space-y-6">
-      {/* Profile Settings */}
+      {/* Account Settings */}
       <Card className="p-4 md:p-6">
         <h2 className="text-lg md:text-xl font-semibold mb-6">
-          Profile Settings
+          Account Settings
         </h2>
 
         <div className="space-y-6">

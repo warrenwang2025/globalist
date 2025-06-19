@@ -254,7 +254,7 @@ export function Sidebar() {
                   onClick={handleProfileNavigation}
                 >
                   <UserCircle className="h-5 w-5 mr-3" />
-                  Profile Settings
+                  Account Settings
                 </Button>
 
                 <Button
