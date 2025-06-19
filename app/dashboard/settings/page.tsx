@@ -1,117 +1,67 @@
 "use client"
 
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { NotificationSettings } from '@/components/settings/NotificationSettings'
+import { PlatformIntegrations } from '@/components/settings/PlatformIntegrations'
+import { EmailListManager } from '@/components/settings/EmailListManager'
+import { PrivacySettings } from '@/components/settings/PrivacySettings'
+import { 
+  Bell, 
+  Link, 
+  Mail, 
+  Shield,
+  Settings as SettingsIcon 
+} from 'lucide-react'
 
 export default function SettingsPage() {
   return (
     <div className="p-4 md:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8">Settings</h1>
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-blue-100 rounded-full">
+            <SettingsIcon className="h-6 w-6 text-blue-600" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold">Settings</h1>
+        </div>
+        <p className="text-muted-foreground">
+          Manage your account preferences and configurations
+        </p>
+      </div>
 
       <Tabs defaultValue="notifications" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto p-1">
+          <TabsTrigger value="notifications" className="flex items-center gap-2 py-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-2 py-2">
+            <Link className="h-4 w-4" />
+            <span className="hidden sm:inline">Integrations</span>
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2 py-2">
+            <Mail className="h-4 w-4" />
+            <span className="hidden sm:inline">Email</span>
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="flex items-center gap-2 py-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Privacy</span>
+          </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="notifications">
-          <Card className="p-4 md:p-6">
-            <h2 className="text-lg md:text-xl font-semibold mb-6">Notification Preferences</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email updates about your activity
-                  </p>
-                </div>
-                <Switch />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive push notifications about your activity
-                  </p>
-                </div>
-                <Switch />
-              </div>
-            </div>
-          </Card>
+        <TabsContent value="notifications" className="space-y-6">
+          <NotificationSettings />
         </TabsContent>
 
-        <TabsContent value="integrations">
-          <Card className="p-4 md:p-6">
-            <h2 className="text-lg md:text-xl font-semibold mb-6">Connected Accounts</h2>
-            
-            <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>X (Twitter)</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your X account
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
+        <TabsContent value="integrations" className="space-y-6">
+          <PlatformIntegrations />
+        </TabsContent>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>LinkedIn</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your LinkedIn profile
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
+        <TabsContent value="email" className="space-y-6">
+          <EmailListManager />
+        </TabsContent>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>Instagram</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your Instagram account
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>TikTok</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your TikTok account
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>YouTube</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your YouTube account
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label>Personal Website</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Connect your Personal WordPress Website
-                  </p>
-                </div>
-                <Button variant="outline" className="w-full sm:w-auto">Connect</Button>
-              </div>
-            </div>
-          </Card>
+        <TabsContent value="privacy" className="space-y-6">
+          <PrivacySettings />
         </TabsContent>
       </Tabs>
     </div>
