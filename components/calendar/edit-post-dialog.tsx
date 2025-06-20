@@ -123,7 +123,7 @@ export function EditPostDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-md sm:max-w-2xl mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] max-w-md sm:max-w-2xl mx-auto px-4 sm:px-6 py-6 rounded-xl shadow-lg overflow-y-auto max-h-[90vh]">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-lg sm:text-xl">
             Edit Scheduled Post
