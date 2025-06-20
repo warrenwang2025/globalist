@@ -17,7 +17,6 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
       const newFiles = [...files, ...acceptedFiles];
       setFiles(newFiles);
 
-      // Call the callback if provided
       if (onMediaUpload) {
         onMediaUpload(newFiles);
       }
@@ -25,13 +24,11 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
     [files, onMediaUpload]
   );
 
-  // NEW: Function to remove a specific file
   const removeFile = useCallback(
     (indexToRemove: number) => {
       const updatedFiles = files.filter((_, index) => index !== indexToRemove);
       setFiles(updatedFiles);
 
-      // Call the callback with updated files
       if (onMediaUpload) {
         onMediaUpload(updatedFiles);
       }
@@ -39,7 +36,6 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
     [files, onMediaUpload]
   );
 
-  // NEW: Function to clear all files
   const clearAllFiles = useCallback(() => {
     setFiles([]);
     if (onMediaUpload) {
@@ -56,30 +52,6 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
     multiple: true,
   });
 
-  const handleImageUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const { url } = await response.json();
-        return url;
-      } else {
-        console.error("Image upload failed");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      return null;
-    }
-  };
-
-  // NEW: Function to format file size
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -95,7 +67,7 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
       {/* Upload Area */}
       <div
         {...getRootProps()}
-        className={`mt-2 border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`mt-2 border-2 border-dashed rounded-lg p-4 md:p-6 text-center cursor-pointer transition-colors ${
           isDragActive
             ? "border-blue-400 bg-blue-50"
             : "border-gray-300 hover:border-gray-400"
@@ -106,7 +78,8 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
           <div className="flex gap-2">
             <Button variant="outline" size="sm" type="button">
               <ImageIcon className="mr-2 h-4 w-4" />
-              Upload Media
+              <span className="hidden sm:inline">Upload Media</span>
+              <span className="sm:hidden">Upload</span>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -120,7 +93,7 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
         </div>
       </div>
 
-      {/* NEW: Uploaded Files Display */}
+      {/* Uploaded Files Display */}
       {files.length > 0 && (
         <div className="mt-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -134,7 +107,8 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <X className="mr-1 h-3 w-3" />
-              Clear All
+              <span className="hidden sm:inline">Clear All</span>
+              <span className="sm:hidden">Clear</span>
             </Button>
           </div>
           
@@ -175,7 +149,6 @@ export function UploadMedia({ onMediaUpload }: UploadMediaProps) {
         </div>
       )}
 
-      {/* MODIFIED: File count indicator - now only shows if no detailed view */}
       {files.length > 0 && (
         <div className="mt-2">
           <p className="text-sm text-muted-foreground">

@@ -205,8 +205,8 @@ export function SignUpForm() {
         selectedCountryName: selectedCountryData?.country,
       });
 
-      // Redirect to dashboard on success
-      router.push("/dashboard");
+      // Redirect to onboarding on success
+      router.push("/onboarding");
     } catch (error) {
       setErrors({ general: "Failed to create account. Please try again." });
     } finally {

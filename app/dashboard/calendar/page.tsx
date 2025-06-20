@@ -16,6 +16,7 @@ import {
 import { CalendarHeader } from "@/components/calendar/calendar-header";
 import { CalendarView } from "@/components/calendar/calendar-view";
 import { CreateEventDialog } from "@/components/calendar/create-event-dialog";
+import { CreatePostDialog } from "@/components/calendar/create-post-dialog";
 import { EditEventDialog } from "@/components/calendar/edit-event-dialog";
 import { EditPostDialog } from "@/components/calendar/edit-post-dialog";
 import { UpcomingItems } from "@/components/calendar/upcoming-items";
@@ -31,7 +32,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-// Import types
 import type { Event, ScheduledPost } from "@/types/calendar";
 
 export default function SchedulePage() {
@@ -42,13 +42,13 @@ export default function SchedulePage() {
     scheduledPosts,
     selectedItems,
     setSelectedItems,
+
     handleCreateEvent,
     handleUpdateEvent,
     handleUpdatePost,
     handleBulkDelete,
     handleExportSchedule,
   } = useCalendarData();
-
   const {
     searchQuery,
     setSearchQuery,
@@ -59,6 +59,7 @@ export default function SchedulePage() {
   } = useCalendarFilters(events, scheduledPosts);
 
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
   const [isEditPostDialogOpen, setIsEditPostDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -74,13 +75,18 @@ export default function SchedulePage() {
     setIsEditPostDialogOpen(true);
   };
 
+  // Navigate to distribution page when scheduling posts
+  const handleSchedulePost = () => {
+    router.push("/dashboard/distribution");
+  };
+
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
       <CalendarHeader
         onExportSchedule={handleExportSchedule}
         onOpenEventDialog={() => setIsEventDialogOpen(true)}
-        onOpenPostDialog={() => router.push("/dashboard/distribution")}
+        onOpenPostDialog={handleSchedulePost}
       />
 
       {/* Filters and Search */}
@@ -127,17 +133,22 @@ export default function SchedulePage() {
       </Card>
 
       {/* Calendar Views */}
-      <CalendarView events={filteredEvents} scheduledPosts={filteredPosts} />
+      <CalendarView
+        events={filteredEvents as import("@/types/calendar").Event[]}
+        scheduledPosts={filteredPosts}
+      />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Events</CardTitle>
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredEvents.length}</div>
+            <div className="text-xl md:text-2xl font-bold">
+              {filteredEvents.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               {events.filter((e) => e.date > new Date()).length} upcoming
             </p>
@@ -152,7 +163,9 @@ export default function SchedulePage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredPosts.length}</div>
+            <div className="text-xl md:text-2xl font-bold">
+              {filteredPosts.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               {
                 scheduledPosts.filter((p) => p.scheduledDate > new Date())
@@ -169,7 +182,7 @@ export default function SchedulePage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {(() => {
                 const now = new Date();
                 const weekStart = new Date(
@@ -200,7 +213,7 @@ export default function SchedulePage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {filteredEvents.filter((e) => e.type === "meeting").length}
             </div>
             <p className="text-xs text-muted-foreground">total meetings</p>
@@ -210,7 +223,7 @@ export default function SchedulePage() {
 
       {/* Upcoming Items */}
       <UpcomingItems
-        events={filteredEvents}
+        events={filteredEvents as import("@/types/calendar").Event[]}
         scheduledPosts={filteredPosts}
         onEditEvent={handleEditEvent}
         onEditPost={handleEditPost}
@@ -222,7 +235,6 @@ export default function SchedulePage() {
         onOpenChange={setIsEventDialogOpen}
         onCreateEvent={handleCreateEvent}
       />
-
       <EditEventDialog
         open={isEditEventDialogOpen}
         onOpenChange={setIsEditEventDialogOpen}

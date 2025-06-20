@@ -42,7 +42,7 @@ export default function ProfilePage() {
     avatar: "/placeholder-avatar.jpg",
   });
 
-  // Avatar handling functions (keep all existing avatar functions)
+  // Avatar handling functions
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -217,29 +217,30 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="p-8 mx-[5%]">
+    <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold">Profile</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             Manage your account settings and preferences
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full sm:w-auto">
           {isEditing ? (
             <>
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" onClick={handleCancel} className="flex-1 sm:flex-none">
                 <X className="mr-2 h-4 w-4" />
-                Cancel
+                <span className="hidden sm:inline">Cancel</span>
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} className="flex-1 sm:flex-none">
                 <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                <span className="hidden sm:inline">Save Changes</span>
+                <span className="sm:hidden">Save</span>
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)}>
+            <Button onClick={() => setIsEditing(true)} className="w-full sm:w-auto">
               <Edit3 className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>
@@ -247,19 +248,19 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-[1fr_2fr]">
+      <div className="grid gap-6 md:gap-8 grid-cols-1 lg:grid-cols-[1fr_2fr]">
         {/* Left Column - Profile Summary */}
         <div className="space-y-6">
           {/* Profile Picture & Basic Info */}
-          <Card className="p-6">
+          <Card className="p-4 md:p-6">
             <div className="text-center">
               <div className="relative inline-block mb-4">
-                <Avatar className="w-24 h-24">
+                <Avatar className="w-20 h-20 md:w-24 md:h-24">
                   <AvatarImage
                     src={getAvatarUrl()}
                     alt={`${profileData.name}'s avatar`}
                   />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="text-xl md:text-2xl">
                     {getUserInitials()}
                   </AvatarFallback>
                 </Avatar>
@@ -332,8 +333,8 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-              <h2 className="text-xl font-semibold mb-1">{profileData.name}</h2>
-              <p className="text-muted-foreground mb-3">{profileData.email}</p>
+              <h2 className="text-lg md:text-xl font-semibold mb-1">{profileData.name}</h2>
+              <p className="text-muted-foreground mb-3 text-sm md:text-base">{profileData.email}</p>
 
               <div className="text-xs text-muted-foreground bg-gray-50 p-2 rounded">
                 <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
@@ -344,7 +345,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Quick Stats */}
-          <Card className="p-6">
+          <Card className="p-4 md:p-6">
             <h3 className="font-semibold mb-4">Account Stats</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
@@ -363,12 +364,12 @@ export default function ProfilePage() {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="p-6 border-red-200">
+          <Card className="p-4 md:p-6 border-red-200">
             <h3 className="text-lg font-semibold mb-4 text-red-600">
               Danger Zone
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-red-200 rounded-lg bg-red-50 gap-4">
                 <div>
                   <p className="font-medium text-red-800">Delete Account</p>
                   <p className="text-sm text-red-600">
@@ -378,7 +379,7 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="border-red-300 text-red-600 hover:bg-red-100"
+                  className="border-red-300 text-red-600 hover:bg-red-100 w-full sm:w-auto"
                   onClick={() => {
                     const confirmed = window.confirm(
                       "Are you sure you want to delete your account? This action cannot be undone."
@@ -402,9 +403,9 @@ export default function ProfilePage() {
 
         {/* Right Column - Detailed Information */}
         <div className="space-y-6">
-          <Card className="p-6">
+          <Card className="p-4 md:p-6">
             <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               <div>
                 <Label htmlFor="name">Full Name</Label>
                 {isEditing ? (
@@ -494,53 +495,6 @@ export default function ProfilePage() {
               )}
             </div>
           </Card>
-
-          {/* Professional Information
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">
-              Professional Information
-            </h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <Label htmlFor="company">Company</Label>
-                {isEditing ? (
-                  <Input
-                    id="company"
-                    value={profileData.company}
-                    onChange={(e) =>
-                      handleInputChange("company", e.target.value)
-                    }
-                    className="mt-1"
-                  />
-                ) : (
-                  <p className="mt-1 p-2 text-sm">{profileData.company}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="website">Website</Label>
-                {isEditing ? (
-                  <Input
-                    id="website"
-                    value={profileData.website}
-                    onChange={(e) =>
-                      handleInputChange("website", e.target.value)
-                    }
-                    className="mt-1"
-                  />
-                ) : (
-                  <a
-                    href={profileData.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 p-2 text-sm text-primary hover:underline block"
-                  >
-                    {profileData.website}
-                  </a>
-                )}
-              </div>
-            </div>
-          </Card> */}
 
           {/* Account Security Component */}
           <AccountSecurity />
