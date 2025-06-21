@@ -38,7 +38,7 @@ export function CalendarHeader({
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-2 justify-end w-full">
             <Button
               onClick={onOpenEventDialog}
               className="w-full sm:w-auto"
