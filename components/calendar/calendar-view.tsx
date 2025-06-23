@@ -190,9 +190,10 @@ export function CalendarView({
     <>
       <Card className="w-full">
         <CardHeader className="pb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap w-full">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -200,9 +201,9 @@ export function CalendarView({
                     viewMode === "week" ? goToPreviousWeek : goToPreviousMonth
                   }
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
-                <CardTitle className="text-lg sm:text-xl">
+                <CardTitle className="text-sm sm:text-base md:text-lg font-semibold px-1 whitespace-nowrap">
                   {monthNames[currentMonth]} {currentYear}
                 </CardTitle>
                 <Button
@@ -210,13 +211,14 @@ export function CalendarView({
                   size="sm"
                   onClick={viewMode === "week" ? goToNextWeek : goToNextMonth}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 " />
                 </Button>
               </div>
             </div>
 
             {/* View Mode Selector */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+
               <Button
                 variant={viewMode === "month" ? "default" : "outline"}
                 size="sm"
