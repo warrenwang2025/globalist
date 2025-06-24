@@ -545,7 +545,7 @@ export function EmailListManager() {
                 key={list.id}
                 className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 w-full">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold text-lg">{list.name}</h3>
@@ -589,7 +589,7 @@ export function EmailListManager() {
                     )}
                   </div>
 
-                  <div className="flex gap-2 ml-4">
+                  <div className="flex flex-wrap gap-1 ml-0 sm:ml-4 w-full sm:w-auto justify-end">
                     <Button
                       variant="outline"
                       size="sm"
@@ -662,7 +662,7 @@ export function EmailListManager() {
 
       {/* Edit List Dialog */}
       <Dialog open={editListDialog} onOpenChange={setEditListDialog}>
-        <DialogContent>
+          <DialogContent className="w-full max-w-sm sm:max-w-md mx-auto px-4 sm:px-6 py-6 rounded-xl shadow-lg overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Email List</DialogTitle>
           </DialogHeader>
@@ -735,7 +735,7 @@ export function EmailListManager() {
 
       {/* Subscribers Management Dialog */}
       <Dialog open={subscribersDialog} onOpenChange={setSubscribersDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh]">
+        <DialogContent className="w-full max-w-sm sm:max-w-md px-4 sm:px-6 py-6 rounded-xl shadow-lg overflow-y-auto max-h-[90vh] mx-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
