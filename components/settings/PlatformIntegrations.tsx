@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
-import { 
-  Twitter, 
-  Linkedin, 
-  Instagram, 
-  Youtube, 
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import {
+  Twitter,
+  Linkedin,
+  Instagram,
+  Youtube,
   Globe,
   CheckCircle,
-  AlertCircle 
-} from 'lucide-react'
-import { SiTiktok } from 'react-icons/si'
+  AlertCircle
+} from 'lucide-react';
+import { SiTiktok } from 'react-icons/si';
 
 interface PlatformConnection {
-  id: number
-  name: string
-  icon: React.ComponentType<{ className?: string }>
-  description: string
-  isConnected: boolean
-  username?: string
-  lastSync?: string
+  id: number;
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  isConnected: boolean;
+  username?: string;
+  lastSync?: string;
 }
 
 export function PlatformIntegrations() {
@@ -72,43 +72,65 @@ export function PlatformIntegrations() {
       description: "Connect your Personal WordPress Website",
       isConnected: false
     }
-  ])
+  ]);
 
   const handleConnect = (platformId: number) => {
-    setPlatforms(prev => prev.map(platform => 
-      platform.id === platformId 
-        ? { ...platform, isConnected: true, username: "@connected", lastSync: "Just now" }
-        : platform
-    ))
-  }
+    setPlatforms(prev =>
+      prev.map(platform =>
+        platform.id === platformId
+          ? {
+              ...platform,
+              isConnected: true,
+              username: "@connected",
+              lastSync: "Just now"
+            }
+          : platform
+      )
+    );
+  };
 
   const handleDisconnect = (platformId: number) => {
-    setPlatforms(prev => prev.map(platform => 
-      platform.id === platformId 
-        ? { ...platform, isConnected: false, username: undefined, lastSync: undefined }
-        : platform
-    ))
-  }
+    setPlatforms(prev =>
+      prev.map(platform =>
+        platform.id === platformId
+          ? {
+              ...platform,
+              isConnected: false,
+              username: undefined,
+              lastSync: undefined
+            }
+          : platform
+      )
+    );
+  };
 
   return (
-    <Card className="p-4 md:p-6">
-      <h2 className="text-lg md:text-xl font-semibold mb-6">Connected Accounts</h2>
-      
+    <Card className="p-4 md:p-6 overflow-x-hidden">
+      <h2 className="text-lg md:text-xl font-semibold mb-6">
+        Connected Accounts
+      </h2>
+
       <div className="space-y-4">
-        {platforms.map((platform) => {
-          const IconComponent = platform.icon
-          
+        {platforms.map(platform => {
+          const IconComponent = platform.icon;
+
           return (
-            <div key={platform.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg">
+            <div
+              key={platform.id}
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg"
+            >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 rounded-full">
                   <IconComponent className="h-5 w-5" />
                 </div>
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Label className="text-base">{platform.name}</Label>
                     {platform.isConnected ? (
-                      <Badge variant="default" className="bg-green-100 text-green-800">
+                      <Badge
+                        variant="default"
+                        className="bg-green-100 text-green-800"
+                      >
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Connected
                       </Badge>
@@ -129,11 +151,12 @@ export function PlatformIntegrations() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex flex-wrap justify-end gap-2 sm:flex-nowrap">
                 {platform.isConnected ? (
                   <>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleDisconnect(platform.id)}
                     >
@@ -144,8 +167,8 @@ export function PlatformIntegrations() {
                     </Button>
                   </>
                 ) : (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => handleConnect(platform.id)}
                   >
                     Connect
@@ -153,9 +176,9 @@ export function PlatformIntegrations() {
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </Card>
-  )
+  );
 }

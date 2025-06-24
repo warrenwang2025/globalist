@@ -1,7 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit } from "lucide-react";
+import { Edit, GitBranch } from "lucide-react";
 import { EditorCanvas } from "@/components/contentEditor/EditorCanvas";
 import { EditorActions } from "./EditorActions";
 import type { AnyBlock } from "@/types/editor";
@@ -34,7 +39,7 @@ export function ContentEditorTab({
   };
 
   return (
-    <>
+    <div className="relative z-0 space-y-6 w-full px-2 sm:px-4 md:px-6 max-w-full"> 
       {/* Post Title */}
       <Card>
         <CardHeader>
@@ -55,7 +60,7 @@ export function ContentEditorTab({
       </Card>
 
       {/* Content Editor */}
-      <Card>
+      <Card className="w-full overflow-hidden">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Edit className="h-5 w-5" />
@@ -81,6 +86,6 @@ export function ContentEditorTab({
         saveAIContent={saveAIContent}
         router={router}
       />
-    </>
+    </div>
   );
 }

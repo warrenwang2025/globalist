@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,10 @@ export function CalendarView({
     Event | ScheduledPost | null
   >(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  // Add theme detection
+  const { theme, resolvedTheme } = useTheme();
+  const isDark = theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
   // Get current month/year
   const currentMonth = currentDate.getMonth();
@@ -193,7 +198,6 @@ export function CalendarView({
           <div className="flex items-center justify-between gap-2 flex-wrap w-full">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1 sm:gap-2">
-
                 <Button
                   variant="outline"
                   size="sm"
@@ -218,7 +222,6 @@ export function CalendarView({
 
             {/* View Mode Selector */}
             <div className="flex items-center gap-1 sm:gap-2">
-
               <Button
                 variant={viewMode === "month" ? "default" : "outline"}
                 size="sm"
@@ -290,7 +293,13 @@ export function CalendarView({
                     key={index}
                     className={`
                       min-h-[60px] sm:min-h-[80px] lg:min-h-[100px] p-1 sm:p-2 border rounded-lg
-                      ${day ? "bg-white hover:bg-gray-50" : "bg-gray-50"}
+                      ${day 
+                        ? isDark 
+                          ? "bg-[#23272F] hover:bg-[#313846]" 
+                          : "bg-white hover:bg-gray-300"
+                        : isDark 
+                          ? "bg-[#1A1D23]" 
+                          : "bg-gray-100"}
                       ${
                         day && day.toDateString() === new Date().toDateString()
                           ? "ring-2 ring-blue-500"
@@ -313,8 +322,12 @@ export function CalendarView({
                                 text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 group
                                 ${
                                   "type" in item
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-green-100 text-green-800"
+                                    ? isDark 
+                                      ? "bg-blue-900 text-blue-200" 
+                                      : "bg-blue-100 text-blue-800"
+                                    : isDark 
+                                      ? "bg-green-900 text-green-200" 
+                                      : "bg-green-100 text-green-800"
                                 }
                               `}
                                 onClick={() => handleEditItem(item)}
