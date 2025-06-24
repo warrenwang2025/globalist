@@ -9,77 +9,67 @@ import {
   YAxis,
 } from "recharts";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const data = [
-  {
-    name: "Jan",
-    total: 2400,
-  },
-  {
-    name: "Feb",
-    total: 1398,
-  },
-  {
-    name: "Mar",
-    total: 9800,
-  },
-  {
-    name: "Apr",
-    total: 3908,
-  },
-  {
-    name: "May",
-    total: 4800,
-  },
-  {
-    name: "Jun",
-    total: 3800,
-  },
-  {
-    name: "Jul",
-    total: 1300,
-  },
-  {
-    name: "Aug",
-    total: 1800,
-  },
-  {
-    name: "Sep",
-    total: 2300,
-  },
-  {
-    name: "Oct",
-    total: 4300,
-  },
-  {
-    name: "Nov",
-    total: 3600,
-  },
-  {
-    name: "Dec",
-    total: 4300,
-  },
+  { name: "Jan", total: 2400 },
+  { name: "Feb", total: 1398 },
+  { name: "Mar", total: 9800 },
+  { name: "Apr", total: 3908 },
+  { name: "May", total: 4800 },
+  { name: "Jun", total: 3800 },
+  { name: "Jul", total: 1300 },
+  { name: "Aug", total: 1800 },
+  { name: "Sep", total: 2300 },
+  { name: "Oct", total: 4300 },
+  { name: "Nov", total: 3600 },
+  { name: "Dec", total: 4300 },
 ];
 
 export function Overview() {
   const { theme, resolvedTheme } = useTheme();
+  const [screenWidth, setScreenWidth] = useState(1200);
 
-  // Determine if we're in dark mode
+  useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    if (typeof window !== "undefined") {
+      setScreenWidth(window.innerWidth);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
+
   const isDark =
     theme === "dark" || (theme === "system" && resolvedTheme === "dark");
 
-  // Set text colors based on theme
   const textColor = isDark ? "#000000" : "#ffffff";
   const graphcolor = isDark ? "#ffffff" : "#000000";
+
+  // Responsive settings for X-axis labels
+  const getXAxisSettings = () => {
+  if (screenWidth <= 480) {
+    return { fontSize: 10, interval: 1 }; 
+  } else if (screenWidth <= 1024) {
+    return { fontSize: 11, interval: 1 }; 
+  } else {
+    return { fontSize: 12, interval: 0 }; 
+  }
+  };
+
+  const { fontSize, interval } = getXAxisSettings();
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <LineChart data={data}>
+      <LineChart data={data} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
+
         <XAxis
           dataKey="name"
           stroke={graphcolor}
-          fontSize={12}
+          fontSize={fontSize}
+          interval={interval}
           tickLine={false}
           axisLine={false}
+          tick={{ fill: graphcolor }}
         />
         <YAxis
           stroke={graphcolor}
@@ -87,6 +77,7 @@ export function Overview() {
           tickLine={false}
           axisLine={false}
           tickFormatter={(value) => `${value}`}
+          tick={{ fill: graphcolor }}
         />
         <Tooltip
           contentStyle={{
