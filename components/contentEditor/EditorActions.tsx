@@ -27,9 +27,7 @@ export function EditorActions({
       .map((block) => {
         switch (block.type) {
           case "text":
-            return (block.content as any).text || "";
           case "heading":
-            return (block.content as any).text || "";
           case "quote":
             return (block.content as any).text || "";
           case "list":
@@ -132,36 +130,33 @@ export function EditorActions({
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="flex flex-col sm:flex-row gap-3 justify-between">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={isSaving}
-              className="flex-1 sm:flex-none"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Saving..." : "Save Draft"}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 sm:flex-none"
-              onClick={handlePreview}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </Button>
-          </div>
+        <div className="flex flex-wrap justify-center sm:justify-between gap-5 w-full">
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSaving}
+            className="flex-1 min-w-[140px] sm:min-w-[160px] md:min-w-[180px] max-w-full"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : "Save Draft"}
+          </Button>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={handleSendToDistribution}
-              className="flex-1 sm:flex-none"
-            >
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Send to Distribution
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handlePreview}
+            className="flex-1 min-w-[140px] sm:min-w-[160px] md:min-w-[180px] max-w-full"
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            Preview
+          </Button>
+
+          <Button
+            onClick={handleSendToDistribution}
+            className="flex-1 min-w-[140px] sm:min-w-[160px] md:min-w-[180px] max-w-full"
+          >
+            <ArrowRight className="mr-2 h-4 w-4" />
+            Send to Distribution
+          </Button>
         </div>
       </CardContent>
     </Card>
