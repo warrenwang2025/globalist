@@ -1,5 +1,4 @@
 "use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -144,8 +143,8 @@ export function TopPosts() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center justify-between " >
+          <CardTitle className="flex items-center gap-2 ">
             <TrendingUp className="h-5 w-5" />
             Top Performing Posts
           </CardTitle>
@@ -160,7 +159,7 @@ export function TopPosts() {
           {topPosts.map((post, index) => (
             <div
               key={post.id}
-              className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors w-full"
             >
               {/* Rank */}
               <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
@@ -184,9 +183,10 @@ export function TopPosts() {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-2">
+
                   <div>
-                    <h4 className="font-medium text-sm truncate">
+                    <h4 className="font-medium text-sm break-words max-w-full">
                       {post.title}
                     </h4>
                     <div className="flex items-center gap-2 mt-1">
@@ -203,7 +203,7 @@ export function TopPosts() {
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 text-xs break-words">
                   <div className="flex items-center gap-1">
                     <Eye className="h-3 w-3 text-gray-500" />
                     <span className="font-medium">
@@ -247,7 +247,7 @@ export function TopPosts() {
               <CardTitle>Engagement Rate by Content Type</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-4 border rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">

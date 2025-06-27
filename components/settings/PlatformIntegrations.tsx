@@ -117,7 +117,7 @@ export function PlatformIntegrations() {
           return (
             <div
               key={platform.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg"
+               className="flex flex-row items-start justify-between gap-4 p-4 border rounded-lg"
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 rounded-full">
