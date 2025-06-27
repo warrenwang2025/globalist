@@ -54,7 +54,7 @@ export function SignInForm() {
       
       // Here you would typically make an API call to authenticate
       console.log("Sign in data:", formData)
-      
+
       // Redirect to dashboard on success
       router.push("/dashboard")
     } catch (error) {
