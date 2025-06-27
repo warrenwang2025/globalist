@@ -48,9 +48,9 @@ const contentTypeData = [
 
 export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 sm:space-y-4 md:space-y-6">
       {/* Performance Overview Chart */}
-      <Card>
+      <Card className="sm:p-4">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Performance Overview</CardTitle>
@@ -58,7 +58,11 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer
+            width="100%"
+            height={300}
+            className="sm:h-64 md:h-72"
+          >
             <LineChart data={engagementData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
@@ -90,15 +94,19 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Platform Distribution */}
-        <Card>
+        <Card className="sm:p-3 md:p-4">
           <CardHeader>
             <CardTitle>Platform Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer
+                width="100%"
+                height={250}
+                className="sm:h-48 md:h-56"
+              >
                 <PieChart>
                   <Pie
                     data={platformData}
@@ -121,14 +129,14 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
               {platformData.map((platform, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between text-sm"
+                  className="flex items-center justify-between text-sm sm:text-xs md:text-sm"
                 >
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: platform.color }}
                     />
-                    <span>{platform.name}</span>
+                    <span className="truncate">{platform.name}</span>
                   </div>
                   <span className="font-medium">{platform.value}%</span>
                 </div>
@@ -138,12 +146,16 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
         </Card>
 
         {/* Content Type Performance */}
-        <Card>
+        <Card className="sm:p-3 md:p-4">
           <CardHeader>
             <CardTitle>Content Type Performance</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer
+              width="100%"
+              height={250}
+              className="sm:h-48 md:h-56"
+            >
               <BarChart data={contentTypeData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="type" />
@@ -160,9 +172,9 @@ export function AnalyticsOverview({ timeRange }: AnalyticsOverviewProps) {
               {contentTypeData.map((content, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between text-sm"
+                  className="flex items-center justify-between text-sm sm:text-xs md:text-sm"
                 >
-                  <span>{content.type}</span>
+                  <span className="truncate">{content.type}</span>
                   <div className="flex gap-4">
                     <span className="text-muted-foreground">
                       {content.posts} posts

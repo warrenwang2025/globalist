@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+    <div className="rounded-lg p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
 
       {/* Main Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3 grid-rows-2 md:grid-rows-1 md:grid-cols-6 border-b p-1 gap-y-3 md:gap-y-0">
           <TabsTrigger value="overview" className="text-xs md:text-sm">
             Overview
           </TabsTrigger>
