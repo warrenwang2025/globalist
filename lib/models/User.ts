@@ -36,8 +36,9 @@ export interface IUser extends Document {
   sessions: ISession[];
 
   // --- Other Important Fields ---
-  role: 'user' | 'admin';
+  userType: 'free' | 'plus' | 'pro'; // For future subscription plans
   isActive: boolean; // For soft-deleting an account
+  planExpiresAt?: Date; // For subscription expiration
   createdAt: Date; // Handled by timestamps
   updatedAt: Date; // Handled by timestamps
 }
@@ -145,16 +146,19 @@ const UserSchema: Schema<IUser> = new Schema(
     sessions: [SessionSchema],
 
     // --- Other Important Fields ---
-    role: {
+    userType: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ['free', 'plus', 'pro'],
+      default: 'free',
     },
     isActive: {
       type: Boolean,
       default: true,
       select: false,
     },
+    planExpiresAt: {
+      type: Date
+    }
   },
   {
     // Automatically adds `createdAt` and `updatedAt` fields
