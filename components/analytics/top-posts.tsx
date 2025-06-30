@@ -183,8 +183,7 @@ export function TopPosts() {
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-2">
-
+                <div className="flex flex-col items-start justify-between gap-2 mb-2">
                   <div>
                     <h4 className="font-medium text-sm break-words max-w-full">
                       {post.title}
@@ -203,32 +202,32 @@ export function TopPosts() {
                 </div>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 text-xs break-words">
-                  <div className="flex items-center gap-1">
+                <div className="w-full flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                  <div className="flex items-center gap-1 min-w-[80px]">
                     <Eye className="h-3 w-3 text-gray-500" />
                     <span className="font-medium">
                       {formatNumber(post.metrics.views)}
                     </span>
                     <span className="text-muted-foreground">views</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 min-w-[80px]">
                     <Heart className="h-3 w-3 text-red-500" />
                     <span className="font-medium">
                       {formatNumber(post.metrics.likes)}
                     </span>
                     <span className="text-muted-foreground">likes</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 min-w-[80px]">
                     <MessageCircle className="h-3 w-3 text-blue-500" />
                     <span className="font-medium">{post.metrics.comments}</span>
                     <span className="text-muted-foreground">comments</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 min-w-[80px]">
                     <Share2 className="h-3 w-3 text-green-500" />
                     <span className="font-medium">{post.metrics.shares}</span>
                     <span className="text-muted-foreground">shares</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 min-w-[80px]">
                     <TrendingUp className="h-3 w-3 text-purple-500" />
                     <span className="font-medium">
                       {post.metrics.engagement}%
