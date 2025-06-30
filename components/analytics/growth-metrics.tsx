@@ -129,7 +129,7 @@ export function GrowthMetrics({ timeRange }: GrowthMetricsProps) {
   return (
     <div className="space-y-6">
       {/* Growth KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {growthMetrics.map((metric, index) => (
           <Card key={index}>
             <CardHeader className="pb-2">
@@ -206,7 +206,7 @@ export function GrowthMetrics({ timeRange }: GrowthMetricsProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Platform Growth Comparison */}
         <Card>
           <CardHeader>
@@ -322,7 +322,7 @@ export function GrowthMetrics({ timeRange }: GrowthMetricsProps) {
           <CardTitle>Growth Projections</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="text-center p-4 border rounded-lg">
               <div className="text-2xl font-bold text-blue-600 mb-2">18,500</div>
               <p className="text-sm text-muted-foreground mb-1">Projected Followers</p>

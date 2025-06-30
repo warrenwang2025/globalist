@@ -103,7 +103,7 @@ export function EngagementTrends({ timeRange }: EngagementTrendsProps) {
   return (
     <div className="space-y-6">
       {/* Engagement Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {engagementMetrics.map((metric, index) => {
           const IconComponent = metric.icon;
           const isPositive = metric.change > 0;
@@ -180,7 +180,7 @@ export function EngagementTrends({ timeRange }: EngagementTrendsProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         {/* Hourly Engagement Pattern */}
         <Card>
           <CardHeader>
