@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import axios from "axios";
 import {
   Select,
   SelectContent,
@@ -180,39 +181,44 @@ export function SignUpForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-    if (!validateForm()) return;
+  setIsLoading(true);
+  setErrors({}); // Clear previous errors
 
-    setIsLoading(true);
+  try {
+    // Make a POST request to your custom registration API route using Axios
+    console.log("Submitting registration data:", formData);
+    const response = await axios.post('/api/auth/register', formData);
+    
+    // With Axios, a successful response (status 2xx) will proceed here.
+    // An error response (status 4xx, 5xx) will automatically be thrown and caught in the catch block.
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+    console.log("Registration successful:", response.data);
+    
+    // On success, redirect the user to the sign-in page.
+    router.push('/signin?registered=true');
 
-      // Get the selected country's code
-      const selectedCountryData = countryCodes.find(
-        (country) => country.id === formData.selectedCountry
-      );
-      const countryCode = selectedCountryData?.code || "";
-      const fullPhoneNumber = countryCode + formData.phoneNumber;
-
-      console.log("Sign up data:", {
-        ...formData,
-        countryCode,
-        fullPhoneNumber,
-        selectedCountryName: selectedCountryData?.country,
-      });
-
-      // Redirect to onboarding on success
-      router.push("/onboarding");
-    } catch (error) {
-      setErrors({ general: "Failed to create account. Please try again." });
-    } finally {
-      setIsLoading(false);
+  } catch (error) {
+    // This block now catches both network errors and API error responses (like 409 Conflict).
+    if (axios.isAxiosError(error) && error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx.
+      // The `error.response.data.message` comes from your API's NextResponse.
+      setErrors({ general: error.response.data.message || "An error occurred." });
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      // or it was a generic network error.
+      console.error("Registration error:", error);
+      setErrors({ general: "Could not connect to the server. Please try again." });
     }
-  };
+  } finally {
+    // Ensure the loading state is turned off, whether it succeeded or failed
+    setIsLoading(false);
+  }
+};
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

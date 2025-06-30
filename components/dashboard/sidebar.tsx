@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { signOut , useSession} from "next-auth/react";
 import {
   Calendar,
   Settings,
@@ -68,12 +69,13 @@ const routes = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState({
-    name: "Loading...",
-    email: "",
-    avatar: "/avatars/default-avatar.jpg",
-    isPremium: false, // Add premium status
-  });
+  const { data: session } = useSession();
+  const user = {
+    name: session?.user.name,
+    email: session?.user.email,
+    avatar: session?.user.image,
+    isPremium: session?.user.userType !== "free", // Assuming userType is set
+  };
   const [imageError, setImageError] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -81,29 +83,30 @@ export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Simulate fetching user data - replace with your actual auth logic
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = {
-          name: "John Doe",
-          email: "john.doe@globalistmedia.com",
-          avatar: "/avatars/user-avatar.jpg",
-          isPremium: false, // Set this based on your user's subscription status
-        };
-        setUser(userData);
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     console.log("session", session);
+  //     try {
+  //       const userData = {
+  //         name: session?.user.name,
+  //         email: session?.user.email,
+  //         avatar: session?.user.image,
+  //         userType : session?.user.userType, // Set this based on your user's subscription status
+  //       };
+  //       setUser(userData);
+  //     } catch (error) {
+  //       console.error("Failed to fetch user data:", error);
+  //     }
+  //   };
 
-    fetchUserData();
-  }, []);
+  //   fetchUserData();
+  // }, []);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await signOut();
       console.log("User signed out successfully");
       router.push("/");
     } catch (error) {
@@ -283,8 +286,8 @@ export function Sidebar() {
                 <div className="relative mr-3 flex-shrink-0">
                   {!imageError ? (
                     <Image
-                      src={user.avatar}
-                      alt={user.name}
+                      src={user?.avatar || "/avatars/default-avatar.jpg"}
+                      alt={user?.name || "User Avatar"}
                       width={40}
                       height={40}
                       className="rounded-full object-cover border-2 border-gray-200"
