@@ -1,8 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import { CustomSonner } from "@/components/ui/sonner";
+import Providers from "./providers"; // 1. Import your new wrapper component
 
 export const metadata: Metadata = {
   title: "Globalist Media Suite",
@@ -33,16 +31,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        {/* 2. Use the Providers component to wrap your children */}
+        <Providers>
           {children}
-          <Toaster />
-          <CustomSonner />
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
