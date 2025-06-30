@@ -16,7 +16,6 @@ export interface IUser extends Document {
   // --- Core Identity & Credentials (from Login/Signup) ---
   email: string;
   name: string;
-  username: string;
   password?: string;
   passwordConfirm?: string; // For password confirmation during signup
 
@@ -67,13 +66,6 @@ const UserSchema: Schema<IUser> = new Schema(
     name: {
       type: String,
       required: [true, 'Name is required.'],
-    },
-    username: {
-      type: String,
-      required: [true, 'Username is required.'],
-      unique: true,
-      trim: true,
-      lowercase: true,
     },
     password: {
       type: String,

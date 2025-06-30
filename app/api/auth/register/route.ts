@@ -1,30 +1,34 @@
 import dbConnect from '@/lib/dbConnect';
 import User from '@/lib/models/User';
 import { NextResponse } from 'next/server';
-import { sendTokenResponse } from '@/utils/authUtils'; // Import our new helper!
 
 export async function POST(request: Request) {
   await dbConnect();
 
   try {
-    const { email, name, username, password, passwordConfirm, phone} = await request.json();
+    const { email, fullName,  password, confirmPassword, phoneNumber} = await request.json();
 
     // Mongoose handles all validation and hashing automatically via middleware
     const newUser = await User.create({
       email,
-      name,
-      username,
+      name: fullName,
       password,
-      passwordConfirm,
-      phone,
+      passwordConfirm: confirmPassword,
+      phone: phoneNumber,
     });
 
-    // Use our helper to create the token, set the cookie, and send the response
-    return sendTokenResponse(
-      newUser,
-      201, // 201 Created
-      'User registered successfully. You are now logged in.'
+    if (!newUser) {
+      return NextResponse.json(
+        { message: 'Failed to create user.' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: 'User created successfully.' },
+      { status: 201 }
     );
+    
 
   } catch (error: any) {
     // This error handling is still important for validation failures
