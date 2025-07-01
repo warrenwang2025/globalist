@@ -31,15 +31,15 @@ export function InterestsStep({ onNext, onPrevious, initialValue }: InterestsSte
     { id: "social-media", label: "Social Media Marketing", icon: Smartphone },
     { id: "video-content", label: "Video Content", icon: Video },
     { id: "visual-design", label: "Visual Design", icon: Image },
-    { id: "analytics", label: "Analytics & Insights", icon: TrendingUp },
-    { id: "community", label: "Community Management", icon: Users2 },
+    { id: "analytics-insights", label: "Analytics & Insights", icon: TrendingUp },
+    { id: "community management", label: "Community Management", icon: Users2 },
     { id: "news-media", label: "News & Media", icon: Newspaper },
     { id: "entertainment", label: "Entertainment", icon: Music },
     { id: "gaming", label: "Gaming", icon: Gamepad2 },
     { id: "ecommerce", label: "E-commerce", icon: ShoppingBag },
-    { id: "b2b", label: "B2B Marketing", icon: Briefcase },
-    { id: "lifestyle", label: "Lifestyle & Wellness", icon: Heart },
-    { id: "global", label: "Global Markets", icon: Globe },
+    { id: "b2b-marketing", label: "B2B Marketing", icon: Briefcase },
+    { id: "lifestyle-wellness", label: "Lifestyle & Wellness", icon: Heart },
+    { id: "global-markets", label: "Global Markets", icon: Globe },
   ];
 
   const toggleInterest = (interestId: string) => {
