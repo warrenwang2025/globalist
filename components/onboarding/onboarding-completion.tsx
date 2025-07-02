@@ -20,22 +20,27 @@ import {
 
 interface OnboardingCompletionProps {
   data: any
+  onComplete?: () => Promise<void> | void
 }
 
-export function OnboardingCompletion({ data }: OnboardingCompletionProps) {
+export function OnboardingCompletion({ data, onComplete }: OnboardingCompletionProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleGetStarted = async () => {
     setIsLoading(true)
-    // Here you would typically save the onboarding data to your backend
     try {
-      // await saveOnboardingData(data)
+      // Call the onComplete callback if provided
+      if (onComplete) {
+        await onComplete()
+      }
+      
+      // Navigate to dashboard
       setTimeout(() => {
         router.push('/dashboard')
       }, 1000)
     } catch (error) {
-      console.error('Error saving onboarding data:', error)
+      console.error('Error completing onboarding:', error)
       setIsLoading(false)
     }
   }

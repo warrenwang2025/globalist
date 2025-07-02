@@ -62,7 +62,7 @@ export function GoalsStep({ onNext, onPrevious, initialValue }: GoalsStepProps) 
       icon: Shield
     },
     {
-      id: "global-reach",
+      id: "global-expansion",
       title: "Global Expansion",
       description: "Expand into new markets and international audiences",
       icon: Globe2

@@ -49,7 +49,7 @@ const authOptions : AuthOptions =     {
           name: user.name,
           email: user.email,
           profilePicture: user.profilePicture,
-          userType: user.userType,
+          userSubscriptionLevel: user.userSubscriptionLevel,
           rememberMe: credentials.rememberMe === 'true', // Convert string to boolean
         };
       },
@@ -98,7 +98,7 @@ const authOptions : AuthOptions =     {
         token.exp = expirationTime;
         token.email = user.email;
         token.profilePicture = user.profilePicture;
-        token.userType = user.userType;
+        token.userSubscriptionLevel = user.userSubscriptionLevel;
       }
       return token;
     },
@@ -111,7 +111,7 @@ const authOptions : AuthOptions =     {
         session.user.name = token.name;
         session.user.email = token.email;
         session.user.profilePicture = token.profilePicture;
-        session.user.userType = token.userType;
+        session.user.userSubscriptionLevel = token.userSubscriptionLevel;
       }
       return session;
     },
@@ -120,4 +120,4 @@ const authOptions : AuthOptions =     {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };

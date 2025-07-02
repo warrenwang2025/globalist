@@ -35,7 +35,7 @@ export interface IUser extends Document {
   sessions: ISession[];
 
   // --- Other Important Fields ---
-  userType: 'free' | 'plus' | 'pro'; // For future subscription plans
+  userSubscriptionLevel: 'free' | 'plus' | 'pro'; // For future subscription plans
   isActive: boolean; // For soft-deleting an account
   planExpiresAt?: Date; // For subscription expiration
   createdAt: Date; // Handled by timestamps
@@ -138,7 +138,7 @@ const UserSchema: Schema<IUser> = new Schema(
     sessions: [SessionSchema],
 
     // --- Other Important Fields ---
-    userType: {
+    userSubscriptionLevel: {
       type: String,
       enum: ['free', 'plus', 'pro'],
       default: 'free',

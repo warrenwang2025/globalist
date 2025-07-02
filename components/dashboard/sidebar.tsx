@@ -74,7 +74,7 @@ export function Sidebar() {
     name: session?.user.name,
     email: session?.user.email,
     avatar: session?.user.image,
-    isPremium: session?.user.userType !== "free", // Assuming userType is set
+    isPremium: session?.user.userSubscriptionLevel !== "free", // Assuming userSubscriptionLevel is set
   };
   const [imageError, setImageError] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -91,7 +91,7 @@ export function Sidebar() {
   //         name: session?.user.name,
   //         email: session?.user.email,
   //         avatar: session?.user.image,
-  //         userType : session?.user.userType, // Set this based on your user's subscription status
+  //         userSubscriptionLevel : session?.user.userSubscriptionLevel, // Set this based on your user's subscription status
   //       };
   //       setUser(userData);
   //     } catch (error) {
