@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { Shield, Eye, Download, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, Eye, Download, Trash2, Save } from "lucide-react";
+import axios from "axios";
 
 export function PrivacySettings() {
   const [privacy, setPrivacy] = useState({
@@ -15,10 +16,66 @@ export function PrivacySettings() {
     marketingCommunications: false,
     thirdPartyIntegrations: true,
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const response = await axios.get('/api/settings');
+      if (response.data.success && response.data.data.privacy) {
+        setPrivacy(response.data.data.privacy);
+      }
+    } catch (error) {
+      console.error('Error loading privacy settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePrivacyChange = (key: keyof typeof privacy, value: boolean) => {
     setPrivacy((prev) => ({ ...prev, [key]: value }));
   };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      const response = await axios.patch('/api/settings', {
+        category: 'privacy',
+        data: privacy
+      });
+      
+      if (response.data.success) {
+        setLastSaved(new Date().toLocaleTimeString());
+      }
+    } catch (error: any) {
+      console.error('Error saving privacy settings:', error);
+      alert('Error saving settings. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-semibold mb-6 flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Privacy & Data
+        </h2>
+        <div className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-4 md:p-6">
@@ -143,6 +200,25 @@ export function PrivacySettings() {
               </div>
             </Button>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-6 border-t">
+          <div className="text-sm text-muted-foreground">
+            {lastSaved && `Last saved: ${lastSaved}`}
+          </div>
+          <Button onClick={saveSettings} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </Card>
