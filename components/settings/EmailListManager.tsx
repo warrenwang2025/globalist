@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Mail,
   Plus,
@@ -38,8 +38,18 @@ import {
   UserPlus,
   UserMinus,
   X,
+  FileText,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import axios from "axios";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Subscriber {
   id: string;
@@ -70,12 +80,25 @@ export function EmailListManager() {
   const [editListDialog, setEditListDialog] = useState(false);
   const [subscribersDialog, setSubscribersDialog] = useState(false);
   const [addSubscriberDialog, setAddSubscriberDialog] = useState(false);
+  const [importDialog, setImportDialog] = useState(false);
   const [selectedList, setSelectedList] = useState<EmailList | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "paused">(
     "all"
   );
+
+  // Import/Export state
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importTargetList, setImportTargetList] = useState<string>("");
+  const [importProgress, setImportProgress] = useState<{
+    total: number;
+    processed: number;
+    errors: string[];
+    success: number;
+  } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newListData, setNewListData] = useState({
     name: "",
@@ -349,6 +372,196 @@ export function EmailListManager() {
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  // Import functionality
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      setImportFile(file);
+    } else {
+      alert('Please select a valid CSV file.');
+    }
+  };
+
+  const parseCsvData = (csvText: string): { email: string; name?: string }[] => {
+    const lines = csvText.trim().split('\n');
+    const data: { email: string; name?: string }[] = [];
+    
+    // Skip header row if it exists
+    const startIndex = lines[0].toLowerCase().includes('email') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+      
+      if (columns.length >= 1) {
+        const email = columns[0].toLowerCase();
+        if (isValidEmail(email)) {
+          data.push({
+            email,
+            name: columns.length >= 2 ? columns[1] : email.split('@')[0]
+          });
+        }
+      }
+    }
+    
+    return data;
+  };
+
+  const handleImportContacts = async () => {
+    if (!importFile || !importTargetList) {
+      alert('Please select both a CSV file and a target list.');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress({ total: 0, processed: 0, errors: [], success: 0 });
+
+    try {
+      const csvText = await importFile.text();
+      const parsedData = parseCsvData(csvText);
+      
+      if (parsedData.length === 0) {
+        alert('No valid email addresses found in the CSV file.');
+        setIsImporting(false);
+        return;
+      }
+
+      setImportProgress(prev => prev ? { ...prev, total: parsedData.length } : null);
+
+      const targetList = emailLists.find(list => list.id === importTargetList);
+      if (!targetList) {
+        alert('Target list not found.');
+        setIsImporting(false);
+        return;
+      }
+
+      const errors: string[] = [];
+      const newSubscribers: Subscriber[] = [];
+      let successCount = 0;
+
+      for (let i = 0; i < parsedData.length; i++) {
+        const { email, name } = parsedData[i];
+        
+        // Check if subscriber already exists
+        const existingSubscriber = targetList.subscribers.find(
+          sub => sub.email.toLowerCase() === email.toLowerCase()
+        );
+        
+        if (existingSubscriber) {
+          errors.push(`${email} - Already exists in list`);
+        } else {
+          const newSubscriber: Subscriber = {
+            id: `sub_${Date.now()}_${i}`,
+            email: email,
+            name: name || email.split('@')[0],
+            status: "subscribed",
+            subscribedAt: new Date(),
+            source: "csv_import",
+          };
+          newSubscribers.push(newSubscriber);
+          successCount++;
+        }
+
+        setImportProgress(prev => prev ? { 
+          ...prev, 
+          processed: i + 1, 
+          errors,
+          success: successCount 
+        } : null);
+      }
+
+      if (newSubscribers.length > 0) {
+        const updatedLists = emailLists.map(list => 
+          list.id === importTargetList 
+            ? {
+                ...list,
+                subscribers: [...list.subscribers, ...newSubscribers],
+                subscriberCount: list.subscriberCount + newSubscribers.length
+              }
+            : list
+        );
+
+        await saveEmailSettings(updatedLists);
+      }
+
+      // Show completion message
+      setTimeout(() => {
+        setImportProgress(null);
+        setImportFile(null);
+        setImportTargetList("");
+        setImportDialog(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        alert(`Import completed! Added ${successCount} new subscribers. ${errors.length} duplicates/errors.`);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Error importing contacts. Please check your CSV format.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Export functionality
+  const handleExportLists = () => {
+    if (emailLists.length === 0) {
+      alert('No email lists to export.');
+      return;
+    }
+
+    // Prepare CSV data
+    const csvData: string[] = ['List Name,Subscriber Email,Subscriber Name,Status,Subscribed Date,Source'];
+    
+    emailLists.forEach(list => {
+      if (list.subscribers && list.subscribers.length > 0) {
+        list.subscribers.forEach(subscriber => {
+          const row = [
+            `"${list.name}"`,
+            `"${subscriber.email}"`,
+            `"${subscriber.name || ''}"`,
+            `"${subscriber.status}"`,
+            `"${new Date(subscriber.subscribedAt).toISOString().split('T')[0]}"`,
+            `"${subscriber.source || 'unknown'}"`
+          ].join(',');
+          csvData.push(row);
+        });
+      } else {
+        // Include empty lists in export
+        const row = [
+          `"${list.name}"`,
+          '""',
+          '""',
+          '""',
+          '""',
+          '""'
+        ].join(',');
+        csvData.push(row);
+      }
+    });
+
+    // Create and download CSV file
+    const csvContent = csvData.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `email_lists_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert('Export not supported in this browser.');
+    }
   };
 
   if (isLoading) {
@@ -1036,30 +1249,140 @@ export function EmailListManager() {
       <Card className="p-4 md:p-6">
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="h-auto p-4 flex flex-col items-center gap-2"
-            onClick={() => {
-              // Handle bulk import functionality
-              console.log("Import contacts");
-            }}
-          >
-            <Upload className="h-6 w-6" />
-            <div className="text-center">
-              <p className="font-medium">Import Contacts</p>
-              <p className="text-xs text-muted-foreground">
-                Upload CSV file with email addresses
-              </p>
-            </div>
-          </Button>
+          <Dialog open={importDialog} onOpenChange={setImportDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-center gap-2"
+              >
+                <Upload className="h-6 w-6" />
+                <div className="text-center">
+                  <p className="font-medium">Import Contacts</p>
+                  <p className="text-xs text-muted-foreground">
+                    Upload CSV file with email addresses
+                  </p>
+                </div>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Import Contacts from CSV</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="csvFile">CSV File</Label>
+                  <input
+                    ref={fileInputRef}
+                    id="csvFile"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                    <p className="text-xs font-medium text-gray-700 mb-2">Required CSV Structure:</p>
+                    <div className="bg-white p-2 rounded border font-mono text-xs">
+                      <div className="text-gray-600">email,name</div>
+                      <div>john@example.com,John Doe</div>
+                      <div>jane@example.com,Jane Smith</div>
+                      <div>bob@example.com,Bob Johnson</div>
+                    </div>
+                    <div className="mt-2 space-y-1 text-xs text-gray-600">
+                      <p>• <strong>Email column</strong> (required): Must be the first column</p>
+                      <p>• <strong>Name column</strong> (optional): Can be the second column</p>
+                      <p>• Header row is optional but recommended</p>
+                      <p>• Duplicate emails will be skipped automatically</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="targetList">Target List</Label>
+                  <Select value={importTargetList} onValueChange={setImportTargetList}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a list to import to" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {emailLists.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          {list.name} ({list.subscriberCount} subscribers)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {importFile && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium">{importFile.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {(importFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                )}
+
+                {importProgress && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress</span>
+                      <span>{importProgress.processed}/{importProgress.total}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ 
+                          width: `${importProgress.total > 0 ? (importProgress.processed / importProgress.total) * 100 : 0}%` 
+                        }}
+                      ></div>
+                    </div>
+                    {importProgress.errors.length > 0 && (
+                      <div className="max-h-20 overflow-y-auto">
+                        <p className="text-xs font-medium text-orange-600 mb-1">Issues:</p>
+                        {importProgress.errors.slice(0, 3).map((error, index) => (
+                          <p key={index} className="text-xs text-orange-600">{error}</p>
+                        ))}
+                        {importProgress.errors.length > 3 && (
+                          <p className="text-xs text-orange-600">...and {importProgress.errors.length - 3} more</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setImportDialog(false);
+                      setImportFile(null);
+                      setImportTargetList("");
+                      setImportProgress(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    disabled={isImporting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleImportContacts}
+                    disabled={!importFile || !importTargetList || isImporting}
+                  >
+                    {isImporting ? 'Importing...' : 'Import'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Button
             variant="outline"
             className="h-auto p-4 flex flex-col items-center gap-2"
-            onClick={() => {
-              // Handle export functionality
-              console.log("Export lists");
-            }}
+            onClick={handleExportLists}
           >
             <Download className="h-6 w-6" />
             <div className="text-center">
