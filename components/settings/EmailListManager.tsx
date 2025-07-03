@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Mail,
   Plus,
@@ -38,116 +38,67 @@ import {
   UserPlus,
   UserMinus,
   X,
+  FileText,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
-
-interface EmailList {
-  id: number;
-  name: string;
-  description: string;
-  subscriberCount: number;
-  createdAt: string;
-  status: "active" | "paused";
-  tags: string[];
-  subscribers: Subscriber[];
-}
+import axios from "axios";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Subscriber {
-  id: number;
+  id: string;
   email: string;
-  name: string;
+  name?: string;
   status: "subscribed" | "unsubscribed";
-  subscribedAt: string;
+  subscribedAt: Date;
+  unsubscribedAt?: Date;
+  source?: string;
+}
+
+interface EmailList {
+  id: string;
+  name: string;
+  description: string;
+  status: "active" | "paused";
+  tags: string[];
+  createdAt: Date;
+  subscribers: Subscriber[];
+  subscriberCount: number;
 }
 
 export function EmailListManager() {
-  const [emailLists, setEmailLists] = useState<EmailList[]>([
-    {
-      id: 1,
-      name: "Newsletter Subscribers",
-      description: "Main newsletter list for weekly updates",
-      subscriberCount: 3,
-      createdAt: "2024-01-15",
-      status: "active",
-      tags: ["newsletter", "weekly"],
-      subscribers: [
-        {
-          id: 1,
-          email: "john@example.com",
-          name: "John Doe",
-          status: "subscribed",
-          subscribedAt: "2024-01-15",
-        },
-        {
-          id: 2,
-          email: "jane@example.com",
-          name: "Jane Smith",
-          status: "subscribed",
-          subscribedAt: "2024-01-16",
-        },
-        {
-          id: 3,
-          email: "bob@example.com",
-          name: "Bob Johnson",
-          status: "subscribed",
-          subscribedAt: "2024-01-17",
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Product Updates",
-      description: "Users interested in product announcements",
-      subscriberCount: 2,
-      createdAt: "2024-02-01",
-      status: "active",
-      tags: ["product", "updates"],
-      subscribers: [
-        {
-          id: 4,
-          email: "alice@example.com",
-          name: "Alice Brown",
-          status: "subscribed",
-          subscribedAt: "2024-02-01",
-        },
-        {
-          id: 5,
-          email: "charlie@example.com",
-          name: "Charlie Wilson",
-          status: "subscribed",
-          subscribedAt: "2024-02-02",
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "VIP Customers",
-      description: "Premium customers and early adopters",
-      subscriberCount: 1,
-      createdAt: "2024-01-20",
-      status: "paused",
-      tags: ["vip", "premium"],
-      subscribers: [
-        {
-          id: 6,
-          email: "vip@example.com",
-          name: "VIP Customer",
-          status: "subscribed",
-          subscribedAt: "2024-01-20",
-        },
-      ],
-    },
-  ]);
-
+  const [emailLists, setEmailLists] = useState<EmailList[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [newListDialog, setNewListDialog] = useState(false);
   const [editListDialog, setEditListDialog] = useState(false);
   const [subscribersDialog, setSubscribersDialog] = useState(false);
   const [addSubscriberDialog, setAddSubscriberDialog] = useState(false);
+  const [importDialog, setImportDialog] = useState(false);
   const [selectedList, setSelectedList] = useState<EmailList | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "paused">(
     "all"
   );
+
+  // Import/Export state
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importTargetList, setImportTargetList] = useState<string>("");
+  const [importProgress, setImportProgress] = useState<{
+    total: number;
+    processed: number;
+    errors: string[];
+    success: number;
+  } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newListData, setNewListData] = useState({
     name: "",
@@ -167,6 +118,62 @@ export function EmailListManager() {
     name: "",
   });
 
+  // Load email settings from database
+  useEffect(() => {
+    loadEmailSettings();
+  }, []);
+
+  const loadEmailSettings = async () => {
+    try {
+      const response = await axios.get("/api/settings");
+      if (response.data.success && response.data.data.emailSettings) {
+        const emailSettings = response.data.data.emailSettings;
+        
+        // Load email lists
+        if (emailSettings.lists) {
+          setEmailLists(emailSettings.lists);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading email settings:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveEmailSettings = async (updatedLists: EmailList[]) => {
+    setIsSaving(true);
+    try {
+      // Get current settings first to preserve other email settings
+      const currentResponse = await axios.get("/api/settings");
+      const currentEmailSettings = currentResponse.data.data.emailSettings || {};
+      
+      const updatedEmailSettings = {
+        ...currentEmailSettings,
+        lists: updatedLists,
+        trackOpens: currentEmailSettings.trackOpens !== false,
+        trackClicks: currentEmailSettings.trackClicks !== false,
+      };
+
+      const response = await axios.patch("/api/settings", {
+        category: "emailSettings",
+        data: updatedEmailSettings,
+      });
+
+      if (response.data.success) {
+        setEmailLists(updatedLists);
+      } else {
+        throw new Error('Failed to save email settings');
+      }
+    } catch (error) {
+      console.error("Error saving email settings:", error);
+      alert("Error saving email settings. Please try again.");
+      throw error; // Re-throw to handle in calling function
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Filter lists based on search and status
   const filteredLists = emailLists.filter((list) => {
     const matchesSearch =
@@ -177,95 +184,96 @@ export function EmailListManager() {
     return matchesSearch && matchesStatus;
   });
 
-  // Filter subscribers based on search
-  const filteredSubscribers =
-    selectedList?.subscribers.filter(
-      (subscriber) =>
-        subscriber.email
-          .toLowerCase()
-          .includes(subscriberSearchQuery.toLowerCase()) ||
-        subscriber.name
-          .toLowerCase()
-          .includes(subscriberSearchQuery.toLowerCase())
-    ) || [];
+  // Filter subscribers based on search query and selected list
+  const filteredSubscribers = selectedList 
+    ? selectedList.subscribers?.filter((subscriber) =>
+        subscriber.email.toLowerCase().includes(subscriberSearchQuery.toLowerCase()) ||
+        subscriber.name?.toLowerCase().includes(subscriberSearchQuery.toLowerCase())
+      )
+    : [];
 
-  const handleCreateList = () => {
+  const handleCreateList = async () => {
     if (!newListData.name.trim()) return;
 
-    // Parse initial emails
-    const initialSubscribers: Subscriber[] = [];
-    if (newListData.initialEmails.trim()) {
-      const emails = newListData.initialEmails
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line && line.includes("@"));
-
-      emails.forEach((email, index) => {
-        initialSubscribers.push({
-          id: Date.now() + index,
-          email: email,
-          name: email.split("@")[0], // Use email prefix as default name
-          status: "subscribed",
-          subscribedAt: new Date().toISOString().split("T")[0],
-        });
-      });
-    }
-
     const newList: EmailList = {
-      id: Date.now(),
+      id: `list_${Date.now()}`,
       name: newListData.name,
       description: newListData.description,
-      subscriberCount: initialSubscribers.length,
-      createdAt: new Date().toISOString().split("T")[0],
       status: "active",
       tags: newListData.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
-      subscribers: initialSubscribers,
+      createdAt: new Date(),
+      subscribers: [],
+      subscriberCount: 0,
     };
 
-    setEmailLists((prev) => [...prev, newList]);
+    // If initial emails are provided, add them as subscribers
+    if (newListData.initialEmails.trim()) {
+      const emailLines = newListData.initialEmails
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line && isValidEmail(line));
+      
+      emailLines.forEach((email, index) => {
+        const subscriber: Subscriber = {
+          id: `sub_${Date.now()}_${index}`,
+          email: email,
+          name: email.split('@')[0], // Use email prefix as default name
+          status: "subscribed",
+          subscribedAt: new Date(),
+          source: "initial_import",
+        };
+        newList.subscribers.push(subscriber);
+      });
+      
+      newList.subscriberCount = newList.subscribers.length;
+    }
+
+    const updatedLists = [...emailLists, newList];
+    await saveEmailSettings(updatedLists);
+    
     setNewListData({ name: "", description: "", tags: "", initialEmails: "" });
     setNewListDialog(false);
   };
 
-  const handleEditList = () => {
+  const handleEditList = async () => {
     if (!selectedList || !editListData.name.trim()) return;
 
-    setEmailLists((prev) =>
-      prev.map((list) =>
-        list.id === selectedList.id
-          ? {
-              ...list,
-              name: editListData.name,
-              description: editListData.description,
-              tags: editListData.tags
-                .split(",")
-                .map((tag) => tag.trim())
-                .filter(Boolean),
-            }
-          : list
-      )
+    const updatedLists = emailLists.map((list) =>
+      list.id === selectedList.id
+        ? {
+            ...list,
+            name: editListData.name,
+            description: editListData.description,
+            tags: editListData.tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter(Boolean),
+          }
+        : list
     );
 
+    await saveEmailSettings(updatedLists);
     setEditListDialog(false);
     setSelectedList(null);
     setEditListData({ name: "", description: "", tags: "" });
   };
 
-  const handleDeleteList = (listId: number) => {
-    setEmailLists((prev) => prev.filter((list) => list.id !== listId));
+  const handleDeleteList = async (listId: string) => {
+    const updatedLists = emailLists.filter((list) => list.id !== listId);
+    await saveEmailSettings(updatedLists);
   };
 
-  const toggleListStatus = (listId: number) => {
-    setEmailLists((prev) =>
-      prev.map((list) =>
-        list.id === listId
-          ? { ...list, status: list.status === "active" ? "paused" : "active" }
-          : list
-      )
+  const toggleListStatus = async (listId: string) => {
+    const updatedLists = emailLists.map((list) =>
+      list.id === listId
+        ? { ...list, status: list.status === "active" ? "paused" : "active" as "active" | "paused" }
+        : list
     );
+
+    await saveEmailSettings(updatedLists);
   };
 
   const openEditDialog = (list: EmailList) => {
@@ -284,88 +292,295 @@ export function EmailListManager() {
     setSubscriberSearchQuery("");
   };
 
-  const handleAddSubscriber = () => {
-    if (!selectedList || !newSubscriberData.email.trim()) return;
+  // Add subscriber functionality
+  const handleAddSubscriber = async () => {
+    if (!selectedList || !newSubscriberData.email.trim() || !isValidEmail(newSubscriberData.email)) return;
 
-    // Check if email already exists
-    const emailExists = selectedList.subscribers.some(
-      (sub) => sub.email.toLowerCase() === newSubscriberData.email.toLowerCase()
+    // Check if subscriber already exists
+    const existingSubscriber = selectedList.subscribers.find(
+      sub => sub.email.toLowerCase() === newSubscriberData.email.toLowerCase()
     );
-
-    if (emailExists) {
-      alert("This email is already subscribed to this list.");
+    
+    if (existingSubscriber) {
+      alert("This email address is already subscribed to this list.");
       return;
     }
 
     const newSubscriber: Subscriber = {
-      id: Date.now(),
-      email: newSubscriberData.email,
-      name: newSubscriberData.name || newSubscriberData.email.split("@")[0],
+      id: `sub_${Date.now()}`,
+      email: newSubscriberData.email.toLowerCase().trim(), // Normalize email
+      name: newSubscriberData.name?.trim() || newSubscriberData.email.split('@')[0],
       status: "subscribed",
-      subscribedAt: new Date().toISOString().split("T")[0],
+      subscribedAt: new Date(),
+      source: "manual",
     };
 
-    setEmailLists((prev) =>
-      prev.map((list) =>
-        list.id === selectedList.id
-          ? {
-              ...list,
-              subscribers: [...list.subscribers, newSubscriber],
-              subscriberCount: list.subscribers.length + 1,
-            }
-          : list
-      )
-    );
 
-    // Update selectedList for immediate UI update
-    setSelectedList((prev) =>
-      prev
+    const updatedLists = emailLists.map(list => 
+      list.id === selectedList.id 
         ? {
-            ...prev,
-            subscribers: [...prev.subscribers, newSubscriber],
-            subscriberCount: prev.subscribers.length + 1,
+            ...list,
+            subscribers: [...list.subscribers, newSubscriber],
+            subscriberCount: list.subscriberCount + 1
           }
-        : null
+        : list
     );
 
-    setNewSubscriberData({ email: "", name: "" });
-    setAddSubscriberDialog(false);
+;
+
+    try {
+      await saveEmailSettings(updatedLists);
+      
+      // Update selectedList to reflect changes
+      setSelectedList(prev => prev ? {
+        ...prev,
+        subscribers: [...prev.subscribers, newSubscriber],
+        subscriberCount: prev.subscriberCount + 1
+      } : null);
+      
+      setNewSubscriberData({ email: "", name: "" });
+      setAddSubscriberDialog(false);
+      
+    } catch (error) {
+      console.error('Error adding subscriber:', error);
+      alert('Error adding subscriber. Please try again.');
+    }
   };
 
-  const handleRemoveSubscriber = (subscriberId: number) => {
+  const handleRemoveSubscriber = async (subscriberId: string) => {
     if (!selectedList) return;
-
-    setEmailLists((prev) =>
-      prev.map((list) =>
-        list.id === selectedList.id
-          ? {
-              ...list,
-              subscribers: list.subscribers.filter(
-                (sub) => sub.id !== subscriberId
-              ),
-              subscriberCount: list.subscribers.length - 1,
-            }
-          : list
-      )
-    );
-
-    // Update selectedList for immediate UI update
-    setSelectedList((prev) =>
-      prev
+    
+    const updatedLists = emailLists.map(list => 
+      list.id === selectedList.id 
         ? {
-            ...prev,
-            subscribers: prev.subscribers.filter(
-              (sub) => sub.id !== subscriberId
-            ),
-            subscriberCount: prev.subscribers.length - 1,
+            ...list,
+            subscribers: list.subscribers.filter(sub => sub.id !== subscriberId),
+            subscriberCount: Math.max(0, list.subscriberCount - 1)
           }
-        : null
+        : list
     );
+
+    await saveEmailSettings(updatedLists);
+    
+    // Update selectedList to reflect changes
+    setSelectedList(prev => prev ? {
+      ...prev,
+      subscribers: prev.subscribers.filter(sub => sub.id !== subscriberId),
+      subscriberCount: Math.max(0, prev.subscriberCount - 1)
+    } : null);
   };
 
   const isValidEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
+
+  // Import functionality
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === 'text/csv') {
+      setImportFile(file);
+    } else {
+      alert('Please select a valid CSV file.');
+    }
+  };
+
+  const parseCsvData = (csvText: string): { email: string; name?: string }[] => {
+    const lines = csvText.trim().split('\n');
+    const data: { email: string; name?: string }[] = [];
+    
+    // Skip header row if it exists
+    const startIndex = lines[0].toLowerCase().includes('email') ? 1 : 0;
+    
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+      
+      if (columns.length >= 1) {
+        const email = columns[0].toLowerCase();
+        if (isValidEmail(email)) {
+          data.push({
+            email,
+            name: columns.length >= 2 ? columns[1] : email.split('@')[0]
+          });
+        }
+      }
+    }
+    
+    return data;
+  };
+
+  const handleImportContacts = async () => {
+    if (!importFile || !importTargetList) {
+      alert('Please select both a CSV file and a target list.');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress({ total: 0, processed: 0, errors: [], success: 0 });
+
+    try {
+      const csvText = await importFile.text();
+      const parsedData = parseCsvData(csvText);
+      
+      if (parsedData.length === 0) {
+        alert('No valid email addresses found in the CSV file.');
+        setIsImporting(false);
+        return;
+      }
+
+      setImportProgress(prev => prev ? { ...prev, total: parsedData.length } : null);
+
+      const targetList = emailLists.find(list => list.id === importTargetList);
+      if (!targetList) {
+        alert('Target list not found.');
+        setIsImporting(false);
+        return;
+      }
+
+      const errors: string[] = [];
+      const newSubscribers: Subscriber[] = [];
+      let successCount = 0;
+
+      for (let i = 0; i < parsedData.length; i++) {
+        const { email, name } = parsedData[i];
+        
+        // Check if subscriber already exists
+        const existingSubscriber = targetList.subscribers.find(
+          sub => sub.email.toLowerCase() === email.toLowerCase()
+        );
+        
+        if (existingSubscriber) {
+          errors.push(`${email} - Already exists in list`);
+        } else {
+          const newSubscriber: Subscriber = {
+            id: `sub_${Date.now()}_${i}`,
+            email: email,
+            name: name || email.split('@')[0],
+            status: "subscribed",
+            subscribedAt: new Date(),
+            source: "csv_import",
+          };
+          newSubscribers.push(newSubscriber);
+          successCount++;
+        }
+
+        setImportProgress(prev => prev ? { 
+          ...prev, 
+          processed: i + 1, 
+          errors,
+          success: successCount 
+        } : null);
+      }
+
+      if (newSubscribers.length > 0) {
+        const updatedLists = emailLists.map(list => 
+          list.id === importTargetList 
+            ? {
+                ...list,
+                subscribers: [...list.subscribers, ...newSubscribers],
+                subscriberCount: list.subscriberCount + newSubscribers.length
+              }
+            : list
+        );
+
+        await saveEmailSettings(updatedLists);
+      }
+
+      // Show completion message
+      setTimeout(() => {
+        setImportProgress(null);
+        setImportFile(null);
+        setImportTargetList("");
+        setImportDialog(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        
+        alert(`Import completed! Added ${successCount} new subscribers. ${errors.length} duplicates/errors.`);
+      }, 1000);
+
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Error importing contacts. Please check your CSV format.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Export functionality
+  const handleExportLists = () => {
+    if (emailLists.length === 0) {
+      alert('No email lists to export.');
+      return;
+    }
+
+    // Prepare CSV data
+    const csvData: string[] = ['List Name,Subscriber Email,Subscriber Name,Status,Subscribed Date,Source'];
+    
+    emailLists.forEach(list => {
+      if (list.subscribers && list.subscribers.length > 0) {
+        list.subscribers.forEach(subscriber => {
+          const row = [
+            `"${list.name}"`,
+            `"${subscriber.email}"`,
+            `"${subscriber.name || ''}"`,
+            `"${subscriber.status}"`,
+            `"${new Date(subscriber.subscribedAt).toISOString().split('T')[0]}"`,
+            `"${subscriber.source || 'unknown'}"`
+          ].join(',');
+          csvData.push(row);
+        });
+      } else {
+        // Include empty lists in export
+        const row = [
+          `"${list.name}"`,
+          '""',
+          '""',
+          '""',
+          '""',
+          '""'
+        ].join(',');
+        csvData.push(row);
+      }
+    });
+
+    // Create and download CSV file
+    const csvContent = csvData.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `email_lists_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert('Export not supported in this browser.');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-4 md:p-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -849,14 +1064,14 @@ export function EmailListManager() {
                 </div>
               ) : (
                 <div className="divide-y">
-                  {filteredSubscribers.map((subscriber) => (
+                  {filteredSubscribers.map((subscriber: Subscriber) => (
                     <div
                       key={subscriber.id}
                       className="p-4 flex items-center justify-between hover:bg-gray-50"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{subscriber.name}</p>
+                          <p className="font-medium">{subscriber.name || subscriber.email}</p>
                           <Badge
                             variant={
                               subscriber.status === "subscribed"
@@ -873,9 +1088,8 @@ export function EmailListManager() {
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Subscribed:{" "}
-                          {new Date(
-                            subscriber.subscribedAt
-                          ).toLocaleDateString()}
+                          {new Date(subscriber.subscribedAt).toLocaleDateString()}
+                          {subscriber.source && ` • Source: ${subscriber.source}`}
                         </p>
                       </div>
                       <AlertDialog>
@@ -921,20 +1135,16 @@ export function EmailListManager() {
             {/* Subscribers Summary */}
             {selectedList && (
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                   <div>
                     <p className="text-2xl font-bold text-blue-600">
-                      {selectedList.subscribers.length}
+                      {selectedList.subscriberCount}
                     </p>
                     <p className="text-sm font-medium text-blue-800">Total</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-green-600">
-                      {
-                        selectedList.subscribers.filter(
-                          (s) => s.status === "subscribed"
-                        ).length
-                      }
+                      {selectedList.subscribers.filter(s => s.status === "subscribed").length}
                     </p>
                     <p className="text-sm font-medium text-green-800">
                       Subscribed
@@ -942,22 +1152,10 @@ export function EmailListManager() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-orange-600">
-                      {
-                        selectedList.subscribers.filter(
-                          (s) => s.status === "unsubscribed"
-                        ).length
-                      }
+                      {selectedList.subscribers.filter(s => s.status === "unsubscribed").length}
                     </p>
                     <p className="text-sm font-medium text-orange-800">
                       Unsubscribed
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {filteredSubscribers.length}
-                    </p>
-                    <p className="text-sm font-medium text-purple-800">
-                      Filtered
                     </p>
                   </div>
                 </div>
@@ -1051,30 +1249,140 @@ export function EmailListManager() {
       <Card className="p-4 md:p-6">
         <h3 className="font-semibold mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Button
-            variant="outline"
-            className="h-auto p-4 flex flex-col items-center gap-2"
-            onClick={() => {
-              // Handle bulk import functionality
-              console.log("Import contacts");
-            }}
-          >
-            <Upload className="h-6 w-6" />
-            <div className="text-center">
-              <p className="font-medium">Import Contacts</p>
-              <p className="text-xs text-muted-foreground">
-                Upload CSV file with email addresses
-              </p>
-            </div>
-          </Button>
+          <Dialog open={importDialog} onOpenChange={setImportDialog}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-auto p-4 flex flex-col items-center gap-2"
+              >
+                <Upload className="h-6 w-6" />
+                <div className="text-center">
+                  <p className="font-medium">Import Contacts</p>
+                  <p className="text-xs text-muted-foreground">
+                    Upload CSV file with email addresses
+                  </p>
+                </div>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Import Contacts from CSV</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="csvFile">CSV File</Label>
+                  <input
+                    ref={fileInputRef}
+                    id="csvFile"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                    <p className="text-xs font-medium text-gray-700 mb-2">Required CSV Structure:</p>
+                    <div className="bg-white p-2 rounded border font-mono text-xs">
+                      <div className="text-gray-600">email,name</div>
+                      <div>john@example.com,John Doe</div>
+                      <div>jane@example.com,Jane Smith</div>
+                      <div>bob@example.com,Bob Johnson</div>
+                    </div>
+                    <div className="mt-2 space-y-1 text-xs text-gray-600">
+                      <p>• <strong>Email column</strong> (required): Must be the first column</p>
+                      <p>• <strong>Name column</strong> (optional): Can be the second column</p>
+                      <p>• Header row is optional but recommended</p>
+                      <p>• Duplicate emails will be skipped automatically</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="targetList">Target List</Label>
+                  <Select value={importTargetList} onValueChange={setImportTargetList}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a list to import to" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {emailLists.map((list) => (
+                        <SelectItem key={list.id} value={list.id}>
+                          {list.name} ({list.subscriberCount} subscribers)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {importFile && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium">{importFile.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {(importFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                )}
+
+                {importProgress && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progress</span>
+                      <span>{importProgress.processed}/{importProgress.total}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ 
+                          width: `${importProgress.total > 0 ? (importProgress.processed / importProgress.total) * 100 : 0}%` 
+                        }}
+                      ></div>
+                    </div>
+                    {importProgress.errors.length > 0 && (
+                      <div className="max-h-20 overflow-y-auto">
+                        <p className="text-xs font-medium text-orange-600 mb-1">Issues:</p>
+                        {importProgress.errors.slice(0, 3).map((error, index) => (
+                          <p key={index} className="text-xs text-orange-600">{error}</p>
+                        ))}
+                        {importProgress.errors.length > 3 && (
+                          <p className="text-xs text-orange-600">...and {importProgress.errors.length - 3} more</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setImportDialog(false);
+                      setImportFile(null);
+                      setImportTargetList("");
+                      setImportProgress(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                      }
+                    }}
+                    disabled={isImporting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleImportContacts}
+                    disabled={!importFile || !importTargetList || isImporting}
+                  >
+                    {isImporting ? 'Importing...' : 'Import'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Button
             variant="outline"
             className="h-auto p-4 flex flex-col items-center gap-2"
-            onClick={() => {
-              // Handle export functionality
-              console.log("Export lists");
-            }}
+            onClick={handleExportLists}
           >
             <Download className="h-6 w-6" />
             <div className="text-center">

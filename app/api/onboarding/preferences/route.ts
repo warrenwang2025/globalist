@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import OnboardingPreferences from '@/lib/models/OnboardingPreferences';
+import UserSettings from '@/lib/models/UserSettings';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 
@@ -16,7 +17,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const userId = session.user.id;
 
-    console.log('Raw request body:', JSON.stringify(body, null, 2));
 
     // Validate required fields
     if (!body.userType || !body.experience) {
@@ -25,69 +25,67 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Transform the frontend data structure to match backend schema
-    const transformedData: any = {
+    // Save core onboarding data
+    const onboardingData = {
       userId,
       userType: body.userType,
       interests: body.interests || [],
       goals: body.goals || [],
-      experience: body.experience,
-      integrationsEnabled: body.integrations || []
+      experience: body.experience
     };
 
-    // Transform preferences into nested structure
-    if (body.preferences) {
-      const prefs = body.preferences;
-      
-      // Notifications preferences
-      transformedData.notifications = {
-        notifications: prefs.notifications !== undefined ? prefs.notifications : true,
-        emailUpdates: prefs.emailUpdates !== undefined ? prefs.emailUpdates : true,
-        marketingEmails: prefs.marketingEmails !== undefined ? prefs.marketingEmails : false,
-        weeklyReports: prefs.weeklyReports !== undefined ? prefs.weeklyReports : true
-      };
-
-      // Localization preferences  
-      transformedData.localization = {
-        language: prefs.language || "en",
-        timezone: prefs.timezone || "UTC",
-        weekStart: prefs.weekStart || "monday"
-      };
-
-      // UI preferences
-      transformedData.ui = {
-        darkMode: prefs.darkMode !== undefined ? prefs.darkMode : false
-      };
-    } else {
-      // Set defaults if no preferences provided
-      transformedData.notifications = {
-        notifications: true,
-        emailUpdates: true,
-        marketingEmails: false,
-        weeklyReports: true
-      };
-      transformedData.localization = {
-        language: "en",
-        timezone: "UTC", 
-        weekStart: "monday"
-      };
-      transformedData.ui = {
-        darkMode: false
-      };
-    }
-
-    console.log('Transformed data:', JSON.stringify(transformedData, null, 2));
-
-    // Save or update preferences
-    const preferences = await OnboardingPreferences.findOneAndUpdate(
+    const onboardingPreferences = await OnboardingPreferences.findOneAndUpdate(
       { userId },
-      transformedData,
+      onboardingData,
       { new: true, upsert: true, runValidators: true }
     );
 
+    // Create or update UserSettings for preferences, integrations, etc.
+    if (body.preferences || body.integrations) {
+      const userSettingsData: any = { userId };
+
+      // Handle preferences (notifications, ui, localization)
+      if (body.preferences) {
+        const prefs = body.preferences;
+        
+        // Notifications preferences
+        userSettingsData.notifications = {
+          emailNotifications: prefs.notifications !== undefined ? prefs.notifications : true,
+          pushNotifications: prefs.emailUpdates !== undefined ? prefs.emailUpdates : true,
+          marketingEmails: prefs.marketingEmails !== undefined ? prefs.marketingEmails : false,
+          weeklyDigest: prefs.weeklyReports !== undefined ? prefs.weeklyReports : true
+        };
+
+        // General settings (from localization and ui)
+        userSettingsData.general = {
+          language: prefs.language || "en",
+          timezone: prefs.timezone || "UTC",
+          weekStart: prefs.weekStart || "monday",
+          theme: prefs.darkMode ? "dark" : "light",
+          dateFormat: "MM/DD/YYYY",
+          timeFormat: "12h"
+        };
+      }
+
+      // Handle platform integrations
+      if (body.integrations && Array.isArray(body.integrations)) {
+        userSettingsData.platformIntegrations = body.integrations.map((platformId: string) => ({
+          platformId,
+          isConnected: false, // Will be connected later
+          syncEnabled: true
+        }));
+      }
+
+      await UserSettings.findOneAndUpdate(
+        { userId },
+        userSettingsData,
+        { new: true, upsert: true, runValidators: true }
+      );
+    }
+
     return NextResponse.json({ 
       success: true, 
-      data: preferences 
+      data: onboardingPreferences 
     });
 
   } catch (error: any) {
@@ -108,17 +106,37 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const preferences = await OnboardingPreferences.findOne({ userId });
+    const onboardingPreferences = await OnboardingPreferences.findOne({ userId });
 
-    if (!preferences) {
+    if (!onboardingPreferences) {
       return NextResponse.json({ 
         error: 'No preferences found' 
       }, { status: 404 });
     }
 
+    // Get related UserSettings to reconstruct the old format if needed
+    const userSettings = await UserSettings.findOne({ userId });
+
+    // Transform back to frontend expected format
+    const response = {
+      userType: onboardingPreferences.userType,
+      interests: onboardingPreferences.interests,
+      goals: onboardingPreferences.goals,
+      experience: onboardingPreferences.experience,
+      preferences: userSettings ? {
+        notifications: userSettings.notifications?.emailNotifications,
+        emailUpdates: userSettings.notifications?.pushNotifications,
+        darkMode: userSettings.general?.theme === 'dark',
+        timezone: userSettings.general?.timezone,
+        language: userSettings.general?.language,
+        weekStart: userSettings.general?.weekStart,
+      } : {},
+      integrations: userSettings?.platformIntegrations?.map((p: any) => p.platformId) || []
+    };
+
     return NextResponse.json({ 
       success: true, 
-      data: preferences 
+      data: response 
     });
 
   } catch (error: any) {

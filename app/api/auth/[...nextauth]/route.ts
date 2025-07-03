@@ -24,7 +24,6 @@ const authOptions : AuthOptions =     {
         }
 
         await dbConnect();
-        console.log('Connected to the database.');
 
         const user = await User.findOne({
           email: credentials.email,
