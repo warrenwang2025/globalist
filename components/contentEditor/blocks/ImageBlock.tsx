@@ -17,24 +17,51 @@ interface ImageBlockProps {
 export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
   const [url, setUrl] = useState(block.content.url || "");
   const [alt, setAlt] = useState(block.content.alt || "");
-  const [imageSize, setImageSize] = useState(100);
-  const [rotation, setRotation] = useState(0);
+  const [imageSize, setImageSize] = useState(block.content.size || 100);
+  const [rotation, setRotation] = useState(block.content.rotation || 0);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedSize, setEditedSize] = useState(100);
-  const [editedRotation, setEditedRotation] = useState(0);
-  const [cropRect, setCropRect] = useState({ x: 100, y: 100, width: 300, height: 200 });
+  const [editedSize, setEditedSize] = useState(block.content.size || 100);
+  const [editedRotation, setEditedRotation] = useState(block.content.rotation || 0);
+  const [cropRect, setCropRect] = useState({ x: 50, y: 50, width: 200, height: 150 });
   const [isSaving, setIsSaving] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const cropBoxRef = useRef<HTMLDivElement>(null);
 
-  const SAFETY_MARGIN = 20;
+  const SAFETY_MARGIN = 10;
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Prevent body scroll when editing on mobile
+  useEffect(() => {
+    if (isEditing && isMobile) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+      };
+    }
+  }, [isEditing, isMobile]);
 
   useEffect(() => {
     setUrl(block.content.url || "");
     setAlt(block.content.alt || "");
+    setImageSize(block.content.size || 100);
+    setRotation(block.content.rotation || 0);
   }, [block.content]);
 
   const handleUrlChange = (value: string) => {
@@ -50,20 +77,38 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
+      console.log("Starting save process...");
+      console.log("Current URL:", url);
+      console.log("Crop rect:", cropRect);
+      
       const croppedImageUrl = await captureCroppedImage();
+      console.log("Cropped image URL:", croppedImageUrl);
+
+      // Save new values to component state
       setImageSize(editedSize);
       setRotation(editedRotation);
       setIsEditing(false);
-      
-      onUpdate({ 
+
+      // Set new cropped image to URL state
+      if (croppedImageUrl) {
+        console.log("Setting new URL:", croppedImageUrl);
+        setUrl(croppedImageUrl);
+      }
+
+      const updateData = { 
         url: croppedImageUrl || url, 
         alt, 
         size: editedSize, 
         rotation: editedRotation,
         crop: cropRect
-      });
+      };
+      
+      console.log("Calling onUpdate with:", updateData);
+      onUpdate(updateData);
+      
     } catch (error) {
       console.error("Error saving image:", error);
+      alert("Error saving image: " + (error as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -72,23 +117,36 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
   const captureCroppedImage = (): Promise<string> => {
     return new Promise((resolve, reject) => {
       if (!imageRef.current || !cropBoxRef.current) {
-        reject("Image or crop box not found");
+        reject(new Error("Image or crop box not found"));
         return;
       }
 
       const img = imageRef.current;
       const cropBox = cropBoxRef.current;
       
-      // Wait for image to load if not already loaded
+      console.log("Image complete:", img.complete);
+      console.log("Image natural dimensions:", img.naturalWidth, img.naturalHeight);
+      
       if (!img.complete || img.naturalWidth === 0) {
+        console.log("Waiting for image to load...");
         img.onload = () => {
-          resolve(performCrop(img, cropBox));
+          console.log("Image loaded, performing crop");
+          try {
+            resolve(performCrop(img, cropBox));
+          } catch (error) {
+            reject(error);
+          }
         };
         img.onerror = () => {
-          reject("Image failed to load");
+          reject(new Error("Image failed to load"));
         };
       } else {
-        resolve(performCrop(img, cropBox));
+        console.log("Image already loaded, performing crop");
+        try {
+          resolve(performCrop(img, cropBox));
+        } catch (error) {
+          reject(error);
+        }
       }
     });
   };
@@ -101,6 +159,8 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
       throw new Error("Canvas context not available");
     }
 
+    console.log("Crop box dimensions:", cropBox.clientWidth, cropBox.clientHeight);
+    
     // Set canvas dimensions to match the crop box
     canvas.width = cropBox.clientWidth;
     canvas.height = cropBox.clientHeight;
@@ -108,6 +168,9 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
     // Calculate the position of the crop box relative to the image
     const imgRect = img.getBoundingClientRect();
     const cropRect = cropBox.getBoundingClientRect();
+    
+    console.log("Image rect:", imgRect);
+    console.log("Crop rect:", cropRect);
     
     // Calculate the source rectangle from the original image
     const scaleX = img.naturalWidth / imgRect.width;
@@ -118,87 +181,117 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
     const sourceWidth = cropRect.width * scaleX;
     const sourceHeight = cropRect.height * scaleY;
     
-    // Draw the cropped portion onto the canvas
-    ctx.drawImage(
-      img,
-      sourceX, sourceY, sourceWidth, sourceHeight,
-      0, 0, canvas.width, canvas.height
-    );
+    console.log("Source dimensions:", { sourceX, sourceY, sourceWidth, sourceHeight });
     
-    // Convert canvas to data URL
-    return canvas.toDataURL('image/png');
+    try {
+      // Draw the cropped portion onto the canvas
+      ctx.drawImage(
+        img,
+        sourceX, sourceY, sourceWidth, sourceHeight,
+        0, 0, canvas.width, canvas.height
+      );
+      
+      // Convert canvas to data URL
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log("Generated data URL length:", dataUrl.length);
+      return dataUrl;
+    } catch (error) {
+      console.error("Canvas drawing error:", error);
+      throw new Error("Failed to crop image: " + (error as Error).message);
+    }
   };
 
   const handleStartEdit = () => {
     if (editorContainerRef.current) {
       const containerRect = editorContainerRef.current.getBoundingClientRect();
-      const centerX = containerRect.width / 2 - 150;
-      const centerY = containerRect.height / 2 - 100;
+      // Responsive crop box sizing
+      const cropWidth = isMobile ? Math.min(200, containerRect.width - 40) : 300;
+      const cropHeight = isMobile ? Math.min(150, containerRect.height - 40) : 200;
+      const centerX = containerRect.width / 2 - cropWidth / 2;
+      const centerY = containerRect.height / 2 - cropHeight / 2;
       
       setCropRect({
-        x: centerX,
-        y: centerY,
-        width: 300,
-        height: 200
+        x: Math.max(SAFETY_MARGIN, centerX),
+        y: Math.max(SAFETY_MARGIN, centerY),
+        width: cropWidth,
+        height: cropHeight
       });
     }
+    // Initialize edited values with current values
+    setEditedSize(imageSize);
+    setEditedRotation(rotation);
     setIsEditing(true);
   };
 
   const handleReset = () => {
     if (editorContainerRef.current) {
       const containerRect = editorContainerRef.current.getBoundingClientRect();
-      const centerX = containerRect.width / 2 - 150;
-      const centerY = containerRect.height / 2 - 100;
+      const cropWidth = isMobile ? Math.min(200, containerRect.width - 40) : 300;
+      const cropHeight = isMobile ? Math.min(150, containerRect.height - 40) : 200;
+      const centerX = containerRect.width / 2 - cropWidth / 2;
+      const centerY = containerRect.height / 2 - cropHeight / 2;
       
       setCropRect({
-        x: centerX,
-        y: centerY,
-        width: 300,
-        height: 200
+        x: Math.max(SAFETY_MARGIN, centerX),
+        y: Math.max(SAFETY_MARGIN, centerY),
+        width: cropWidth,
+        height: cropHeight
       });
     }
     setEditedSize(100);
     setEditedRotation(0);
   };
 
-  const handleResizeMouseDown = (direction: string, e: React.MouseEvent) => {
+  // Generic event handler for both mouse and touch events
+  const getEventCoordinates = (e: MouseEvent | TouchEvent) => {
+    if ('touches' in e && e.touches.length > 0) {
+      return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+    }
+    return { clientX: (e as MouseEvent).clientX, clientY: (e as MouseEvent).clientY };
+  };
+
+  const handleResizeStart = (direction: string, e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     if (!editorContainerRef.current || !cropBoxRef.current) return;
     
     const editorRect = editorContainerRef.current.getBoundingClientRect();
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const coords = getEventCoordinates(e.nativeEvent);
+    const startX = coords.clientX;
+    const startY = coords.clientY;
     const startWidth = cropRect.width;
     const startHeight = cropRect.height;
     const startLeft = cropRect.x;
     const startTop = cropRect.y;
     
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
+      moveEvent.stopPropagation();
       
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
+      const moveCoords = getEventCoordinates(moveEvent);
+      const deltaX = moveCoords.clientX - startX;
+      const deltaY = moveCoords.clientY - startY;
       
       let newWidth = startWidth;
       let newHeight = startHeight;
       let newLeft = startLeft;
       let newTop = startTop;
       
+      const minSize = isMobile ? 30 : 50;
+      
       if (direction.includes('right')) {
-        newWidth = Math.max(50, startWidth + deltaX);
+        newWidth = Math.max(minSize, startWidth + deltaX);
       }
       if (direction.includes('bottom')) {
-        newHeight = Math.max(50, startHeight + deltaY);
+        newHeight = Math.max(minSize, startHeight + deltaY);
       }
       if (direction.includes('left')) {
-        newWidth = Math.max(50, startWidth - deltaX);
+        newWidth = Math.max(minSize, startWidth - deltaX);
         newLeft = startLeft + deltaX;
       }
       if (direction.includes('top')) {
-        newHeight = Math.max(50, startHeight - deltaY);
+        newHeight = Math.max(minSize, startHeight - deltaY);
         newTop = startTop + deltaY;
       }
       
@@ -221,32 +314,42 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
       });
     };
     
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+    const handleEnd = (endEvent: MouseEvent | TouchEvent) => {
+      endEvent.preventDefault();
+      endEvent.stopPropagation();
+      
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove as EventListener);
+      document.removeEventListener('touchend', handleEnd);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
   };
 
-  const handleCropBoxMouseDown = (e: React.MouseEvent) => {
+  const handleCropBoxStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const startX = e.clientX;
-    const startY = e.clientY;
+    const coords = getEventCoordinates(e.nativeEvent);
+    const startX = coords.clientX;
+    const startY = coords.clientY;
     const startLeft = cropRect.x;
     const startTop = cropRect.y;
     
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
+      moveEvent.stopPropagation();
       
       if (!editorContainerRef.current) return;
       
       const editorRect = editorContainerRef.current.getBoundingClientRect();
-      const deltaX = moveEvent.clientX - startX;
-      const deltaY = moveEvent.clientY - startY;
+      const moveCoords = getEventCoordinates(moveEvent);
+      const deltaX = moveCoords.clientX - startX;
+      const deltaY = moveCoords.clientY - startY;
       
       let newLeft = startLeft + deltaX;
       let newTop = startTop + deltaY;
@@ -264,14 +367,24 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
       }));
     };
     
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+    const handleEnd = (endEvent: MouseEvent | TouchEvent) => {
+      endEvent.preventDefault();
+      endEvent.stopPropagation();
+      
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleMove as EventListener);
+      document.removeEventListener('touchend', handleEnd);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleMove);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
   };
+
+  const editorHeight = isMobile ? "300px" : "450px";
+  const handleSize = isMobile ? "w-4 h-4" : "w-3 h-3";
 
   return (
     <div className="space-y-4">
@@ -316,7 +429,7 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
               <div className="absolute bottom-2 right-2">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={isMobile ? "sm" : "sm"}
                   className="bg-background/80 backdrop-blur-sm"
                   onClick={handleStartEdit}
                 >
@@ -325,8 +438,8 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
               </div>
             </>
           ) : (
-            <Card className="border border-border rounded-lg bg-card">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <Card className="border border-border rounded-lg bg-card" style={{ touchAction: 'none' }}>
+              <CardHeader className={`flex ${isMobile ? 'flex-col space-y-2' : 'flex-row items-center justify-between'} pb-2`}>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -338,7 +451,7 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
                   </Button>
                   <h3 className="font-medium">Edit Image</h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -373,11 +486,12 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
               <CardContent>
                 <div 
                   ref={editorContainerRef}
-                  className="flex items-center justify-center mb-4 overflow-hidden p-6" 
+                  className="flex items-center justify-center mb-4 overflow-hidden p-3 md:p-6" 
                   style={{ 
-                    height: "450px",
+                    height: editorHeight,
                     position: "relative",
-                    backgroundColor: "#f0f0f0"
+                    backgroundColor: "#f0f0f0",
+                    touchAction: 'none'
                   }}>
                   <img 
                     ref={imageRef}
@@ -390,9 +504,11 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
                       objectFit: "contain",
                       transition: "transform 0.3s ease",
                       transformOrigin: "center center",
-                      position: "absolute"
+                      position: "absolute",
+                      touchAction: 'none'
                     }}
                     className="absolute inset-0"
+                    crossOrigin="anonymous"
                   />
                   
                   {/* Crop box - dotted line */}
@@ -405,43 +521,65 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
                       width: `${cropRect.width}px`,
                       height: `${cropRect.height}px`,
                       cursor: 'move',
-                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)'
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.5)',
+                      touchAction: 'none'
                     }}
-                    onMouseDown={handleCropBoxMouseDown}
+                    onMouseDown={handleCropBoxStart}
+                    onTouchStart={handleCropBoxStart}
                   >
                     {/* Resize handles */}
                     <div 
-                      className="absolute top-0 right-0 w-3 h-3 bg-primary cursor-nesw-resize z-10" 
-                      onMouseDown={(e) => handleResizeMouseDown('top-right', e)}
+                      className={`absolute top-0 right-0 ${handleSize} bg-primary cursor-nesw-resize z-10`}
+                      style={{ touchAction: 'none' }}
+                      onMouseDown={(e) => handleResizeStart('top-right', e)}
+                      onTouchStart={(e) => handleResizeStart('top-right', e)}
                     />
                     <div 
-                      className="absolute bottom-0 right-0 w-3 h-3 bg-primary cursor-nwse-resize z-10" 
-                      onMouseDown={(e) => handleResizeMouseDown('bottom-right', e)}
+                      className={`absolute bottom-0 right-0 ${handleSize} bg-primary cursor-nwse-resize z-10`}
+                      style={{ touchAction: 'none' }}
+                      onMouseDown={(e) => handleResizeStart('bottom-right', e)}
+                      onTouchStart={(e) => handleResizeStart('bottom-right', e)}
                     />
                     <div 
-                      className="absolute bottom-0 left-0 w-3 h-3 bg-primary cursor-nesw-resize z-10" 
-                      onMouseDown={(e) => handleResizeMouseDown('bottom-left', e)}
+                      className={`absolute bottom-0 left-0 ${handleSize} bg-primary cursor-nesw-resize z-10`}
+                      style={{ touchAction: 'none' }}
+                      onMouseDown={(e) => handleResizeStart('bottom-left', e)}
+                      onTouchStart={(e) => handleResizeStart('bottom-left', e)}
                     />
                     <div 
-                      className="absolute top-0 left-0 w-3 h-3 bg-primary cursor-nwse-resize z-10" 
-                      onMouseDown={(e) => handleResizeMouseDown('top-left', e)}
+                      className={`absolute top-0 left-0 ${handleSize} bg-primary cursor-nwse-resize z-10`}
+                      style={{ touchAction: 'none' }}
+                      onMouseDown={(e) => handleResizeStart('top-left', e)}
+                      onTouchStart={(e) => handleResizeStart('top-left', e)}
                     />
-                    <div 
-                      className="absolute top-0 w-full h-3 cursor-ns-resize" 
-                      onMouseDown={(e) => handleResizeMouseDown('top', e)}
-                    />
-                    <div 
-                      className="absolute right-0 h-full w-3 cursor-ew-resize" 
-                      onMouseDown={(e) => handleResizeMouseDown('right', e)}
-                    />
-                    <div 
-                      className="absolute bottom-0 w-full h-3 cursor-ns-resize" 
-                      onMouseDown={(e) => handleResizeMouseDown('bottom', e)}
-                    />
-                    <div 
-                      className="absolute left-0 h-full w-3 cursor-ew-resize" 
-                      onMouseDown={(e) => handleResizeMouseDown('left', e)}
-                    />
+                    {!isMobile && (
+                      <>
+                        <div 
+                          className="absolute top-0 w-full h-3 cursor-ns-resize" 
+                          style={{ touchAction: 'none' }}
+                          onMouseDown={(e) => handleResizeStart('top', e)}
+                          onTouchStart={(e) => handleResizeStart('top', e)}
+                        />
+                        <div 
+                          className="absolute right-0 h-full w-3 cursor-ew-resize" 
+                          style={{ touchAction: 'none' }}
+                          onMouseDown={(e) => handleResizeStart('right', e)}
+                          onTouchStart={(e) => handleResizeStart('right', e)}
+                        />
+                        <div 
+                          className="absolute bottom-0 w-full h-3 cursor-ns-resize" 
+                          style={{ touchAction: 'none' }}
+                          onMouseDown={(e) => handleResizeStart('bottom', e)}
+                          onTouchStart={(e) => handleResizeStart('bottom', e)}
+                        />
+                        <div 
+                          className="absolute left-0 h-full w-3 cursor-ew-resize" 
+                          style={{ touchAction: 'none' }}
+                          onMouseDown={(e) => handleResizeStart('left', e)}
+                          onTouchStart={(e) => handleResizeStart('left', e)}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="space-y-4">

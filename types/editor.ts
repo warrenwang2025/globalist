@@ -5,6 +5,20 @@ export interface Block {
   order: number;
 }
 
+export interface ImageBlock extends Block {
+  type: 'image';
+  content: {
+    url: string;
+    alt: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    size?: number;
+    rotation?: number; 
+    crop?: { x: number; y: number; width: number; height: number }; 
+  };
+}
+
 export interface TextBlock extends Block {
   type: 'text';
   content: {
