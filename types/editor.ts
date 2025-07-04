@@ -35,6 +35,9 @@ export interface ImageBlock extends Block {
     caption?: string;
     width?: number;
     height?: number;
+    size?: number;
+    rotation?: number;
+    crop?: { x: number; y: number; width: number; height: number; };
   };
 }
 
