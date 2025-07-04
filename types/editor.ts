@@ -27,20 +27,6 @@ export interface TextBlock extends Block {
   };
 }
 
-export interface ImageBlock extends Block {
-  type: 'image';
-  content: {
-    url: string;
-    alt: string;
-    caption?: string;
-    width?: number;
-    height?: number;
-    size?: number;
-    rotation?: number;
-    crop?: { x: number; y: number; width: number; height: number; };
-  };
-}
-
 export interface VideoBlock extends Block {
   type: 'video';
   content: {
