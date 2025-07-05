@@ -41,14 +41,14 @@ export default function OnboardingPage() {
           goals: data.goals || [],
           experience: data.experience,
           preferences: {
-            notifications: data.notifications?.notifications,
-            emailUpdates: data.notifications?.emailUpdates,
-            darkMode: data.ui?.darkMode,
-            timezone: data.localization?.timezone,
-            language: data.localization?.language,
-            weekStart: data.localization?.weekStart,
+            notifications: data.preferences?.notifications,
+            emailUpdates: data.preferences?.emailUpdates,
+            darkMode: data.preferences?.darkMode,
+            timezone: data.preferences?.timezone,
+            language: data.preferences?.language,
+            weekStart: data.preferences?.weekStart,
           },
-          integrations: data.integrationsEnabled || [],
+          integrations: data.integrations || [],
         });
         
         // Set current step based on what data exists
@@ -57,7 +57,7 @@ export default function OnboardingPage() {
         if (data.interests?.length) step = Math.max(step, 2);
         if (data.goals?.length) step = Math.max(step, 3);
         if (data.experience) step = Math.max(step, 4);
-        if (data.notifications && data.localization && data.ui) step = Math.max(step, 5);
+        if (data.preferences && Object.keys(data.preferences).length > 0) step = Math.max(step, 5);
         
         setCurrentStep(step);
       }

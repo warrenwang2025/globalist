@@ -187,7 +187,6 @@ UserSchema.methods.comparePassword = async function (
   userEnteredPassword: string,
   actualPassword: string
 ): Promise<boolean> {
-    console.log('Comparing passwords:', userEnteredPassword, actualPassword);
   return await bcrypt.compare(userEnteredPassword, actualPassword);
 };
 

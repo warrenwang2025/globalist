@@ -27,6 +27,7 @@ export interface TextBlock extends Block {
   };
 }
 
+
 export interface VideoBlock extends Block {
   type: 'video';
   content: {
