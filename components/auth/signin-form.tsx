@@ -48,7 +48,7 @@ export function SignInForm() {
     if (!validateForm()) return
 
     setIsLoading(true)
-    
+
     const response = await signIn("credentials", {
       email: formData.email,
       password: formData.password,
@@ -60,6 +60,18 @@ export function SignInForm() {
       router.push('/dashboard')
     }
     else{
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Here you would typically make an API call to authenticate
+      console.log("Sign in data:", formData)
+
+      // Redirect to dashboard on success
+      router.push("/dashboard")
+    } catch (error) {
+
       setErrors({ general: "Invalid email or password" })
     }
 
