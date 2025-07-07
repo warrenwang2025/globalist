@@ -49,17 +49,9 @@ export function ExperienceStep({ onNext, onPrevious, initialValue }: ExperienceS
       id: "expert",
       title: "Media Professional",
       description: "Expert level user managing complex campaigns and teams",
-      icon: Building,
+      icon: Crown,
       features: ["Enterprise features", "White-label options", "Custom reporting"],
       color: "text-orange-600"
-    },
-    {
-      id: "enterprise",
-      title: "Enterprise Leader",
-      description: "Leading large-scale media operations across organizations",
-      icon: Crown,
-      features: ["Multi-org management", "Advanced security", "Dedicated support"],
-      color: "text-red-600"
     }
   ]
 

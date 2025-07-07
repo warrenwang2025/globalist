@@ -223,6 +223,7 @@ export function ContentPerformance({ timeRange }: ContentPerformanceProps) {
           </div>
         </CardHeader>
         <CardContent>
+        <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -240,7 +241,7 @@ export function ContentPerformance({ timeRange }: ContentPerformanceProps) {
                 <TableRow key={content.id}>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{content.title}</p>
+                     <p className="font-medium truncate">{content.title}</p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(content.publishDate).toLocaleDateString()}
                       </p>
@@ -293,6 +294,7 @@ export function ContentPerformance({ timeRange }: ContentPerformanceProps) {
               ))}
             </TableBody>
           </Table>
+          </div>
                 {/* Engagement Rate Comparison */}
       <Card>
         <CardHeader>

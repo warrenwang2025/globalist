@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,35 @@ import {
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d");
   const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [tabGridClass, setTabGridClass] = useState("grid-cols-3 grid-rows-2");
+  const [isIpadMini, setIsIpadMini] = useState(false);
+
+  useEffect(() => {
+    function updateTabGridClass() {
+      const width = window.innerWidth;
+      // iPad Mini (portrait/landscape) and phones: 3 cols, 2 rows
+      if (width >= 768 && width <= 834) {
+        setTabGridClass("grid-cols-3 grid-rows-2");
+      } else if (width < 768) {
+        setTabGridClass("grid-cols-3 grid-rows-2");
+      } else {
+        setTabGridClass("md:grid-rows-1 md:grid-cols-6");
+      }
+    }
+    updateTabGridClass();
+    window.addEventListener("resize", updateTabGridClass);
+    return () => window.removeEventListener("resize", updateTabGridClass);
+  }, []);
+
+  useEffect(() => {
+    function checkIpadMini() {
+      const width = window.innerWidth;
+      setIsIpadMini(width >= 768 && width <= 834);
+    }
+    checkIpadMini();
+    window.addEventListener("resize", checkIpadMini);
+    return () => window.removeEventListener("resize", checkIpadMini);
+  }, []);
 
   const handleExportReport = () => {
     const reportData = {
@@ -59,7 +88,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
+    <div className="rounded-lg p-4 md:p-8 space-y-6 md:space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
@@ -86,46 +115,91 @@ export default function AnalyticsPage() {
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7d">Last 7 days</SelectItem>
-                    <SelectItem value="30d">Last 30 days</SelectItem>
-                    <SelectItem value="90d">Last 3 months</SelectItem>
-                    <SelectItem value="1y">Last year</SelectItem>
-                  </SelectContent>
-                </Select>
+          {isIpadMini ? (
+            <div className="flex flex-col gap-4 items-stretch">
+              <div className="flex flex-col gap-4 w-full">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Select value={timeRange} onValueChange={setTimeRange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Last 7 days</SelectItem>
+                      <SelectItem value="30d">Last 30 days</SelectItem>
+                      <SelectItem value="90d">Last 3 months</SelectItem>
+                      <SelectItem value="1y">Last year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value={selectedPlatform}
+                    onValueChange={setSelectedPlatform}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Platforms</SelectItem>
+                      <SelectItem value="twitter">X (Twitter)</SelectItem>
+                      <SelectItem value="linkedin">LinkedIn</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="youtube">YouTube</SelectItem>
+                      <SelectItem value="tiktok">TikTok</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select
-                  value={selectedPlatform}
-                  onValueChange={setSelectedPlatform}
-                >
-                  <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Platforms</SelectItem>
-                    <SelectItem value="twitter">X (Twitter)</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="youtube">YouTube</SelectItem>
-                    <SelectItem value="tiktok">TikTok</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex justify-center">
+                <Badge variant="secondary" className="text-xs">
+                  Data updated 2 hours ago
+                </Badge>
               </div>
             </div>
-            <Badge variant="secondary" className="text-xs">
-              Data updated 2 hours ago
-            </Badge>
-          </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Select value={timeRange} onValueChange={setTimeRange}>
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7d">Last 7 days</SelectItem>
+                      <SelectItem value="30d">Last 30 days</SelectItem>
+                      <SelectItem value="90d">Last 3 months</SelectItem>
+                      <SelectItem value="1y">Last year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value={selectedPlatform}
+                    onValueChange={setSelectedPlatform}
+                  >
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Platforms</SelectItem>
+                      <SelectItem value="twitter">X (Twitter)</SelectItem>
+                      <SelectItem value="linkedin">LinkedIn</SelectItem>
+                      <SelectItem value="instagram">Instagram</SelectItem>
+                      <SelectItem value="youtube">YouTube</SelectItem>
+                      <SelectItem value="tiktok">TikTok</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Badge variant="secondary" className="text-xs">
+                Data updated 2 hours ago
+              </Badge>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -192,25 +266,13 @@ export default function AnalyticsPage() {
 
       {/* Main Analytics Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-          <TabsTrigger value="overview" className="text-xs md:text-sm">
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="platforms" className="text-xs md:text-sm">
-            Platforms
-          </TabsTrigger>
-          <TabsTrigger value="content" className="text-xs md:text-sm">
-            Content
-          </TabsTrigger>
-          <TabsTrigger value="audience" className="text-xs md:text-sm">
-            Audience
-          </TabsTrigger>
-          <TabsTrigger value="engagement" className="text-xs md:text-sm">
-            Engagement
-          </TabsTrigger>
-          <TabsTrigger value="growth" className="text-xs md:text-sm">
-            Growth
-          </TabsTrigger>
+        <TabsList className={`grid w-full border-b p-1 gap-2 gap-y-4 ${tabGridClass}`}>
+          <TabsTrigger value="overview" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Overview</TabsTrigger>
+          <TabsTrigger value="platforms" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Platforms</TabsTrigger>
+          <TabsTrigger value="content" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Content</TabsTrigger>
+          <TabsTrigger value="audience" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Audience</TabsTrigger>
+          <TabsTrigger value="engagement" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Engagement</TabsTrigger>
+          <TabsTrigger value="growth" className="text-xs md:text-sm rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-md">Growth</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">

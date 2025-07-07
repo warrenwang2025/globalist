@@ -1,5 +1,6 @@
 "use client"
 
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,7 +48,19 @@ export function SignInForm() {
     if (!validateForm()) return
 
     setIsLoading(true)
-    
+
+    const response = await signIn("credentials", {
+      email: formData.email,
+      password: formData.password,
+      redirect: false
+    })
+
+    setIsLoading(false)
+    if(response?.ok){
+      router.push('/dashboard')
+    }
+    else{
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -58,10 +71,10 @@ export function SignInForm() {
       // Redirect to dashboard on success
       router.push("/dashboard")
     } catch (error) {
+
       setErrors({ general: "Invalid email or password" })
-    } finally {
-      setIsLoading(false)
     }
+
   }
 
   const handleInputChange = (field: string, value: string | boolean) => {

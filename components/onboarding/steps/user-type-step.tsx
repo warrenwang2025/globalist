@@ -29,28 +29,28 @@ export function UserTypeStep({ onNext, onPrevious, initialValue }: UserTypeStepP
       features: ["Multi-team management", "Advanced analytics", "Custom integrations"]
     },
     {
-      id: "agency",
+      id: "marketing agency",
       title: "Marketing Agency",
       description: "Agency managing multiple clients and campaigns",
       icon: Users,
       features: ["Client management", "Campaign tracking", "White-label options"]
     },
     {
-      id: "creator",
+      id: "content creator",
       title: "Content Creator",
       description: "Individual creator or influencer managing personal brand",
       icon: User,
       features: ["Personal branding", "Audience insights", "Monetization tools"]
     },
     {
-      id: "marketer",
+      id: "digital marketer",
       title: "Digital Marketer",
       description: "Marketing professional focused on digital campaigns",
       icon: Megaphone,
       features: ["Campaign optimization", "ROI tracking", "A/B testing"]
     },
     {
-      id: "media",
+      id: "media company",
       title: "Media Company",
       description: "News, entertainment, or media production company",
       icon: Camera,
