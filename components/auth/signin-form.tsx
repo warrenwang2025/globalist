@@ -169,7 +169,7 @@ export default function SignInForm() {
                 }
               />
               <Label htmlFor="remember" className="text-sm">
-                Remember me
+                Remember Me
               </Label>
             </div>
             <Link
