@@ -59,25 +59,16 @@ export default function SignInForm() {
     const response = await signIn("credentials", {
       email: formData.email,
       password: formData.password,
+      rememberMe: formData.rememberMe.toString(),
       redirect: false,
     });
 
     setIsLoading(false);
     if (response?.ok) {
+      // Let the middleware handle redirection based on onboarding status
       router.push("/dashboard");
     } else {
-      try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Here you would typically make an API call to authenticate
-        console.log("Sign in data:", formData);
-
-        // Redirect to dashboard on success
-        router.push("/dashboard");
-      } catch (error) {
-        setErrors({ general: "Invalid email or password" });
-      }
+      setErrors({ general: "Invalid email or password" });
     }
   };
   const handleInputChange = (field: string, value: string | boolean) => {
