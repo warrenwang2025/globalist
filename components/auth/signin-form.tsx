@@ -1,88 +1,91 @@
-"use client"
+"use client";
 
-import { signIn } from "next-auth/react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-export function SignInForm() {
-  const router = useRouter()
+export default function SignInForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    rememberMe: false
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isLoading, setIsLoading] = useState(false)
+    rememberMe: false,
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+    const newErrors: Record<string, string> = {};
 
     // Email validation
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address"
+      newErrors.email = "Please enter a valid email address";
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Password is required";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
+    e.preventDefault();
 
-    setIsLoading(true)
+    if (!validateForm()) return;
+
+    setIsLoading(true);
 
     const response = await signIn("credentials", {
       email: formData.email,
       password: formData.password,
-      redirect: false
-    })
+      redirect: false,
+    });
 
-    setIsLoading(false)
-    if(response?.ok){
-      router.push('/dashboard')
+    setIsLoading(false);
+    if (response?.ok) {
+      router.push("/dashboard");
+    } else {
+      try {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+        // Here you would typically make an API call to authenticate
+        console.log("Sign in data:", formData);
+
+        // Redirect to dashboard on success
+        router.push("/dashboard");
+      } catch (error) {
+        setErrors({ general: "Invalid email or password" });
+      }
     }
-    else{
-
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Here you would typically make an API call to authenticate
-      console.log("Sign in data:", formData)
-
-      // Redirect to dashboard on success
-      router.push("/dashboard")
-    } catch (error) {
-
-      setErrors({ general: "Invalid email or password" })
-    }
-
-  }
-
+  };
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+  };
 
   return (
     <Card className="w-full">
@@ -95,12 +98,14 @@ export function SignInForm() {
             </Link>
           </Button>
         </div>
-        <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">
+          Welcome Back
+        </CardTitle>
         <CardDescription className="text-center">
           Sign in to your Globalist Media Suite account
         </CardDescription>
       </CardHeader>
-      
+
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {errors.general && (
@@ -159,7 +164,7 @@ export function SignInForm() {
               <Checkbox
                 id="remember"
                 checked={formData.rememberMe}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   handleInputChange("rememberMe", checked as boolean)
                 }
               />
@@ -167,8 +172,8 @@ export function SignInForm() {
                 Remember me
               </Label>
             </div>
-            <Link 
-              href="/forgot-password" 
+            <Link
+              href="/forgot-password"
               className="text-sm text-primary hover:underline"
             >
               Forgot password?
@@ -177,14 +182,10 @@ export function SignInForm() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={isLoading}
-          >
+          <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Signing In..." : "Sign In"}
           </Button>
-          
+
           <p className="text-center text-sm text-muted-foreground">
             Do not have an account?{" "}
             <Link href="/signup" className="text-primary hover:underline">
@@ -194,5 +195,5 @@ export function SignInForm() {
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }
