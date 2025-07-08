@@ -47,6 +47,10 @@ export function QuoteBlock({ block, isSelected, onUpdate }: QuoteBlockProps) {
           placeholder="Enter quote..."
           className="border-none resize-none focus:ring-0 focus:border-none p-0 italic text-lg"
           autoFocus={isSelected && !text}
+          style={{ 
+            minHeight: '60px',
+            height: `${Math.max(60, text.split('\n').length * 28 + 28)}px`
+          }}
         />
       </div>
     </div>
