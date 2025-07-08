@@ -1,6 +1,6 @@
 // Location: src/lib/models/User.ts
 
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document} from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 
@@ -42,6 +42,11 @@ export interface IUser extends Document {
   userSubscriptionLevel: 'free' | 'plus' | 'pro'; // For future subscription plans
   isActive: boolean; // For soft-deleting an account
   planExpiresAt?: Date; // For subscription expiration
+  
+  // --- Onboarding Flow ---
+  isOnboarded: boolean; // Track if user has completed onboarding
+  onboardedAt?: Date; // When onboarding was completed
+  
   createdAt: Date; // Handled by timestamps
   updatedAt: Date; // Handled by timestamps
 }
@@ -178,6 +183,15 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     planExpiresAt: {
       type: Date
+    },
+    
+    // --- Onboarding Flow ---
+    isOnboarded: {
+      type: Boolean,
+      default: false, // New users start as not onboarded
+    },
+    onboardedAt: {
+      type: Date,
     }
   },
   {

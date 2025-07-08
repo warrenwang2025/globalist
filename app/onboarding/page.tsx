@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession, signIn } from "next-auth/react";
 import { OnboardingWelcome } from "@/components/onboarding/onboarding-welcome";
 import { OnboardingSteps } from "@/components/onboarding/onboarding-steps";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
-import { OnboardingCompletion } from "@/components/onboarding/onboarding-completion";
 import { OnboardingData } from "@/types/onboarding";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
 
 export default function OnboardingPage() {
+  const { data: session, update } = useSession();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -21,7 +22,7 @@ export default function OnboardingPage() {
     integrations: [],
   });
 
-  const totalSteps = 7;
+  const totalSteps = 6;
 
   // Load existing preferences on mount
   useEffect(() => {
@@ -59,7 +60,8 @@ export default function OnboardingPage() {
         if (data.experience) step = Math.max(step, 4);
         if (data.preferences && Object.keys(data.preferences).length > 0) step = Math.max(step, 5);
         
-        setCurrentStep(step);
+        // Don't go beyond the completion step (step 6)
+        setCurrentStep(Math.min(step, totalSteps));
       }
     } catch (error: any) {
       // If it's a 404 error, that's expected for new users
@@ -94,6 +96,7 @@ export default function OnboardingPage() {
       return;
     }
     
+    // Move to next step, but don't go beyond the completion step
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -107,22 +110,32 @@ export default function OnboardingPage() {
 
   const handleOnboardingComplete = async () => {
     try {
-      // Final save with complete data
-      const response = await axios.post('/api/onboarding/preferences', onboardingData, {
+      // Mark user as onboarded
+      const onboardingResponse = await axios.post('/api/onboarding/complete', {}, {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (response.data.success) {
-        // Redirect to dashboard
+
+      if (onboardingResponse.data.success) {
+        // Update the session to reflect the new onboarding status
+        // We need to trigger a session refresh to get the updated JWT token
+        await update();
+        
+        // Redirect directly to dashboard instead of showing completion page
         window.location.href = '/dashboard';
       } else {
-        console.error('Error completing onboarding:', response.data.error);
+        console.error('Error marking onboarding as complete:', onboardingResponse.data.error);
         alert('Error completing onboarding. Please try again.');
       }
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
-      const errorMessage = error.response?.data?.error || 'Error completing onboarding. Please try again.';
-      alert(errorMessage);
+      if (error.response?.status === 401) {
+        // User is not authenticated, redirect to sign in
+        window.location.href = '/signin';
+      } else {
+        const errorMessage = error.response?.data?.error || 'Error completing onboarding. Please try again.';
+        alert(errorMessage);
+      }
     }
   };
 
@@ -136,10 +149,6 @@ export default function OnboardingPage() {
         </div>
       </div>
     );
-  }
-
-  if (currentStep === totalSteps) {
-    return <OnboardingCompletion data={onboardingData} onComplete={handleOnboardingComplete} />;
   }
 
   return (
@@ -173,6 +182,7 @@ export default function OnboardingPage() {
               currentStep={currentStep}
               onStepComplete={handleStepComplete}
               onPrevious={handlePrevious}
+              onComplete={handleOnboardingComplete}
               data={onboardingData}
             />
           )}

@@ -88,7 +88,6 @@ const OnboardingPreferencesSchema: Schema = new Schema(
 );
 
 // Create indexes for better query performance
-OnboardingPreferencesSchema.index({ userId: 1 });
 OnboardingPreferencesSchema.index({ userType: 1 });
 
 // Export the model
