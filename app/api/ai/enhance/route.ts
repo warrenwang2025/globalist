@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { aiService } from '@/lib/services/aiService';
 import { UsageStatsService } from '@/lib/services/usageStatsService';
-import { TokenEstimationService } from '@/lib/services/tokenEstimationService';
+import tokenEstimationService from '@/lib/services/tokenEstimationService';
 import { AIRequestValidator } from '@/lib/services/aiRequestValidator';
 import type { AIRequest, AIResponse } from '@/types/ai';
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const { toolType, tone, contentFromFrontend } = validation;
 
     // Estimate token usage (user pays for their content only)
-    const estimatedTokens = TokenEstimationService.estimateUserTokensOnly(
+    const estimatedTokens = tokenEstimationService.estimateUserTokensOnly(
       toolType!,
       AIRequestValidator.formatContentForTokenEstimation(contentFromFrontend!)
     );
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     try {
       // Determine tokens to charge the user
       const tokensToCharge = result.usage?.totalTokens 
-        ? TokenEstimationService.calculateUserTokensUsed(result.usage.totalTokens, toolType!)
+        ? tokenEstimationService.calculateUserTokensUsed(result.usage.totalTokens, toolType!)
         : estimatedTokens;
 
       if (!result.usage?.totalTokens) {
