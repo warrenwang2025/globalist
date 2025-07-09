@@ -22,7 +22,7 @@ export default function OnboardingPage() {
     integrations: [],
   });
 
-  const totalSteps = 6;
+  const totalSteps = 7;
 
   // Load existing preferences on mount
   useEffect(() => {
@@ -96,8 +96,8 @@ export default function OnboardingPage() {
       return;
     }
     
-    // Move to next step, but don't go beyond the completion step
-    if (currentStep < totalSteps) {
+    // Move to next step, but don't go beyond the last step
+    if (currentStep < totalSteps - 1) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -176,8 +176,19 @@ export default function OnboardingPage() {
             <OnboardingWelcome onNext={() => setCurrentStep(1)} />
           )}
 
-          {/* Onboarding Steps */}
-          {currentStep > 0 && currentStep < totalSteps && (
+          {/* Onboarding Steps (steps 1-5) */}
+          {currentStep > 0 && currentStep < totalSteps - 1 && (
+            <OnboardingSteps
+              currentStep={currentStep}
+              onStepComplete={handleStepComplete}
+              onPrevious={handlePrevious}
+              onComplete={handleOnboardingComplete}
+              data={onboardingData}
+            />
+          )}
+
+          {/* Completion Step (step 6) */}
+          {currentStep === totalSteps - 1 && (
             <OnboardingSteps
               currentStep={currentStep}
               onStepComplete={handleStepComplete}
