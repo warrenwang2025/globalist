@@ -170,3 +170,44 @@ export async function PUT(request: NextRequest) {
     );
   }
 } 
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    await dbConnect();
+
+    // Find and update user to set isActive to false (soft delete)
+    const user = await User.findOneAndUpdate(
+      { email: session.user.email },
+      { isActive: false },
+      { new: true, select: '+isActive' }
+    );
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+} 

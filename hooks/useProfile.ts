@@ -32,6 +32,7 @@ export const useProfile = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const { toast } = useToast();
 
   // Fetch profile data
@@ -191,6 +192,49 @@ export const useProfile = () => {
     }
   };
 
+  // Delete account
+  const deleteAccount = async (): Promise<boolean> => {
+    try {
+      setDeletingAccount(true);
+      
+      const response = await fetch('/api/profile', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete account');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        toast({
+          title: 'Account Deleted',
+          description: 'Your account has been successfully deleted.',
+        });
+        
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+        
+        return true;
+      } else {
+        throw new Error(result.error || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete account',
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   // Load profile data on mount
   useEffect(() => {
     fetchProfile();
@@ -201,9 +245,11 @@ export const useProfile = () => {
     loading,
     updating,
     uploadingPicture,
+    deletingAccount,
     updateProfile,
     uploadProfilePicture,
     removeProfilePicture,
+    deleteAccount,
     refreshProfile: fetchProfile,
   };
 }; 

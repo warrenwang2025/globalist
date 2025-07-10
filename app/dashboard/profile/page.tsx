@@ -38,9 +38,11 @@ export default function ProfilePage() {
     loading,
     updating,
     uploadingPicture,
+    deletingAccount,
     updateProfile,
     uploadProfilePicture,
     removeProfilePicture,
+    deleteAccount,
   } = useProfile();
 
   const [editData, setEditData] = useState({
@@ -417,21 +419,24 @@ export default function ProfilePage() {
                   variant="outline"
                   size="sm"
                   className="border-red-300 text-red-600 hover:bg-red-100 w-full sm:w-auto"
-                  onClick={() => {
+                  onClick={async () => {
                     const confirmed = window.confirm(
                       "Are you sure you want to delete your account? This action cannot be undone."
                     );
                     if (confirmed) {
-                      toast({
-                        title: "Account Deletion",
-                        description:
-                          "Account deletion process would be initiated here.",
-                        variant: "destructive",
-                      });
+                      await deleteAccount();
                     }
                   }}
+                  disabled={deletingAccount}
                 >
-                  Delete Account
+                  {deletingAccount ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Account'
+                  )}
                 </Button>
               </div>
             </div>
