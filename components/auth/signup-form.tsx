@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, ArrowLeft, Check, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { passwordRequirements, validatePassword, getPasswordStrength, validatePasswordMatch } from "@/lib/utils";
 
 // Country codes data with unique identifiers
 const countryCodes = [
@@ -116,14 +117,6 @@ export function SignUpForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const passwordRequirements = [
-    { regex: /.{8,}/, text: "At least 8 characters" },
-    { regex: /[A-Z]/, text: "One uppercase letter" },
-    { regex: /[a-z]/, text: "One lowercase letter" },
-    { regex: /\d/, text: "One number" },
-    { regex: /[!@#$%^&*(),.?":{}|<>]/, text: "One special character" },
-  ];
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -154,21 +147,15 @@ export function SignUpForm() {
     }
 
     // Password validation
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else {
-      const failedRequirements = passwordRequirements.filter(
-        (req) => !req.regex.test(formData.password)
-      );
-      if (failedRequirements.length > 0) {
-        newErrors.password = "Password does not meet requirements";
-      }
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.isValid) {
+      newErrors.password = "Password does not meet requirements";
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
+    } else if (!validatePasswordMatch(formData.password, formData.confirmPassword)) {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
@@ -225,11 +212,8 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   };
 
-  const getPasswordStrength = () => {
-    const metRequirements = passwordRequirements.filter((req) =>
-      req.regex.test(formData.password)
-    ).length;
-    return metRequirements;
+  const getCurrentPasswordStrength = () => {
+    return getPasswordStrength(formData.password);
   };
 
   const isFormValid = () => {
@@ -241,8 +225,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       formData.phoneNumber &&
       formData.password &&
       formData.confirmPassword &&
-      passwordRequirements.every((req) => req.regex.test(formData.password)) &&
-      formData.password === formData.confirmPassword
+      validatePassword(formData.password).isValid &&
+      validatePasswordMatch(formData.password, formData.confirmPassword)
     );
   };
 
@@ -421,18 +405,18 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="mt-2">
                   <div className="flex justify-between text-xs mb-1">
                     <span>Password Strength</span>
-                    <span>{getPasswordStrength()}/5</span>
+                    <span>{getCurrentPasswordStrength()}/5</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        getPasswordStrength() <= 2
+                        getCurrentPasswordStrength() <= 2
                           ? "bg-red-500"
-                          : getPasswordStrength() <= 4
+                          : getCurrentPasswordStrength() <= 4
                           ? "bg-yellow-500"
                           : "bg-green-500"
                       }`}
-                      style={{ width: `${(getPasswordStrength() / 5) * 100}%` }}
+                      style={{ width: `${(getCurrentPasswordStrength() / 5) * 100}%` }}
                     />
                   </div>
                 </div>

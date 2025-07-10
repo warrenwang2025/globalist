@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
 import { AccountSecurity } from "@/components/profile/account-security";
 import {
   UserCircle,
@@ -20,27 +21,52 @@ import {
   X,
   Camera,
   Trash2,
+  Building,
+  Globe,
+  Loader2,
 } from "lucide-react";
 
 export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const [profileData, setProfileData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
-    bio: "Content creator and social media strategist with 5+ years of experience in digital marketing.",
-    company: "Digital Marketing Agency",
-    website: "https://johndoe.com",
-    joinDate: "January 2023",
-    avatar: "/placeholder-avatar.jpg",
+  const {
+    profileData,
+    loading,
+    updating,
+    uploadingPicture,
+    updateProfile,
+    uploadProfilePicture,
+    removeProfilePicture,
+  } = useProfile();
+
+  const [editData, setEditData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    company: "",
+    website: "",
   });
+
+  // Initialize edit data when profile data loads
+  React.useEffect(() => {
+    if (profileData) {
+      setEditData({
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio,
+        company: profileData.company,
+        website: profileData.website,
+      });
+    }
+  }, [profileData]);
 
   // Avatar handling functions
   const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,35 +124,13 @@ export default function ProfilePage() {
       return;
     }
 
-    setIsUploadingAvatar(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setProfileData((prev) => ({
-        ...prev,
-        avatar: avatarPreview || prev.avatar,
-      }));
-
+    const success = await uploadProfilePicture(avatarFile);
+    if (success) {
       setAvatarFile(null);
       setAvatarPreview(null);
-
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-
-      toast({
-        title: "Avatar Updated",
-        description: "Your profile picture has been updated successfully!",
-      });
-    } catch (error) {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload avatar. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingAvatar(false);
     }
   };
 
@@ -136,34 +140,11 @@ export default function ProfilePage() {
     );
     if (!confirmed) return;
 
-    setIsUploadingAvatar(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setProfileData((prev) => ({
-        ...prev,
-        avatar: "/placeholder-avatar.jpg",
-      }));
-
-      setAvatarFile(null);
-      setAvatarPreview(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-
-      toast({
-        title: "Avatar Removed",
-        description: "Your profile picture has been removed.",
-      });
-    } catch (error) {
-      toast({
-        title: "Remove Failed",
-        description: "Failed to remove avatar. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUploadingAvatar(false);
+    await removeProfilePicture();
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -184,24 +165,22 @@ export default function ProfilePage() {
   };
 
   const getAvatarUrl = () => {
-    return avatarPreview || profileData.avatar;
+    return avatarPreview || profileData?.profilePicture;
   };
 
   const getUserInitials = () => {
-    return profileData.name
+    return profileData?.name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
   };
 
-  const handleSave = () => {
-    console.log("Saving profile data:", profileData);
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully!",
-    });
+  const handleSave = async () => {
+    const success = await updateProfile(editData);
+    if (success) {
+      setIsEditing(false);
+    }
   };
 
   const handleCancel = () => {
@@ -210,11 +189,37 @@ export default function ProfilePage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setProfileData((prev) => ({
+    setEditData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading profile...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Profile Not Found</h2>
+            <p className="text-muted-foreground">Unable to load profile data.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
@@ -233,10 +238,22 @@ export default function ProfilePage() {
                 <X className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Cancel</span>
               </Button>
-              <Button onClick={handleSave} className="flex-1 sm:flex-none">
-                <Save className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Save Changes</span>
-                <span className="sm:hidden">Save</span>
+              <Button 
+                onClick={handleSave} 
+                disabled={updating}
+                className="flex-1 sm:flex-none"
+              >
+                {updating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </span>
+                <span className="sm:hidden">
+                  {updating ? 'Saving...' : 'Save'}
+                </span>
               </Button>
             </>
           ) : (
@@ -271,10 +288,14 @@ export default function ProfilePage() {
                     variant="secondary"
                     className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
                     onClick={triggerFileInput}
-                    disabled={isUploadingAvatar}
+                    disabled={uploadingPicture}
                     title="Change Avatar"
                   >
-                    <Camera className="h-4 w-4" />
+                    {uploadingPicture ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
                   </Button>
                 )}
               </div>
@@ -297,16 +318,23 @@ export default function ProfilePage() {
                       <Button
                         size="sm"
                         onClick={handleAvatarUpload}
-                        disabled={isUploadingAvatar}
+                        disabled={uploadingPicture}
                         className="bg-green-600 hover:bg-green-700"
                       >
-                        {isUploadingAvatar ? "Uploading..." : "Confirm"}
+                        {uploadingPicture ? (
+                          <>
+                            <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          "Confirm"
+                        )}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={handleCancelAvatarUpload}
-                        disabled={isUploadingAvatar}
+                        disabled={uploadingPicture}
                         className="border-gray-300"
                       >
                         Cancel
@@ -317,17 +345,21 @@ export default function ProfilePage() {
               )}
 
               {isEditing &&
-                profileData.avatar !== "/placeholder-avatar.jpg" &&
+                profileData.profilePicture !== "/default-user-profile-picture.webp" &&
                 !avatarFile && (
                   <div className="mb-4">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={handleAvatarRemove}
-                      disabled={isUploadingAvatar}
+                      disabled={uploadingPicture}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Trash2 className="mr-2 h-3 w-3" />
+                      {uploadingPicture ? (
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="mr-2 h-3 w-3" />
+                      )}
                       Remove Avatar
                     </Button>
                   </div>
@@ -350,15 +382,20 @@ export default function ProfilePage() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Content Created</span>
-                <span className="font-medium">247</span>
+                <span className="font-medium">{profileData.contentCreatedCount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">AI Generations</span>
-                <span className="font-medium">1,432</span>
+                <span className="font-medium">{profileData.aiGenerationsCount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Member Since</span>
-                <span className="font-medium">{profileData.joinDate}</span>
+                <span className="font-medium">
+                  {new Date(profileData.joinDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long'
+                  })}
+                </span>
               </div>
             </div>
           </Card>
@@ -411,7 +448,7 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="name"
-                    value={profileData.name}
+                    value={editData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className="mt-1"
                   />
@@ -425,20 +462,10 @@ export default function ProfilePage() {
 
               <div>
                 <Label htmlFor="email">Email</Label>
-                {isEditing ? (
-                  <Input
-                    id="email"
-                    type="email"
-                    value={profileData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="mt-1"
-                  />
-                ) : (
-                  <div className="flex items-center mt-1 p-2">
-                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {profileData.email}
-                  </div>
-                )}
+                <div className="flex items-center mt-1 p-2">
+                  <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+                  {profileData.email}
+                </div>
               </div>
 
               <div>
@@ -446,14 +473,15 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="phone"
-                    value={profileData.phone}
+                    value={editData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
                     className="mt-1"
+                    placeholder="Enter phone number"
                   />
                 ) : (
                   <div className="flex items-center mt-1 p-2">
                     <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {profileData.phone}
+                    {profileData.phone || 'Not provided'}
                   </div>
                 )}
               </div>
@@ -463,16 +491,64 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="location"
-                    value={profileData.location}
+                    value={editData.location}
                     onChange={(e) =>
                       handleInputChange("location", e.target.value)
                     }
                     className="mt-1"
+                    placeholder="Enter location"
                   />
                 ) : (
                   <div className="flex items-center mt-1 p-2">
                     <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {profileData.location}
+                    {profileData.location || 'Not provided'}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="company">Company</Label>
+                {isEditing ? (
+                  <Input
+                    id="company"
+                    value={editData.company}
+                    onChange={(e) => handleInputChange("company", e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter company name"
+                  />
+                ) : (
+                  <div className="flex items-center mt-1 p-2">
+                    <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {profileData.company || 'Not provided'}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="website">Website</Label>
+                {isEditing ? (
+                  <Input
+                    id="website"
+                    value={editData.website}
+                    onChange={(e) => handleInputChange("website", e.target.value)}
+                    className="mt-1"
+                    placeholder="https://example.com"
+                  />
+                ) : (
+                  <div className="flex items-center mt-1 p-2">
+                    <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {profileData.website ? (
+                      <a 
+                        href={profileData.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {profileData.website}
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
                   </div>
                 )}
               </div>
@@ -485,13 +561,16 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Textarea
                   id="bio"
-                  value={profileData.bio}
+                  value={editData.bio}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
                   className="mt-1"
                   rows={3}
+                  placeholder="Tell us about yourself..."
                 />
               ) : (
-                <p className="mt-1 p-2 text-sm">{profileData.bio}</p>
+                <p className="mt-1 p-2 text-sm">
+                  {profileData.bio || 'No bio provided'}
+                </p>
               )}
             </div>
           </Card>
