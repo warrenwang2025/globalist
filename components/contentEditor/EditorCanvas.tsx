@@ -50,11 +50,13 @@ export function EditorCanvas({
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    
+
     const { source, destination } = result;
-    
-    // Handle block reordering
-    if (source.droppableId === "editor-blocks" && destination.droppableId === "editor-blocks") {
+
+    if (
+      source.droppableId === "editor-blocks" &&
+      destination.droppableId === "editor-blocks"
+    ) {
       reorderBlocks(source.index, destination.index);
     }
   };
@@ -83,7 +85,9 @@ export function EditorCanvas({
   };
 
   const handleMoveBlockUp = (blockId: string) => {
-    const currentIndex = editorState.blocks.findIndex(block => block.id === blockId);
+    const currentIndex = editorState.blocks.findIndex(
+      (block) => block.id === blockId
+    );
     if (currentIndex > 0) {
       reorderBlocks(currentIndex, currentIndex - 1);
       toast({ title: "Block moved up" });
@@ -91,7 +95,9 @@ export function EditorCanvas({
   };
 
   const handleMoveBlockDown = (blockId: string) => {
-    const currentIndex = editorState.blocks.findIndex(block => block.id === blockId);
+    const currentIndex = editorState.blocks.findIndex(
+      (block) => block.id === blockId
+    );
     if (currentIndex < editorState.blocks.length - 1) {
       reorderBlocks(currentIndex, currentIndex + 1);
       toast({ title: "Block moved down" });
@@ -99,7 +105,9 @@ export function EditorCanvas({
   };
 
   const handleMoveActionButtonUp = (buttonId: string) => {
-    const currentIndex = actionButtons.findIndex(button => button.id === buttonId);
+    const currentIndex = actionButtons.findIndex(
+      (button) => button.id === buttonId
+    );
     if (currentIndex > 0) {
       handleReorderActionButtons(currentIndex, currentIndex - 1);
       toast({ title: "Action button moved up" });
@@ -107,7 +115,9 @@ export function EditorCanvas({
   };
 
   const handleMoveActionButtonDown = (buttonId: string) => {
-    const currentIndex = actionButtons.findIndex(button => button.id === buttonId);
+    const currentIndex = actionButtons.findIndex(
+      (button) => button.id === buttonId
+    );
     if (currentIndex < actionButtons.length - 1) {
       handleReorderActionButtons(currentIndex, currentIndex + 1);
       toast({ title: "Action button moved down" });
@@ -115,20 +125,22 @@ export function EditorCanvas({
   };
 
   return (
-    <div className={cn("relative h-screen", className)}>
+    <div className={cn("flex h-screen overflow-hidden", className)}>
       {/* Main Editor Area */}
       <motion.div
         className={cn(
-          "flex flex-col h-full",
-          editorState.isFullscreen && "fixed inset-0 z-50 bg-background"
+          "flex flex-col flex-1 min-w-0 relative",
+          editorState.isFullscreen && "fixed inset-0 z-50 bg-background",
+          !editorState.isFullscreen && sidebarOpen && "pr-80"
         )}
         layout
+        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {/* Fixed Header */}
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b">
-          <div className="flex items-center justify-between p-4">
+        {/* ✅ CHANGED z-50 to z-10 */}
+        <div className="sticky top-0 z-10 bg-background border-b flex-shrink-0 shadow-sm">
+          <div className="flex items-center justify-between p-4 min-h-[64px]">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold">Content Editor</h1>
+              <h1 className="text-lg font-semibold text-foreground">Content Editor</h1>
             </div>
             <div className="flex items-center gap-2">
               {!editorState.isFullscreen && (
@@ -136,7 +148,7 @@ export function EditorCanvas({
                   variant="ghost"
                   size="sm"
                   onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2"
+                  className="p-2 hover:bg-muted"
                 >
                   {sidebarOpen ? (
                     <PanelRightClose className="h-4 w-4" />
@@ -153,13 +165,10 @@ export function EditorCanvas({
           </div>
         </div>
 
-        {/* Editor Content */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
           <div
-            className={cn(
-              "p-4 pb-20",
-              editorState.isFullscreen && "pt-0 min-h-screen"
-            )}
+            className={cn("p-4 pb-20 min-h-full", editorState.isFullscreen && "pt-4")}
+            style={{ paddingTop: "64px" }} // ✅ Adjusted for sticky header height
           >
             <DragDropContext onDragEnd={onDragEnd}>
               <Droppable droppableId="editor-blocks">
@@ -168,17 +177,13 @@ export function EditorCanvas({
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                     className={cn(
-                      "max-w-4xl mx-auto space-y-4",
+                      "max-w-4xl mx-auto space-y-4 w-full relative",
                       snapshot.isDraggingOver && "bg-muted/50 rounded-lg p-2"
                     )}
                   >
                     <AnimatePresence>
                       {editorState.blocks.map((block, index) => (
-                        <Draggable
-                          key={block.id}
-                          draggableId={block.id}
-                          index={index}
-                        >
+                        <Draggable key={block.id} draggableId={block.id} index={index}>
                           {(provided, snapshot) => (
                             <motion.div
                               ref={provided.innerRef}
@@ -187,15 +192,13 @@ export function EditorCanvas({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -20 }}
                               className={cn(
-                                "group relative",
-                                snapshot.isDragging && "z-50 rotate-2 shadow-lg"
+                                "group relative w-full",
+                                snapshot.isDragging && "z-40 rotate-2 shadow-lg"
                               )}
                             >
                               <BlockWrapper
                                 block={block}
-                                isSelected={
-                                  editorState.selectedBlockId === block.id
-                                }
+                                isSelected={editorState.selectedBlockId === block.id}
                                 isDragging={snapshot.isDragging}
                                 onSelect={() => selectBlock(block.id)}
                                 onDelete={() => deleteBlock(block.id)}
@@ -203,9 +206,7 @@ export function EditorCanvas({
                               >
                                 <Block
                                   block={block}
-                                  isSelected={
-                                    editorState.selectedBlockId === block.id
-                                  }
+                                  isSelected={editorState.selectedBlockId === block.id}
                                   onUpdate={(content) =>
                                     updateBlock(block.id, content)
                                   }
@@ -218,30 +219,26 @@ export function EditorCanvas({
                     </AnimatePresence>
                     {provided.placeholder}
 
-                    {/* Action Buttons - Simple Display */}
                     {actionButtons.length > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="mt-6"
+                        className="mt-6 w-full relative z-10"
                       >
                         <ActionButtonBlock
                           buttons={actionButtons}
-                          onRemoveButton={() => {}} // No remove functionality in content area
-                          showRemoveButtons={false} // Hide remove buttons in content area
+                          onRemoveButton={() => {}}
+                          showRemoveButtons={false}
                         />
                       </motion.div>
                     )}
 
-                    {/* Empty State */}
                     {editorState.blocks.length === 0 && (
-                      <div className="text-center py-12">
+                      <div className="text-center py-12 w-full relative z-10">
                         <div className="text-muted-foreground mb-4">
                           <Plus className="h-12 w-12 mx-auto mb-2" />
-                          <h3 className="text-lg font-medium">
-                            Start creating
-                          </h3>
+                          <h3 className="text-lg font-medium">Start creating</h3>
                           <p className="text-sm">
                             Use the sidebar to add your first block
                           </p>
@@ -256,25 +253,33 @@ export function EditorCanvas({
         </div>
       </motion.div>
 
-      {/* Right Sidebar Component */}
       {!editorState.isFullscreen && (
-        <EditorSidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          editorState={editorState}
-          actionButtons={actionButtons}
-          onActionButtonsChange={setActionButtons}
-          onAddBlock={addBlock}
-          onDeleteBlock={deleteBlock}
-          onSelectBlock={selectBlock}
-          onRemoveActionButton={handleRemoveActionButton}
-          onClearAllActionButtons={handleClearAllActionButtons}
-          onReorderActionButtons={handleReorderActionButtons}
-          onMoveBlockUp={handleMoveBlockUp}
-          onMoveBlockDown={handleMoveBlockDown}
-          onMoveActionButtonUp={handleMoveActionButtonUp}
-          onMoveActionButtonDown={handleMoveActionButtonDown}
-        />
+        <motion.div
+          className="fixed top-0 right-0 h-full z-30 w-80"
+          initial={false}
+          animate={{
+            x: sidebarOpen ? 0 : 320,
+          }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        >
+          <EditorSidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            editorState={editorState}
+            actionButtons={actionButtons}
+            onActionButtonsChange={setActionButtons}
+            onAddBlock={addBlock}
+            onDeleteBlock={deleteBlock}
+            onSelectBlock={selectBlock}
+            onRemoveActionButton={handleRemoveActionButton}
+            onClearAllActionButtons={handleClearAllActionButtons}
+            onReorderActionButtons={handleReorderActionButtons}
+            onMoveBlockUp={handleMoveBlockUp}
+            onMoveBlockDown={handleMoveBlockDown}
+            onMoveActionButtonUp={handleMoveActionButtonUp}
+            onMoveActionButtonDown={handleMoveActionButtonDown}
+          />
+        </motion.div>
       )}
     </div>
   );
