@@ -9,21 +9,10 @@ const nextConfig = {
       config.optimization.minimize = false;
     }
 
-    // Handle AWS SDK v3 ES modules
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-    };
-
     return config;
   },
   images: { unoptimized: true },
   swcMinify: false,
-  experimental: {
-    esmExternals: 'loose',
-  },
 };
 
 module.exports = nextConfig;

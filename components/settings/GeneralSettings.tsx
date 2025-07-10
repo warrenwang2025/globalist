@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { Settings, Save, Globe, Clock, Palette } from "lucide-react";
+import { Settings, Save, Globe, Clock, Palette, UserCheck } from "lucide-react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export function GeneralSettings() {
   const [settings, setSettings] = useState({
@@ -262,6 +263,29 @@ export function GeneralSettings() {
               </>
             )}
           </Button>
+        </div>
+
+        {/* Preferences Section */}
+        <div className="pt-6 border-t">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold flex items-center gap-2 mb-2">
+                <UserCheck className="h-4 w-4" />
+                Onboarding Preferences
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Revisit and update your onboarding preferences and settings
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/onboarding?force-navigation=true'}
+              className="flex items-center gap-2"
+            >
+              <UserCheck className="h-4 w-4" />
+              Update Preferences
+            </Button>
+          </div>
         </div>
       </div>
     </Card>
