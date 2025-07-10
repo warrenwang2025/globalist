@@ -118,6 +118,7 @@ export function FloatingAIAssistant({
   const [showToneSelector, setShowToneSelector] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [usageStats, setUsageStats] = useState({
     hourlyRequestsRemaining: 20,
     totalRequests: 0,
@@ -126,6 +127,18 @@ export function FloatingAIAssistant({
   const { toast } = useToast();
   const { generateContent, isGenerating } = useAIContentGeneration();
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Close tone selector when clicking outside
   useEffect(() => {
@@ -485,9 +498,10 @@ export function FloatingAIAssistant({
     }
   };
 
+  // Responsive positioning classes
   const positionClasses = {
-    "bottom-right": "bottom-6 right-6",
-    "bottom-left": "bottom-6 left-6",
+    "bottom-right": isMobile ? "bottom-4 right-4" : "bottom-6 right-6",
+    "bottom-left": isMobile ? "bottom-4 left-4" : "bottom-6 left-6",
   };
 
   return (
@@ -501,26 +515,28 @@ export function FloatingAIAssistant({
             transition={{ duration: 0.2 }}
             className="mb-4"
           >
-            <Card className="w-96 p-4 shadow-xl border-2 bg-card/95 backdrop-blur-sm">
+            <Card className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-96'} max-w-[96vw] p-3 sm:p-4 shadow-xl border-2 bg-card/95 backdrop-blur-sm`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-foreground">AI Assistant</h3>
+                  <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">AI Assistant</h3>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setActiveTab('settings')}
+                    className="h-8 w-8 p-0 sm:h-auto sm:w-auto sm:p-2"
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsOpen(false)}
+                    className="h-8 w-8 p-0 sm:h-auto sm:w-auto sm:p-2"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
@@ -531,26 +547,26 @@ export function FloatingAIAssistant({
                   variant="ghost"
                   size="sm"
                   onClick={() => setActiveTab('tools')}
-                  className={`flex-1 rounded-none border-b-2 transition-colors ${
+                  className={`flex-1 rounded-none border-b-2 transition-colors text-xs sm:text-sm ${
                     activeTab === 'tools'
                       ? 'border-primary text-primary bg-primary/10'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Wand2 className="h-4 w-4 mr-2" />
+                  <Wand2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Tools
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setActiveTab('settings')}
-                  className={`flex-1 rounded-none border-b-2 transition-colors ${
+                  className={`flex-1 rounded-none border-b-2 transition-colors text-xs sm:text-sm ${
                     activeTab === 'settings'
                       ? 'border-primary text-primary bg-primary/10'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <Settings className="h-4 w-4 mr-2" />
+                  <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Settings
                 </Button>
               </div>
@@ -558,258 +574,294 @@ export function FloatingAIAssistant({
               {/* Tab Content */}
               {activeTab === 'tools' ? (
                 <>
-                  {/* AI Tools Grid */}
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                {AI_TOOLS.map((tool) => {
-                  const hasContent = getCurrentContent().trim().length > 0;
-                  
-                  // Determine if button should be disabled
-                  let isDisabled = false;
-                  let disabledReason = "";
-                  
-                  if (isGenerating) {
-                    isDisabled = true;
-                    disabledReason = "AI is currently processing...";
-                  } else if (tool.premium && !user.isPremium) {
-                    isDisabled = true;
-                    disabledReason = "Requires premium subscription";
-                  } else if (tool.requiresContent && !hasContent) {
-                    isDisabled = true;
-                    disabledReason = "Write some content first to use this tool";
-                  }
-                  
-                  return (
-                    <Button
-                      key={tool.id}
-                      variant={selectedTool === tool.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedTool(tool.id)}
-                      disabled={isDisabled}
-                      className="h-auto p-2 flex flex-col items-center gap-1 w-full"
-                      title={isDisabled ? disabledReason : tool.description}
-                    >
-                      <tool.icon className="h-4 w-4" />
-                      <span className="text-xs">{tool.label}</span>
-                      {tool.premium && (
-                        <Badge variant={user.isPremium ? "default" : "secondary"} className="text-xs px-1">
-                          Pro
-                        </Badge>
-                      )}
-                    </Button>
-                  );
-                })}
-                
-                {/* Tone Selector Button */}
-                <div className="relative">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setShowToneSelector(!showToneSelector)}
-                    disabled={isGenerating}
-                    className="h-auto p-2 flex flex-col items-center gap-1 w-full relative"
-                    title="Select writing tone"
-                  >
-                    <div className="flex items-center gap-1">
-                      {(() => {
-                        const selectedToneData = TONE_OPTIONS.find(t => t.value === selectedTone);
-                        const IconComponent = selectedToneData?.icon || Palette;
-                        return <IconComponent className="h-4 w-4" />;
-                      })()}
-                      {showToneSelector && <ChevronUp className="h-3 w-3" />}
-                      {!showToneSelector && <ChevronDown className="h-3 w-3" />}
-                    </div>
-                    <span className="text-xs">Tone</span>
-                    <span className="text-xs font-medium capitalize bg-primary/10 px-1 rounded">
-                      {selectedTone}
-                    </span>
-                  </Button>
-
-                  {/* Rigid L-Shape Tone Selector */}
-                  <AnimatePresence>
-                    {showToneSelector && (
-                      <>
-                        {/* Backdrop blur */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.15 }}
-                          className="fixed inset-0 bg-black/25 backdrop-blur-md z-40"
-                          onClick={() => setShowToneSelector(false)}
-                        />
-                        
-                        {/* L-Shape Container - positioned relative to the pivot button */}
-                        <div className="absolute bottom-0 left-0 z-50">
-                          <motion.div
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="relative"
-                          >
-                            {/* Grid-based L-shape layout: 3 vertical + 3 horizontal (excluding corner) */}
-                            {TONE_OPTIONS.map((tone, index) => {
-                              // Define L-shape positions for 6 buttons:
-                              // Vertical column: positions 0, 1, 2 (bottom to top)
-                              // Horizontal row: positions 3, 4, 5 (right to left from corner)
-                              // Position 0 is the corner (shared reference point)
-                              
-                              const gridSize = 44; // Button size + gap
-                              const buttonSize = 40; // Actual button size
-                              
-                              let x = 0;
-                              let y = 0;
-                              
-                              switch (index) {
-                                case 0: // Corner position (bottom-right of L)
-                                  x = 0;
-                                  y = 0;
-                                  break;
-                                case 1: // Above corner
-                                  x = 0;
-                                  y = -gridSize;
-                                  break;
-                                case 2: // Top of vertical column
-                                  x = 0;
-                                  y = -gridSize * 2;
-                                  break;
-                                case 3: // Left of corner
-                                  x = -gridSize;
-                                  y = 0;
-                                  break;
-                                case 4: // Middle of horizontal row
-                                  x = -gridSize * 2;
-                                  y = 0;
-                                  break;
-                                case 5: // Far left of horizontal row
-                                  x = -gridSize * 3;
-                                  y = 0;
-                                  break;
-                                default:
-                                  x = 0;
-                                  y = 0;
-                              }
-                              
-                              return (
-                                <motion.div
-                                  key={tone.value}
-                                  initial={{ 
-                                    scale: 0, 
-                                    opacity: 0,
-                                    x: 0,
-                                    y: 0
-                                  }}
-                                  animate={{ 
-                                    scale: 1, 
-                                    opacity: 1,
-                                    x: x,
-                                    y: y
-                                  }}
-                                  exit={{ 
-                                    scale: 0, 
-                                    opacity: 0,
-                                    x: 0,
-                                    y: 0
-                                  }}
-                                  transition={{ 
-                                    duration: 0.2,
-                                    delay: index * 0.03,
-                                    ease: "easeOut"
-                                  }}
-                                  className="absolute"
-                                  style={{
-                                    transformOrigin: 'center center',
-                                    width: `${buttonSize}px`,
-                                    height: `${buttonSize}px`
-                                  }}
-                                >
-                                  {/* Perfect Square Grid Button - High Fidelity */}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedTone(tone.value);
-                                      setShowToneSelector(false);
-                                    }}
-                                    className={`
-                                      w-full h-full rounded-md transition-all duration-200 border p-0 flex items-center justify-center
-                                      ${selectedTone === tone.value 
-                                        ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/30 ring-1 ring-blue-400/50' 
-                                        : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:border-gray-600 hover:text-white'
-                                      }
-                                    `}
-                                    title={tone.label}
-                                  >
-                                    <tone.icon className="h-4 w-4" />
-                                  </Button>
-                                </motion.div>
-                              );
-                            })}
-                          </motion.div>
+                  {/* AI Tools Grid - Responsive */}
+                  <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-2 mb-4`}>
+                    {AI_TOOLS.map((tool) => {
+                      const hasContent = getCurrentContent().trim().length > 0;
+                      
+                      // Determine if button should be disabled
+                      let isDisabled = false;
+                      let disabledReason = "";
+                      
+                      if (isGenerating) {
+                        isDisabled = true;
+                        disabledReason = "AI is currently processing...";
+                      } else if (tool.premium && !user.isPremium) {
+                        isDisabled = true;
+                        disabledReason = "Requires premium subscription";
+                      } else if (tool.requiresContent && !hasContent) {
+                        isDisabled = true;
+                        disabledReason = "Write some content first to use this tool";
+                      }
+                      
+                      return (
+                        <Button
+                          key={tool.id}
+                          variant={selectedTool === tool.id ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setSelectedTool(tool.id)}
+                          disabled={isDisabled}
+                          className={`h-auto ${isMobile ? 'p-2' : 'p-2'} flex flex-col items-center gap-1 w-full min-h-[60px] sm:min-h-[70px]`}
+                          title={isDisabled ? disabledReason : tool.description}
+                        >
+                          <tool.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span className="text-xs leading-tight text-center">{tool.label}</span>
+                          {tool.premium && (
+                            <Badge variant={user.isPremium ? "default" : "secondary"} className="text-xs px-1 py-0">
+                              Pro
+                            </Badge>
+                          )}
+                        </Button>
+                      );
+                    })}
+                    
+                    {/* Tone Selector Button */}
+                    <div className="relative">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setShowToneSelector(!showToneSelector)}
+                        disabled={isGenerating}
+                        className={`h-auto ${isMobile ? 'p-2' : 'p-2'} flex flex-col items-center gap-1 w-full relative min-h-[60px] sm:min-h-[70px]`}
+                        title="Select writing tone"
+                      >
+                        <div className="flex items-center gap-1">
+                          {(() => {
+                            const selectedToneData = TONE_OPTIONS.find(t => t.value === selectedTone);
+                            const IconComponent = selectedToneData?.icon || Palette;
+                            return <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />;
+                          })()}
+                          {showToneSelector && <ChevronUp className="h-2 w-2 sm:h-3 sm:w-3" />}
+                          {!showToneSelector && <ChevronDown className="h-2 w-2 sm:h-3 sm:w-3" />}
                         </div>
-                      </>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+                        <span className="text-xs leading-tight">Tone</span>
+                        <span className="text-xs font-medium capitalize bg-primary/10 px-1 rounded leading-tight">
+                          {selectedTone}
+                        </span>
+                      </Button>
 
-              {/* Tool Description */}
-              {selectedTool && (
-                <div className="mb-4 p-3 bg-muted/20 rounded-lg">
-                  <div className="text-sm text-muted-foreground">
-                    <strong>{AI_TOOLS.find(t => t.id === selectedTool)?.label}:</strong>{' '}
-                    {AI_TOOLS.find(t => t.id === selectedTool)?.description}
+                      {/* Responsive Tone Selector */}
+                      <AnimatePresence>
+                        {showToneSelector && (
+                          <>
+                            {/* Backdrop blur */}
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.15 }}
+                              className="fixed inset-0 bg-black/25 backdrop-blur-md z-40"
+                              onClick={() => setShowToneSelector(false)}
+                            />
+                            
+                            {/* Mobile: Simple Grid Layout */}
+                            {isMobile ? (
+                              <div className="absolute bottom-full left-0 right-0 mb-2 z-50">
+                                <motion.div
+                                  initial={{ scale: 0.8, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ scale: 0.8, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="bg-card/95 backdrop-blur-sm rounded-lg border shadow-xl p-3"
+                                >
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {TONE_OPTIONS.map((tone) => (
+                                      <Button
+                                        key={tone.value}
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setSelectedTone(tone.value);
+                                          setShowToneSelector(false);
+                                        }}
+                                        className={`h-12 flex flex-col items-center gap-1 transition-all duration-200 ${
+                                          selectedTone === tone.value 
+                                            ? 'bg-blue-600 text-white border-blue-500 shadow-lg' 
+                                            : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
+                                        }`}
+                                        title={tone.label}
+                                      >
+                                        <tone.icon className="h-3 w-3" />
+                                        <span className="text-xs">{tone.label.slice(0, 4)}</span>
+                                      </Button>
+                                    ))}
+                                  </div>
+                                </motion.div>
+                              </div>
+                            ) : (
+                              /* Desktop: L-Shape Container */
+                              <div className="absolute bottom-0 left-0 z-50">
+                                <motion.div
+                                  initial={{ scale: 0, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  exit={{ scale: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2, ease: "easeOut" }}
+                                  className="relative"
+                                >
+                                  {/* Grid-based L-shape layout: 3 vertical + 3 horizontal (excluding corner) */}
+                                  {TONE_OPTIONS.map((tone, index) => {
+                                    // Define L-shape positions for 6 buttons:
+                                    // Vertical column: positions 0, 1, 2 (bottom to top)
+                                    // Horizontal row: positions 3, 4, 5 (right to left from corner)
+                                    // Position 0 is the corner (shared reference point)
+                                    
+                                    const gridSize = 44; // Button size + gap
+                                    const buttonSize = 40; // Actual button size
+                                    
+                                    let x = 0;
+                                    let y = 0;
+                                    
+                                    switch (index) {
+                                      case 0: // Corner position (bottom-right of L)
+                                        x = 0;
+                                        y = 0;
+                                        break;
+                                      case 1: // Above corner
+                                        x = 0;
+                                        y = -gridSize;
+                                        break;
+                                      case 2: // Top of vertical column
+                                        x = 0;
+                                        y = -gridSize * 2;
+                                        break;
+                                      case 3: // Left of corner
+                                        x = -gridSize;
+                                        y = 0;
+                                        break;
+                                      case 4: // Middle of horizontal row
+                                        x = -gridSize * 2;
+                                        y = 0;
+                                        break;
+                                      case 5: // Far left of horizontal row
+                                        x = -gridSize * 3;
+                                        y = 0;
+                                        break;
+                                      default:
+                                        x = 0;
+                                        y = 0;
+                                    }
+                                    
+                                    return (
+                                      <motion.div
+                                        key={tone.value}
+                                        initial={{ 
+                                          scale: 0, 
+                                          opacity: 0,
+                                          x: 0,
+                                          y: 0
+                                        }}
+                                        animate={{ 
+                                          scale: 1, 
+                                          opacity: 1,
+                                          x: x,
+                                          y: y
+                                        }}
+                                        exit={{ 
+                                          scale: 0, 
+                                          opacity: 0,
+                                          x: 0,
+                                          y: 0
+                                        }}
+                                        transition={{ 
+                                          duration: 0.2,
+                                          delay: index * 0.03,
+                                          ease: "easeOut"
+                                        }}
+                                        className="absolute"
+                                        style={{
+                                          transformOrigin: 'center center',
+                                          width: `${buttonSize}px`,
+                                          height: `${buttonSize}px`
+                                        }}
+                                      >
+                                        {/* Perfect Square Grid Button - High Fidelity */}
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => {
+                                            setSelectedTone(tone.value);
+                                            setShowToneSelector(false);
+                                          }}
+                                          className={`
+                                            w-full h-full rounded-md transition-all duration-200 border p-0 flex items-center justify-center
+                                            ${selectedTone === tone.value 
+                                              ? 'bg-blue-600 text-white border-blue-500 shadow-lg shadow-blue-500/30 ring-1 ring-blue-400/50' 
+                                              : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 hover:border-gray-600 hover:text-white'
+                                            }
+                                          `}
+                                          title={tone.label}
+                                        >
+                                          <tone.icon className="h-4 w-4" />
+                                        </Button>
+                                      </motion.div>
+                                    );
+                                  })}
+                                </motion.div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                    <Palette className="h-3 w-3" />
-                    Tone: <span className="font-medium text-primary capitalize">{selectedTone}</span>
-                  </div>
-                </div>
-              )}
 
-              {/* Custom Prompt for Ideas/Headlines */}
-              {selectedTool && (selectedTool === "ideas" || selectedTool === "headlines") && (
-                <div className="mb-4 p-3 bg-muted/30 rounded-lg">
-                  <div className="text-sm font-medium mb-2 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4" />
-                    Enter your {selectedTool} prompt:
-                  </div>
-                  <Textarea
-                    placeholder={`What would you like ${selectedTool} about?`}
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    className="min-h-[80px] resize-none"
-                  />
-                  <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <Palette className="h-3 w-3" />
-                    Will generate {selectedTool} with a <span className="font-medium text-primary capitalize">{selectedTone}</span> tone
-                  </div>
-                </div>
-              )}
-
-              {/* Execute Button */}
-              {selectedTool && (
-                <Button
-                  onClick={() => handleToolExecution(selectedTool)}
-                  disabled={isGenerating || usageStats.hourlyRequestsRemaining <= 0}
-                  className="w-full"
-                >
-                  {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Zap className="h-4 w-4 mr-2" />
+                  {/* Tool Description */}
+                  {selectedTool && (
+                    <div className="mb-4 p-3 bg-muted/20 rounded-lg">
+                      <div className="text-sm text-muted-foreground">
+                        <strong>{AI_TOOLS.find(t => t.id === selectedTool)?.label}:</strong>{' '}
+                        {AI_TOOLS.find(t => t.id === selectedTool)?.description}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Palette className="h-3 w-3" />
+                        Tone: <span className="font-medium text-primary capitalize">{selectedTone}</span>
+                      </div>
+                    </div>
                   )}
-                  {isGenerating ? "Enhancing..." : "Enhance with AI"}
-                </Button>
-              )}
 
-              {usageStats.hourlyRequestsRemaining <= 0 && (
-                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    You&apos;ve reached your hourly limit. Please wait or upgrade.
-                  </p>
-                </div>
-              )}
+                  {/* Custom Prompt for Ideas/Headlines */}
+                  {selectedTool && (selectedTool === "ideas" || selectedTool === "headlines") && (
+                    <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+                      <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        Enter your {selectedTool} prompt:
+                      </div>
+                      <Textarea
+                        placeholder={`What would you like ${selectedTool} about?`}
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        className="min-h-[80px] resize-none text-sm"
+                      />
+                      <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                        <Palette className="h-3 w-3" />
+                        Will generate {selectedTool} with a <span className="font-medium text-primary capitalize">{selectedTone}</span> tone
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Execute Button */}
+                  {selectedTool && (
+                    <Button
+                      onClick={() => handleToolExecution(selectedTool)}
+                      disabled={isGenerating || usageStats.hourlyRequestsRemaining <= 0}
+                      className="w-full"
+                    >
+                      {isGenerating ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Zap className="h-4 w-4 mr-2" />
+                      )}
+                      {isGenerating ? "Enhancing..." : "Enhance with AI"}
+                    </Button>
+                  )}
+
+                  {usageStats.hourlyRequestsRemaining <= 0 && (
+                    <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        You&apos;ve reached your hourly limit. Please wait or upgrade.
+                      </p>
+                    </div>
+                  )}
                 </>
               ) : (
                 /* Settings Tab Content */
@@ -915,32 +967,32 @@ export function FloatingAIAssistant({
         )}
       </AnimatePresence>
 
-      {/* Floating Button */}
+      {/* Responsive Floating Button */}
       <motion.div
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
         <Button
           onClick={() => setIsOpen(!isOpen)}
-          className="h-12 w-12 rounded-full shadow-lg"
+          className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} rounded-full shadow-lg`}
           size="icon"
         >
           {isOpen ? (
-            <ChevronDown className="h-5 w-5" />
+            <ChevronDown className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           ) : (
-            <Brain className="h-5 w-5" />
+            <Brain className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           )}
         </Button>
       </motion.div>
       
-      {/* Suggestions Panel */}
+      {/* Responsive Suggestions Panel */}
       <AnimatePresence>
         {showSuggestions && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="absolute bottom-16 right-0 w-80 bg-card/95 backdrop-blur-sm rounded-lg border shadow-xl p-4 z-40"
+            className={`absolute ${isMobile ? 'bottom-12 left-0 right-0' : 'bottom-16 right-0'} ${isMobile ? 'w-full' : 'w-80'} bg-card/95 backdrop-blur-sm rounded-lg border shadow-xl p-4 z-40`}
           >
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-medium text-sm">AI Suggestions</h3>
