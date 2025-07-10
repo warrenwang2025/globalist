@@ -8,6 +8,8 @@ import { UsageStatsService } from '@/lib/services/usageStatsService';
 import tokenEstimationService from '@/lib/services/tokenEstimationService';
 import { AIRequestValidator } from '@/lib/services/aiRequestValidator';
 import type { AIRequest, AIResponse } from '@/types/ai';
+import dbConnect from '@/lib/dbConnect';
+import User from '@/lib/models/User';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,6 +25,8 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
     const subscriptionLevel = (session.user as any).subscriptionLevel || 'free';
 
+    // Connect to database
+    await dbConnect();
     const requestsLeft = (await UsageStatsService.checkRateLimit(userId,subscriptionLevel)).canProceed; // Check if requests or tokens are zero
 
     if (!requestsLeft) {
@@ -112,6 +116,13 @@ export async function POST(request: NextRequest) {
       // Update usage stats and get formatted response
       await UsageStatsService.updateUsageStats(userId, 1, tokensToCharge);
       updatedUsageStats = await UsageStatsService.getUsageStatsResponse(userId, subscriptionLevel);
+      
+      // Increment aiGenerationsCount for the user
+      await User.findByIdAndUpdate(
+        userId,
+        { $inc: { aiGenerationsCount: 1 } },
+        { new: true }
+      );
       
     } catch (usageError) {
       console.error('Failed to update usage stats:', usageError);
