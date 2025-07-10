@@ -1,7 +1,60 @@
-// This is the simplest way to protect routes.
-// It will automatically redirect unauthenticated users to the page
-// you defined in the `pages: { signIn: ... }` option in your authOptions.
-export { default } from 'next-auth/middleware';
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
+
+export default withAuth(
+  async function middleware(req) {
+    const token = req.nextauth.token
+    const { pathname } = req.nextUrl
+    
+    
+    // Skip middleware entirely for these paths
+    if (pathname.startsWith('/api/') || 
+        pathname.startsWith('/signin') || 
+        pathname.startsWith('/signup') ||
+        pathname.startsWith('/_next/') ||
+        pathname.startsWith('/favicon.ico') ||
+        pathname.startsWith('/apple-touch-icon.png') ||
+        pathname.startsWith('/icon-') ||
+        pathname.includes('.png') ||
+        pathname.includes('.jpg') ||
+        pathname.includes('.jpeg') ||
+        pathname.includes('.gif') ||
+        pathname.includes('.svg') ||
+        pathname.includes('.ico') ||
+        pathname === '/') {
+      return NextResponse.next()
+    }
+    
+    // Check if user is authenticated and needs onboarding
+    if (token) {
+      // Check if token has required user information
+      if (!token.id || !token.email) {
+        console.warn("Token missing user information, redirecting to /signin");
+        return NextResponse.redirect(new URL("/signin", req.url));
+      }
+
+      // Use the onboarding status from the JWT token instead of database query
+      const isOnboarded = token.isOnboarded;
+      
+      // Check onboarding status
+      if (!isOnboarded && pathname !== '/onboarding') {
+        return NextResponse.redirect(new URL('/onboarding', req.url))
+      }
+      
+      // If user is onboarded but trying to access onboarding page, redirect to dashboard
+      if (isOnboarded && pathname === '/onboarding') {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+    }
+    
+    return NextResponse.next()
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+)
 
 // The matcher config tells the middleware WHICH routes to protect.
 export const config = {

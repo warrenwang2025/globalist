@@ -55,7 +55,8 @@ const authOptions : AuthOptions = {
           email: user.email,
           profilePicture: user.profilePicture,
           userSubscriptionLevel: user.userSubscriptionLevel,
-          rememberMe: credentials.rememberMe === 'true',
+          isOnboarded: user.isOnboarded,
+          rememberMe: credentials.rememberMe === 'true', // Convert string to boolean
         };
       },
     }),
@@ -106,8 +107,8 @@ const authOptions : AuthOptions = {
       return true;
     },
 
-    // Your existing JWT callback with OAuth support
-    async jwt({ token, user, account }) {
+    // JWT callback with OAuth support
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         const thirtyDays = 30 * 24 * 60 * 60;
         const oneDay = 20;
@@ -123,11 +124,30 @@ const authOptions : AuthOptions = {
         token.email = user.email;
         token.profilePicture = user.profilePicture;
         token.userSubscriptionLevel = user.userSubscriptionLevel;
+        token.isOnboarded = user.isOnboarded;
       }
+
+      // Handle session updates (like when onboarding is completed)
+      if (trigger === "update" && token.id) {
+        try {
+          await dbConnect();
+          const updatedUser = await User.findById(token.id);
+          if (updatedUser) {
+            token.isOnboarded = updatedUser.isOnboarded;
+            token.name = updatedUser.name;
+            token.email = updatedUser.email;
+            token.profilePicture = updatedUser.profilePicture;
+            token.userSubscriptionLevel = updatedUser.userSubscriptionLevel;
+          }
+        } catch (error) {
+          console.error('Error updating JWT token:', error);
+        }
+      }
+
       return token;
     },
 
-    // Your existing session callback (unchanged)
+    // Session callback
     async session({ session, token }) {
       if (session.user && token) {
         session.expires = new Date(token.exp * 1000).toISOString();
@@ -136,6 +156,7 @@ const authOptions : AuthOptions = {
         session.user.email = token.email;
         session.user.profilePicture = token.profilePicture;
         session.user.userSubscriptionLevel = token.userSubscriptionLevel;
+        session.user.isOnboarded = token.isOnboarded;
       }
       return session;
     },

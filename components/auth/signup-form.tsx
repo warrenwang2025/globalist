@@ -190,13 +190,11 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   try {
     // Make a POST request to your custom registration API route using Axios
-    console.log("Submitting registration data:", formData);
     const response = await axios.post('/api/auth/register', formData);
     
     // With Axios, a successful response (status 2xx) will proceed here.
     // An error response (status 4xx, 5xx) will automatically be thrown and caught in the catch block.
 
-    console.log("Registration successful:", response.data);
     
     // On success, redirect the user to the sign-in page.
     router.push('/signin?registered=true');

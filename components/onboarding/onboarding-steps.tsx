@@ -9,6 +9,7 @@ interface OnboardingStepsProps {
   currentStep: number
   onStepComplete: (data: any) => void
   onPrevious: () => void
+  onComplete?: () => Promise<void> // Make onComplete async
   data: any
 }
 
@@ -16,13 +17,17 @@ export function OnboardingSteps({
   currentStep, 
   onStepComplete, 
   onPrevious, 
+  onComplete,
   data 
 }: OnboardingStepsProps) {
-  const handleComplete = () => {
-    // Handle final completion
-    console.log("Setup completed!")
-    // Redirect to main app
-    window.location.href = "/dashboard"
+  const handleComplete = async () => {
+    // Call the API to mark onboarding as complete
+    if (onComplete) {
+      await onComplete();
+    }
+    
+    // Note: After completion, the onboarding page should handle the redirect
+    // or move to the next step (OnboardingCompletion)
   }
 
   const renderStep = () => {

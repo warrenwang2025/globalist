@@ -15,6 +15,7 @@ declare module 'next-auth' {
       email?: string; // Optional property for user's email
       profilePicture?: string; // Optional property for profile picture
       userSubscriptionLevel?: string; // Optional property for user type (e.g., 'admin',
+      isOnboarded?: boolean; // Optional property for onboarding completion status
       expires?: string; // Optional property for session expiration time
     } & DefaultSession['user']; // Keep the default properties like name, email, image
   }
@@ -29,6 +30,7 @@ declare module 'next-auth' {
     email?: string; // Optional property for user's email
     profilePicture?: string; // Optional property for profile picture
     userSubscriptionLevel?: string; // Optional property for user type (e.g., 'admin',
+    isOnboarded?: boolean; // Optional property for onboarding completion status
     rememberMe?: boolean; // Optional property for remember me functionality
   }
 }
@@ -44,6 +46,7 @@ declare module 'next-auth/jwt' {
     email?: string;
     profilePicture?: string; // Optional property for profile picture
     userSubscriptionLevel?: string; // Optional property for user type (e.g., 'admin', 'user', etc.)
+    isOnboarded?: boolean; // Optional property for onboarding completion status
     rememberMe?: boolean; // Optional property for remember me functionality
     exp: number; // Optional property for token expiration time
   }
