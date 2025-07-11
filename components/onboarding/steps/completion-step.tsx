@@ -4,18 +4,29 @@ import { CheckCircle, Sparkles, ArrowRight, Users, Calendar, BarChart3 } from "l
 import { useEffect, useState } from "react"
 
 interface CompletionStepProps {
-  onComplete: () => void
+  onComplete: () => Promise<void> | void
   userData?: any // Optional: to display user-specific data
 }
 
 export function CompletionStep({ onComplete, userData }: CompletionStepProps) {
   const [showContent, setShowContent] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   useEffect(() => {
     // Trigger animation after component mounts
     const timer = setTimeout(() => setShowContent(true), 100)
     return () => clearTimeout(timer)
   }, [])
+
+  const handleComplete = async () => {
+    setIsCompleting(true)
+    try {
+      await onComplete()
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+      setIsCompleting(false)
+    }
+  }
 
   const features = [
     {
@@ -81,9 +92,23 @@ export function CompletionStep({ onComplete, userData }: CompletionStepProps) {
         </div>
 
         <div className="pt-6">
-          <Button onClick={onComplete} size="lg" className="px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-            Launch Media Suite
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button 
+            onClick={handleComplete} 
+            size="lg" 
+            className="px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            disabled={isCompleting}
+          >
+            {isCompleting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Launching Media Suite...
+              </>
+            ) : (
+              <>
+                Launch Media Suite
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </CardContent>

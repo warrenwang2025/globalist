@@ -1,24 +1,34 @@
 import NextAuth, { AuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import FacebookProvider from 'next-auth/providers/facebook';
 import dbConnect from '@/lib/dbConnect'; // Adjust path if needed
 import User from '@/lib/models/User'; // Adjust path if needed
 
-const authOptions : AuthOptions =     {
+const authOptions : AuthOptions = {
   // 1. CONFIGURE LOGIN PROVIDERS
   providers: [
+    // Add Google Provider
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+    
+    // Add Facebook Provider
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
+    
+    // Your existing Credentials Provider (unchanged)
     CredentialsProvider({
-      // This is the "provider" for traditional email & password login.
       name: 'Credentials',
       credentials: {
         email: {},
         password: {},
-        rememberMe: {}, // Optional field for remember me functionality
+        rememberMe: {},
       },
-
-      // This 'authorize' function is WHERE YOUR LOGIN LOGIC GOES.
-      // It's the replacement for your old POST /api/login route.
       authorize: async (credentials) => {
-
         if (!credentials) {
           throw new Error('No credentials provided.');
         }
@@ -27,11 +37,15 @@ const authOptions : AuthOptions =     {
 
         const user = await User.findOne({
           email: credentials.email,
-        }).select('+password');
+        }).select('+password +isActive');
 
         if (!user) {
-          // NextAuth.js will handle the error and show it on the login form.
           return null;
+        }
+
+        // Check if user account is active
+        if (!user.isActive) {
+          throw new Error('Account has been deleted.');
         }
 
         const isValid = await user.comparePassword(credentials.password,user.password);
@@ -40,69 +54,110 @@ const authOptions : AuthOptions =     {
           return null;
         }
 
-        // If everything is correct, return the user object.
-        // NextAuth.js will then automatically handle creating the session, JWT, and cookie.
-        // Make sure to NOT return the password.
         return {
           id: user._id,
           name: user.name,
           email: user.email,
           profilePicture: user.profilePicture,
           userSubscriptionLevel: user.userSubscriptionLevel,
+          isOnboarded: user.isOnboarded,
           rememberMe: credentials.rememberMe === 'true', // Convert string to boolean
         };
       },
     }),
-    // You can easily add more providers here later!
-    // e.g., GoogleProvider({ ... })
   ],
 
   // 2. CONFIGURE SESSION STRATEGY
   session: {
-    // We'll use JSON Web Tokens for our session strategy. This is stateless.
     strategy: 'jwt'
   },
 
   // 3. ADD YOUR SECRET
-  // This is used to sign the JWT. It's like your old JWT_SECRET.
   secret: process.env.NEXTAUTH_SECRET,
 
-  // 4. CONFIGURE CUSTOM PAGES (Optional but recommended)
+  // 4. CONFIGURE CUSTOM PAGES
   pages: {
-    signIn: '/signin', // Tell NextAuth.js that your login page is at `/login`
-    // You can also specify pages for signOut, error, verifyRequest, etc.
+    signIn: '/signin',
   },
 
-  // 5. CALLBACKS (Advanced customization)
-  // Callbacks let you control what happens at different stages.
+  // 5. CALLBACKS (Extended to handle OAuth)
   callbacks: {
-    // This callback adds custom data (like user ID and username) to the JWT.
-    async jwt({ token, user }) {
+    // Handle OAuth sign-ins
+    async signIn({ user, account, profile }) {
+      // Only handle OAuth providers, let credentials flow through unchanged
+      if (account?.provider === 'google' || account?.provider === 'facebook') {
+        await dbConnect();
+        
+        // Check if user exists
+        let existingUser = await User.findOne({ email: user.email }).select('+isActive');
+        
+        if (!existingUser) {
+          // Create new user for OAuth
+          existingUser = await User.create({
+            name: user.name,
+            email: user.email,
+            profilePicture: user.image,
+            userSubscriptionLevel: 'free', // Default level
+            provider: account.provider,
+            providerId: account.providerAccountId,
+          });
+        } else {
+          // Check if existing user account is active
+          if (!existingUser.isActive) {
+            throw new Error('Account has been deleted.');
+          }
+        }
+        
+        // Add database info to user object
+        user.id = existingUser._id.toString();
+        user.userSubscriptionLevel = existingUser.userSubscriptionLevel;
+        user.profilePicture = existingUser.profilePicture || user.image;
+      }
+      
+      return true;
+    },
+
+    // JWT callback with OAuth support
+    async jwt({ token, user, account, trigger }) {
       if (user) {
-        // --- This is the core logic for "Remember Me" ---
         const thirtyDays = 30 * 24 * 60 * 60;
-        // const oneDay = 24 * 60 * 60;
         const oneDay = 20;
         
-        // Check the rememberMe flag we passed from `authorize`
-        const sessionIsLongLived = user.rememberMe;
+        // For OAuth, default to longer sessions; for credentials, use rememberMe
+        const isOAuth = account?.provider === 'google' || account?.provider === 'facebook';
+        const sessionIsLongLived = user.rememberMe || isOAuth;
         const expirationTime = Math.floor(Date.now() / 1000) + (sessionIsLongLived ? thirtyDays : oneDay);
 
-        // Set the token's expiration
-        // --- End of Remember Me logic ---
-        
-        // Persist the other user data to the token
         token.id = user.id;
         token.name = user.name;
         token.exp = expirationTime;
         token.email = user.email;
         token.profilePicture = user.profilePicture;
         token.userSubscriptionLevel = user.userSubscriptionLevel;
+        token.isOnboarded = user.isOnboarded;
       }
+
+      // Handle session updates (like when onboarding is completed)
+      if (trigger === "update" && token.id) {
+        try {
+          await dbConnect();
+          const updatedUser = await User.findById(token.id);
+          if (updatedUser) {
+            token.isOnboarded = updatedUser.isOnboarded;
+            token.name = updatedUser.name;
+            token.email = updatedUser.email;
+            token.profilePicture = updatedUser.profilePicture;
+            token.userSubscriptionLevel = updatedUser.userSubscriptionLevel;
+          }
+        } catch (error) {
+          console.error('Error updating JWT token:', error);
+        }
+      }
+
       return token;
     },
-    // This callback adds the custom data from the JWT to the session object
-    // so you can access it on the client-side.
+
+    // Session callback
     async session({ session, token }) {
       if (session.user && token) {
         session.expires = new Date(token.exp * 1000).toISOString();
@@ -111,6 +166,7 @@ const authOptions : AuthOptions =     {
         session.user.email = token.email;
         session.user.profilePicture = token.profilePicture;
         session.user.userSubscriptionLevel = token.userSubscriptionLevel;
+        session.user.isOnboarded = token.isOnboarded;
       }
       return session;
     },

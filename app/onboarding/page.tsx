@@ -1,15 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession, signIn } from "next-auth/react";
 import { OnboardingWelcome } from "@/components/onboarding/onboarding-welcome";
 import { OnboardingSteps } from "@/components/onboarding/onboarding-steps";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
-import { OnboardingCompletion } from "@/components/onboarding/onboarding-completion";
 import { OnboardingData } from "@/types/onboarding";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function OnboardingPage() {
+  const { data: session, update } = useSession();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -22,6 +26,7 @@ export default function OnboardingPage() {
   });
 
   const totalSteps = 7;
+  const isFromPreferences = searchParams?.get('force-navigation') === 'true';
 
   // Load existing preferences on mount
   useEffect(() => {
@@ -59,12 +64,28 @@ export default function OnboardingPage() {
         if (data.experience) step = Math.max(step, 4);
         if (data.preferences && Object.keys(data.preferences).length > 0) step = Math.max(step, 5);
         
+        // Don't go beyond the completion step (step 6)
+        step = Math.min(step, totalSteps);
+        
+        // If coming from preferences, always start at step 1 (user type) regardless of existing data
+        if (isFromPreferences) {
+          step = 1;
+        }
+        
         setCurrentStep(step);
+      } else if (isFromPreferences) {
+        // If no existing data but coming from preferences, start at step 1
+        setCurrentStep(1);
       }
     } catch (error: any) {
       // If it's a 404 error, that's expected for new users
       if (error.response?.status !== 404) {
         console.error('Error loading preferences:', error);
+      }
+      
+      // If coming from preferences but no data found, start at step 1
+      if (isFromPreferences) {
+        setCurrentStep(1);
       }
     } finally {
       setIsLoading(false);
@@ -94,7 +115,8 @@ export default function OnboardingPage() {
       return;
     }
     
-    if (currentStep < totalSteps) {
+    // Move to next step, but don't go beyond the last step
+    if (currentStep < totalSteps - 1) {
       setCurrentStep((prev) => prev + 1);
     }
   };
@@ -107,22 +129,32 @@ export default function OnboardingPage() {
 
   const handleOnboardingComplete = async () => {
     try {
-      // Final save with complete data
-      const response = await axios.post('/api/onboarding/preferences', onboardingData, {
+      // Mark user as onboarded
+      const onboardingResponse = await axios.post('/api/onboarding/complete', {}, {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      if (response.data.success) {
-        // Redirect to dashboard
+
+      if (onboardingResponse.data.success) {
+        // Update the session to reflect the new onboarding status
+        // We need to trigger a session refresh to get the updated JWT token
+        await update();
+        
+        // Redirect directly to dashboard instead of showing completion page
         window.location.href = '/dashboard';
       } else {
-        console.error('Error completing onboarding:', response.data.error);
+        console.error('Error marking onboarding as complete:', onboardingResponse.data.error);
         alert('Error completing onboarding. Please try again.');
       }
     } catch (error: any) {
       console.error('Error completing onboarding:', error);
-      const errorMessage = error.response?.data?.error || 'Error completing onboarding. Please try again.';
-      alert(errorMessage);
+      if (error.response?.status === 401) {
+        // User is not authenticated, redirect to sign in
+        window.location.href = '/signin';
+      } else {
+        const errorMessage = error.response?.data?.error || 'Error completing onboarding. Please try again.';
+        alert(errorMessage);
+      }
     }
   };
 
@@ -138,21 +170,32 @@ export default function OnboardingPage() {
     );
   }
 
-  if (currentStep === totalSteps) {
-    return <OnboardingCompletion data={onboardingData} onComplete={handleOnboardingComplete} />;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
+            {isFromPreferences && (
+              <div className="flex justify-start mb-4">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => window.location.href = '/dashboard/settings'}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Settings
+                </Button>
+              </div>
+            )}
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome to Globalist Media Suite
+              {isFromPreferences ? 'Update Your Preferences' : 'Welcome to Globalist Media Suite'}
             </h1>
             <p className="text-muted-foreground text-lg">
-              Let&#39;s set up your media management experience
+              {isFromPreferences 
+                ? 'Review and update your media management preferences'
+                : 'Let\'s set up your media management experience'
+              }
             </p>
           </div>
 
@@ -167,12 +210,24 @@ export default function OnboardingPage() {
             <OnboardingWelcome onNext={() => setCurrentStep(1)} />
           )}
 
-          {/* Onboarding Steps */}
-          {currentStep > 0 && currentStep < totalSteps && (
+          {/* Onboarding Steps (steps 1-5) */}
+          {currentStep > 0 && currentStep < totalSteps - 1 && (
             <OnboardingSteps
               currentStep={currentStep}
               onStepComplete={handleStepComplete}
               onPrevious={handlePrevious}
+              onComplete={handleOnboardingComplete}
+              data={onboardingData}
+            />
+          )}
+
+          {/* Completion Step (step 6) */}
+          {currentStep === totalSteps - 1 && (
+            <OnboardingSteps
+              currentStep={currentStep}
+              onStepComplete={handleStepComplete}
+              onPrevious={handlePrevious}
+              onComplete={handleOnboardingComplete}
               data={onboardingData}
             />
           )}

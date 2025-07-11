@@ -36,9 +36,12 @@ async function dbConnect() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    });
+    try {
+      cached.promise = await mongoose.connect(MONGODB_URI, opts);
+    } catch (error) {
+      console.error('Database connection error:', error);
+      throw error;
+    }
   }
 
   // Wait for the connection promise to resolve and cache the connection
@@ -46,6 +49,7 @@ async function dbConnect() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    console.error('Database connection failed:', e);
     throw e;
   }
   

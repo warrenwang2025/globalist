@@ -1,6 +1,6 @@
 // Location: src/lib/models/User.ts
 
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document} from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
 
@@ -23,6 +23,12 @@ export interface IUser extends Document {
   bio?: string;
   location?: string;
   phone?: string;
+  company?: string;
+  website?: string;
+
+  // --- OAuth Support (NEW) ---
+  provider?: 'credentials' | 'google' | 'facebook';
+  providerId?: string;
 
   // --- Account Stats (from the UI) ---
   contentCreatedCount: number;
@@ -38,6 +44,11 @@ export interface IUser extends Document {
   userSubscriptionLevel: 'free' | 'plus' | 'pro'; // For future subscription plans
   isActive: boolean; // For soft-deleting an account
   planExpiresAt?: Date; // For subscription expiration
+  
+  // --- Onboarding Flow ---
+  isOnboarded: boolean; // Track if user has completed onboarding
+  onboardedAt?: Date; // When onboarding was completed
+  
   createdAt: Date; // Handled by timestamps
   updatedAt: Date; // Handled by timestamps
 }
@@ -69,22 +80,34 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required.'],
+      required: function(this: IUser) {
+        // Only require password for credentials provider
+        return this.provider === 'credentials' || !this.provider;
+      },
       select: false, // NEVER return the password by default
       validate: {
-        validator: (value: string) => validator.isStrongPassword(value, {
-          minLength: 8,
-          minLowercase: 1,
-          minUppercase: 1,
-          minNumbers: 1,
-          minSymbols: 1,
-        }),
+        validator: function(this: IUser, value: string) {
+          // Only validate password strength for credentials provider
+          if (this.provider === 'credentials' || !this.provider) {
+            return validator.isStrongPassword(value, {
+              minLength: 8,
+              minLowercase: 1,
+              minUppercase: 1,
+              minNumbers: 1,
+              minSymbols: 1,
+            });
+          }
+          return true; // Skip validation for OAuth users
+        },
         message: 'Password must be at least 8 characters long and include at least one lowercase letter, one uppercase letter, one number, and one symbol.',
       }
     },
     passwordConfirm: {
         type: String,
-        required: [true, 'Password confirmation is required.'], 
+        required: function(this: IUser) {
+          // Only require password confirmation for credentials provider
+          return (this.provider === 'credentials' || !this.provider) && this.isNew;
+        },
         validate: {
           // This only works on CREATE and SAVE, not on UPDATE
           validator: function (this: IUser, value: string) {
@@ -93,6 +116,18 @@ const UserSchema: Schema<IUser> = new Schema(
           message: 'Passwords do not match.',
         },
     },
+
+    // --- OAuth Support (NEW FIELDS) ---
+    provider: {
+      type: String,
+      enum: ['credentials', 'google', 'facebook'],
+      default: 'credentials',
+    },
+    providerId: {
+      type: String,
+      sparse: true, // Allows null values but ensures uniqueness when present
+    },
+
     // --- Profile Information ---
     profilePicture: {
       type: String,
@@ -112,6 +147,19 @@ const UserSchema: Schema<IUser> = new Schema(
       validate: {
         validator: (value: string) => !value || validator.isMobilePhone(value, 'any', { strictMode: false }),
         message: 'Please provide a valid phone number.',
+      },
+    },
+    company: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Company name cannot be more than 100 characters.'],
+    },
+    website: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (value: string) => !value || validator.isURL(value, { protocols: ['http', 'https'] }),
+        message: 'Please provide a valid website URL.',
       },
     },
 
@@ -150,6 +198,15 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     planExpiresAt: {
       type: Date
+    },
+    
+    // --- Onboarding Flow ---
+    isOnboarded: {
+      type: Boolean,
+      default: false, // New users start as not onboarded
+    },
+    onboardedAt: {
+      type: Date,
     }
   },
   {
@@ -158,10 +215,10 @@ const UserSchema: Schema<IUser> = new Schema(
   }
 );
 
-// This is the crucial part for Next.js to prevent model re-definition
+// Modified pre-save middleware to handle OAuth users
 UserSchema.pre('save', async function (next) {
-  // Only run this function if password was actually modified
-  if (!this.isModified('password')) return next();
+  // Only run this function if password was actually modified AND user is credentials-based
+  if (!this.isModified('password') || this.provider !== 'credentials') return next();
 
   // Hash the password with a cost of 12
   this.password = await bcrypt.hash(this.password!, 12);
@@ -172,13 +229,18 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
-// This middleware updates the passwordChangedAt field
+// Modified password change tracking middleware
 UserSchema.pre('save', function (next) {
-  // If the password wasn't modified or if this is a new document, don't do anything
-  if (!this.isModified('password') || this.isNew) return next();
+  // If the password wasn't modified, if this is a new document, or if it's OAuth user, don't do anything
+  if (!this.isModified('password') || this.isNew || this.provider !== 'credentials') return next();
 
   // We subtract 1 second to ensure the token is created AFTER the password is changed
   this.passwordChangedAt = new Date(Date.now() - 1000); 
+  next();
+});
+
+UserSchema.pre(/^find/, function (next) {
+  (this as mongoose.Query<any, any>).find({ isActive: { $ne: false } });
   next();
 });
 
