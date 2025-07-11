@@ -37,10 +37,15 @@ const authOptions : AuthOptions = {
 
         const user = await User.findOne({
           email: credentials.email,
-        }).select('+password');
+        }).select('+password +isActive');
 
         if (!user) {
           return null;
+        }
+
+        // Check if user account is active
+        if (!user.isActive) {
+          throw new Error('Account has been deleted.');
         }
 
         const isValid = await user.comparePassword(credentials.password,user.password);
@@ -84,7 +89,7 @@ const authOptions : AuthOptions = {
         await dbConnect();
         
         // Check if user exists
-        let existingUser = await User.findOne({ email: user.email });
+        let existingUser = await User.findOne({ email: user.email }).select('+isActive');
         
         if (!existingUser) {
           // Create new user for OAuth
@@ -96,6 +101,11 @@ const authOptions : AuthOptions = {
             provider: account.provider,
             providerId: account.providerAccountId,
           });
+        } else {
+          // Check if existing user account is active
+          if (!existingUser.isActive) {
+            throw new Error('Account has been deleted.');
+          }
         }
         
         // Add database info to user object

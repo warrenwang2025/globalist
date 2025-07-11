@@ -461,8 +461,41 @@ export function FloatingAIAssistant({
                 }
               })
               .join('\n\n');
-            // Pass enhancedEditorBlocks as the 4th argument
-            onAIEnhancement(originalContent, enhancedContent, tool, enhancedEditorBlocks);
+            // Convert enhancedEditorBlocks (AnyBlock[]) to ContentBlock[]
+            const enhancedContentBlocks = enhancedEditorBlocks
+              .filter(block => block.type === 'text' || block.type === 'heading' || block.type === 'quote' || block.type === 'list')
+              .map(block => {
+                switch (block.type) {
+                  case 'text':
+                    return {
+                      type: 'text',
+                      content: block.content.text,
+                    };
+                  case 'heading':
+                    return {
+                      type: 'heading',
+                      content: block.content.text,
+                      level: block.content.level,
+                    };
+                  case 'quote':
+                    return {
+                      type: 'quote',
+                      content: block.content.text,
+                      author: block.content.author,
+                    };
+                  case 'list':
+                    return {
+                      type: 'list',
+                      content: block.content.items,
+                      ordered: block.content.ordered,
+                    };
+                  default:
+                    return null;
+                }
+              })
+              .filter(Boolean);
+            // Pass enhancedContentBlocks as the 4th argument
+            onAIEnhancement(originalContent, enhancedContent, tool, enhancedContentBlocks as ContentBlock[]);
           } else {
             // Fallback: update the blocks directly
             onContentUpdate(enhancedEditorBlocks);
@@ -478,7 +511,7 @@ export function FloatingAIAssistant({
         if (result.usageStats) {
           setUsageStats({
             hourlyRequestsRemaining: result.usageStats.hourlyRequestsRemaining || 0,
-            totalRequests: result.usageStats.totalRequests || 0,
+            totalRequests: result.usageStats.hourlyTotalRequests || 0,
           });
         }
       } else {

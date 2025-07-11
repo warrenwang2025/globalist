@@ -73,7 +73,7 @@ export function Sidebar() {
   const user = {
     name: session?.user.name,
     email: session?.user.email,
-    avatar: session?.user.image,
+    avatar: session?.user.profilePicture,
     isPremium: session?.user.userSubscriptionLevel !== "free", // Assuming userSubscriptionLevel is set
   };
   const [imageError, setImageError] = useState(false);
@@ -286,7 +286,7 @@ export function Sidebar() {
                 <div className="relative mr-3 flex-shrink-0">
                   {!imageError ? (
                     <Image
-                      src={user?.avatar || "/avatars/default-avatar.jpg"}
+                      src={user?.avatar || "/default-user-profile-picture.webp"}
                       alt={user?.name || "User Avatar"}
                       width={40}
                       height={40}

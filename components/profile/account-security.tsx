@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { validatePassword, validatePasswordMatch } from "@/lib/utils";
 
 interface AccountSecurityProps {
   className?: string;
@@ -55,7 +57,7 @@ export function AccountSecurity({ className }: AccountSecurityProps) {
       return;
     }
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    if (!validatePasswordMatch(passwordForm.newPassword, passwordForm.confirmPassword)) {
       toast({
         title: "Password Mismatch",
         description: "New password and confirmation don't match.",
@@ -64,10 +66,12 @@ export function AccountSecurity({ className }: AccountSecurityProps) {
       return;
     }
 
-    if (passwordForm.newPassword.length < 8) {
+    // Validate new password using shared validation
+    const passwordValidation = validatePassword(passwordForm.newPassword);
+    if (!passwordValidation.isValid) {
       toast({
-        title: "Password Too Short",
-        description: "Password must be at least 8 characters long.",
+        title: "Password Too Weak",
+        description: `Password must meet all requirements: ${passwordValidation.errors.join(", ")}`,
         variant: "destructive",
       });
       return;
@@ -76,18 +80,21 @@ export function AccountSecurity({ className }: AccountSecurityProps) {
     setIsChangingPassword(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch('/api/profile/update-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword
+        })
+      });
 
-      // In a real app, you would make an API call here:
-      // const response = await fetch('/api/change-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     currentPassword: passwordForm.currentPassword,
-      //     newPassword: passwordForm.newPassword
-      //   })
-      // })
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update password');
+      }
 
       // Reset form
       setPasswordForm({
@@ -104,7 +111,7 @@ export function AccountSecurity({ className }: AccountSecurityProps) {
     } catch (error) {
       toast({
         title: "Password Change Failed",
-        description: "Failed to change password. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to change password. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -435,7 +442,14 @@ export function AccountSecurity({ className }: AccountSecurityProps) {
               onClick={handleChangePassword}
               disabled={isChangingPassword}
             >
-              {isChangingPassword ? "Changing..." : "Change Password"}
+              {isChangingPassword ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Changing...
+                </>
+              ) : (
+                "Change Password"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

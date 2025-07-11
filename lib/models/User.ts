@@ -23,6 +23,8 @@ export interface IUser extends Document {
   bio?: string;
   location?: string;
   phone?: string;
+  company?: string;
+  website?: string;
 
   // --- OAuth Support (NEW) ---
   provider?: 'credentials' | 'google' | 'facebook';
@@ -147,6 +149,19 @@ const UserSchema: Schema<IUser> = new Schema(
         message: 'Please provide a valid phone number.',
       },
     },
+    company: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Company name cannot be more than 100 characters.'],
+    },
+    website: {
+      type: String,
+      trim: true,
+      validate: {
+        validator: (value: string) => !value || validator.isURL(value, { protocols: ['http', 'https'] }),
+        message: 'Please provide a valid website URL.',
+      },
+    },
 
     // --- Account Stats ---
     contentCreatedCount: {
@@ -223,6 +238,12 @@ UserSchema.pre('save', function (next) {
   this.passwordChangedAt = new Date(Date.now() - 1000); 
   next();
 });
+
+UserSchema.pre(/^find/, function (next) {
+  (this as mongoose.Query<any, any>).find({ isActive: { $ne: false } });
+  next();
+});
+
 
 UserSchema.methods.comparePassword = async function (
   userEnteredPassword: string,

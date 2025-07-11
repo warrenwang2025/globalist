@@ -6,11 +6,14 @@ import { OnboardingWelcome } from "@/components/onboarding/onboarding-welcome";
 import { OnboardingSteps } from "@/components/onboarding/onboarding-steps";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
 import { OnboardingData } from "@/types/onboarding";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function OnboardingPage() {
   const { data: session, update } = useSession();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
@@ -23,6 +26,7 @@ export default function OnboardingPage() {
   });
 
   const totalSteps = 7;
+  const isFromPreferences = searchParams?.get('force-navigation') === 'true';
 
   // Load existing preferences on mount
   useEffect(() => {
@@ -61,12 +65,27 @@ export default function OnboardingPage() {
         if (data.preferences && Object.keys(data.preferences).length > 0) step = Math.max(step, 5);
         
         // Don't go beyond the completion step (step 6)
-        setCurrentStep(Math.min(step, totalSteps));
+        step = Math.min(step, totalSteps);
+        
+        // If coming from preferences, always start at step 1 (user type) regardless of existing data
+        if (isFromPreferences) {
+          step = 1;
+        }
+        
+        setCurrentStep(step);
+      } else if (isFromPreferences) {
+        // If no existing data but coming from preferences, start at step 1
+        setCurrentStep(1);
       }
     } catch (error: any) {
       // If it's a 404 error, that's expected for new users
       if (error.response?.status !== 404) {
         console.error('Error loading preferences:', error);
+      }
+      
+      // If coming from preferences but no data found, start at step 1
+      if (isFromPreferences) {
+        setCurrentStep(1);
       }
     } finally {
       setIsLoading(false);
@@ -157,11 +176,26 @@ export default function OnboardingPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
+            {isFromPreferences && (
+              <div className="flex justify-start mb-4">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => window.location.href = '/dashboard/settings'}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Settings
+                </Button>
+              </div>
+            )}
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Welcome to Globalist Media Suite
+              {isFromPreferences ? 'Update Your Preferences' : 'Welcome to Globalist Media Suite'}
             </h1>
             <p className="text-muted-foreground text-lg">
-              Let&#39;s set up your media management experience
+              {isFromPreferences 
+                ? 'Review and update your media management preferences'
+                : 'Let\'s set up your media management experience'
+              }
             </p>
           </div>
 

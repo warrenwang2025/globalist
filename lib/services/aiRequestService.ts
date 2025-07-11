@@ -26,7 +26,11 @@ export class AIRequestService {
         error: error instanceof Error ? error.message : 'Request failed',
         usageStats: {
           hourlyRequestsRemaining: 0,
-          totalRequests: 0,
+          hourlyTotalRequests: 0,
+          hourlyTokensRemaining: 0,
+          hourlyTotalTokens: 0,
+          tokensUsed: 0,
+          requestsUsed: 0,
         }
       };
     }

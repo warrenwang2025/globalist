@@ -18,6 +18,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
+import type { ContentBlock } from "@/types/ai";
 
 interface User {
   isPremium: boolean;
@@ -36,7 +37,7 @@ interface AIEnhancement {
   enhancedContent: string;
   tool: string;
   blockIndex?: number;
-  enhancedBlocks?: AnyBlock[];
+  enhancedBlocks?: ContentBlock[];
 }
 
 export function StreamlinedEditor({
@@ -115,7 +116,7 @@ export function StreamlinedEditor({
       }, 0);
   };
 
-  const handleAIEnhancement = (originalContent: string, enhancedContent: string, tool: string, enhancedBlocks?: AnyBlock[]) => {
+  const handleAIEnhancement = (originalContent: string, enhancedContent: string, tool: string, enhancedBlocks?: ContentBlock[]) => {
     setAIEnhancement({
       originalContent,
       enhancedContent,
@@ -127,7 +128,42 @@ export function StreamlinedEditor({
 
   const handleAcceptEnhancement = (enhancedContent: string) => {
     if (aiEnhancement && aiEnhancement.enhancedBlocks && aiEnhancement.enhancedBlocks.length > 0) {
-      setBlocks(aiEnhancement.enhancedBlocks);
+      // Convert ContentBlock[] to AnyBlock[] for the editor
+      const newBlocks: AnyBlock[] = aiEnhancement.enhancedBlocks.map((block, index) => {
+        switch (block.type) {
+          case 'text':
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              type: 'text',
+              content: { text: block.content as string, html: block.content as string },
+              order: index,
+            };
+          case 'heading':
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              type: 'heading',
+              content: { text: block.content as string, level: block.level || 1 },
+              order: index,
+            };
+          case 'quote':
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              type: 'quote',
+              content: { text: block.content as string, author: block.author || '' },
+              order: index,
+            };
+          case 'list':
+            return {
+              id: Math.random().toString(36).substr(2, 9),
+              type: 'list',
+              content: { items: Array.isArray(block.content) ? block.content : [block.content as string], ordered: block.ordered || false },
+              order: index,
+            };
+          default:
+            return null;
+        }
+      }).filter(Boolean) as AnyBlock[];
+      setBlocks(newBlocks);
       setAIEnhancement(null);
       setShowEnhancementView(false);
       toast({
