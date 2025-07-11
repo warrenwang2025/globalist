@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { AnyBlock, EditorState } from "@/types/editor";
 
@@ -19,11 +19,31 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
     };
   }
 
+  // Helper: deep compare blocks
+  function areBlocksEqual(a: AnyBlock[], b: AnyBlock[]): boolean {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (JSON.stringify(a[i]) !== JSON.stringify(b[i])) return false;
+    }
+    return true;
+  }
+
   const [editorState, setEditorState] = useState<EditorState>({
     blocks: initialBlocks.length > 0 ? initialBlocks : [], // Don't create default block
     selectedBlockId: null,
     isFullscreen: false,
   });
+
+  // Sync editorState.blocks with initialBlocks prop after mount, only if different
+  useEffect(() => {
+    setEditorState((prev) => {
+      if (areBlocksEqual(prev.blocks, initialBlocks)) return prev;
+      return {
+        ...prev,
+        blocks: initialBlocks.length > 0 ? initialBlocks : [],
+      };
+    });
+  }, [initialBlocks]);
 
   const createBlock = useCallback((type: AnyBlock["type"]): AnyBlock => {
     const baseBlock = {

@@ -44,6 +44,10 @@ export function TextBlock({ block, isSelected, onUpdate }: TextBlockProps) {
       placeholder="Start typing..."
       className="min-h-[100px] border-none resize-none focus:ring-0 focus:border-none p-0"
       autoFocus={isSelected && !text}
+      style={{ 
+        minHeight: '100px',
+        height: `${Math.max(100, text.split('\n').length * 24 + 24)}px`
+      }}
     />
   );
 }
