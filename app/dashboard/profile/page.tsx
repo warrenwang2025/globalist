@@ -67,7 +67,7 @@ export default function ProfilePage() {
     uploadProfilePicture,
     removeProfilePicture,
     deleteAccount,
-    setProfileData, // <-- add this
+    refreshProfile,
   } = useProfile();
 
   const [editData, setEditData] = useState({
@@ -301,10 +301,10 @@ export default function ProfilePage() {
       setUploadHistory(prev => [resizedImageUrl, ...prev.slice(0, 4)]); // Keep last 5 uploads
 
       // Update profile data
-      setProfileData(prev => ({
-        ...prev,
-        profilePicture: resizedImageUrl
-      }));
+      // setProfileData(prev => ({
+      //   ...prev,
+      //   profilePicture: resizedImageUrl
+      // }));
 
       // Clean up temporary states
       setShowImageEditDialog(false);
@@ -351,10 +351,10 @@ export default function ProfilePage() {
       }
 
       // Reset to default avatar
-      setProfileData(prev => ({
-        ...prev,
-        profilePicture: "/placeholder-avatar.jpg"
-      }));
+      // setProfileData(prev => ({
+      //   ...prev,
+      //   profilePicture: "/placeholder-avatar.jpg"
+      // }));
 
       // Clear any temporary states
       setTempImageUrl("");
@@ -399,10 +399,7 @@ export default function ProfilePage() {
 
   // Handle selecting from upload history
   const handleSelectFromHistory = (imageUrl: string) => {
-    setProfileData(prev => ({
-      ...prev,
-      profilePicture: imageUrl
-    }));
+    setTempImageUrl(imageUrl);
     
     setShowEditProfileDialog(false);
     
