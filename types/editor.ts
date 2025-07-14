@@ -1,6 +1,6 @@
 export interface Block {
   id: string;
-  type: "text" | "image" | "video" | "embed" | "heading" | "quote" | "list";
+  type: "text" | "image" | "video" | "embed" | "heading" | "quote" | "list" | "audio";
   content: any;
   order: number;
 }
@@ -85,6 +85,20 @@ export interface ListBlock extends Block {
   };
 }
 
+export interface AudioBlock extends Block {
+  type: "audio";
+  content: {
+    url: string;
+    fileName?: string;
+    fileType?: string;
+    size?: number;
+    duration?: number;
+    thumbnailUrl?: string;
+    title?: string;
+    // Add any other audio-specific fields as needed
+  };
+}
+
 export type AnyBlock =
   | TextBlock
   | ImageBlock
@@ -92,7 +106,8 @@ export type AnyBlock =
   | EmbedBlock
   | HeadingBlock
   | QuoteBlock
-  | ListBlock;
+  | ListBlock
+  | AudioBlock;
 
 export interface EditorState {
   blocks: AnyBlock[];
