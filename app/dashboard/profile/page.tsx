@@ -452,31 +452,6 @@ export default function ProfilePage() {
 
               <h2 className="text-lg md:text-xl font-semibold mb-1 text-foreground">{profileData.name}</h2>
               <p className="text-muted-foreground mb-3 text-sm md:text-base">{profileData.email}</p>
-
-              {/* Upload History */}
-              {uploadHistory.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs text-muted-foreground mb-2">Recent Uploads</p>
-                  <div className="flex gap-2 justify-center flex-wrap">
-                    {uploadHistory.slice(0, 3).map((url, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleSelectFromHistory(url)}
-                        className="w-8 h-8 rounded-full overflow-hidden border-2 border-border hover:border-primary transition-colors"
-                        title="Click to use this image"
-                      >
-                        <img src={url} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-                <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
-                <p>• Maximum size: 10MB</p>
-                <p>• Transformations are saved permanently</p>
-              </div>
             </div>
           </Card>
 
@@ -697,7 +672,7 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Upload History */}
+              {/* Upload History - Only shown in Edit Profile Dialog */}
               {uploadHistory.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-foreground">Recent Uploads</Label>
@@ -716,7 +691,7 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4">
               <Button
                 variant="outline"
                 onClick={() => setShowEditProfileDialog(false)}
@@ -795,6 +770,13 @@ export default function ProfilePage() {
                 <p>Drag the image to reposition • Position: ({imagePosition.x}, {imagePosition.y})</p>
               </div>
               
+              {/* Upload Guidelines - Only shown in Image Edit Dialog */}
+              <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+                <p>• Supported formats: JPEG, PNG, GIF, WebP</p>
+                <p>• Maximum size: 10MB</p>
+                <p>• Transformations are saved permanently</p>
+              </div>
+              
               {/* Action Buttons */}
               <div className="flex gap-2">
                 <Button
@@ -817,18 +799,18 @@ export default function ProfilePage() {
                 </Button>
               </div>
             </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
+            <DialogFooter className="flex-col sm:flex-row gap-2 p-4">
               <Button
                 variant="outline"
                 onClick={handleCancelImageEdit}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto m-2"
                 disabled={isUploadingAvatar}
               >
                 Cancel
               </Button>
               <Button 
                 onClick={handleSaveEditedImage}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto m-2"
                 disabled={isUploadingAvatar}
               >
                 {isUploadingAvatar ? "Saving..." : "Save Changes"}
