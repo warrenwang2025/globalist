@@ -54,23 +54,10 @@ export default function CreatePostPage() {
     });
   };
 
-
-
-
-
   const handlePreview = () => {
     const contentText = blocks
-
       .map(block => {
         switch (block.type) {
-
-
-
-
-
-
-
-
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
@@ -80,7 +67,6 @@ export default function CreatePostPage() {
           case 'list':
             return (block.content as any).items?.join(', ') || '';
           default:
-
             return '';
         }
       })
@@ -108,7 +94,6 @@ export default function CreatePostPage() {
       title,
       content: contentText,
       selectedPlatforms,
-
       uploadedFiles: uploadedFiles.map(file => ({
         name: file.name,
         type: file.type,
@@ -135,23 +120,16 @@ export default function CreatePostPage() {
 
   const handleSaveDraft = async () => {
     const contentText = blocks
-
       .map(block => {
         switch (block.type) {
-
-
-
-
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
             return (block.content as any).text || '';
           default:
-
             return '';
         }
       })
-
       .join(' ');
 
     if (!title.trim() && !contentText.trim()) {
@@ -183,23 +161,16 @@ export default function CreatePostPage() {
 
   const handlePublish = async () => {
     const contentText = blocks
-
       .map(block => {
         switch (block.type) {
-
-
-
-
           case 'text':
             return (block.content as any).text || '';
           case 'heading':
             return (block.content as any).text || '';
           default:
-
             return '';
         }
       })
-
       .join(' ');
 
     if (!contentText.trim()) {
@@ -275,134 +246,23 @@ export default function CreatePostPage() {
       <div className="mb-6 md:mb-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center gap-2">
           <Sparkles className="h-8 w-8 text-primary" />
-
           Content Distribution
         </h1>
         <p className="text-muted-foreground text-sm md:text-base">
-
-
           Publish your content across multiple platforms with scheduling and media support
         </p>
       </div>
 
       {/* AI Content Import Banner */}
       <div className="mb-6">
-
         <AIContentBanner 
           onImport={handleImportAIContent}
           showDismiss={true}
         />
       </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       <div className="space-y-6">
-        {/* Post Title */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Post Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="title">Title (Optional)</Label>
-              <Input
-                id="title"
-                placeholder="Enter a compelling title for your post..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            {blocks.length === 0 && (
-              <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
-                <Brain className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Need content? Use our{" "}
-                  <a 
-                    href="/dashboard/ai" 
-                    className="text-primary hover:underline font-medium"
-                  >
-                    AI Assistant
-                  </a>{" "}
-                  to generate content, then import it here for publishing.
-                </span>
-              </div>
-
-
-
-
-
-
-
-
-
-
-
-
-            )}
-            {blocks.length > 0 && (
-              <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                    Content Ready
-                  </span>
-                </div>
-
-
-
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  {blocks.length} content block{blocks.length !== 1 ? 's' : ''} imported and ready for publishing
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        {/* Platform Selection */}
+        {/* Platform Selection - Moved to top */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Publishing Platforms</CardTitle>
@@ -415,20 +275,6 @@ export default function CreatePostPage() {
           </CardContent>
         </Card>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         {/* Media Upload */}
         <Card>
           <CardHeader>
@@ -438,52 +284,6 @@ export default function CreatePostPage() {
             <UploadMedia onMediaUpload={handleMediaUpload} />
           </CardContent>
         </Card>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         {/* Scheduling */}
         <Card>
@@ -505,11 +305,6 @@ export default function CreatePostPage() {
                     min={new Date().toISOString().split("T")[0]}
                   />
                 </div>
-
-
-
-
-
               </div>
               <div>
                 <Label htmlFor="schedule-time">Time</Label>

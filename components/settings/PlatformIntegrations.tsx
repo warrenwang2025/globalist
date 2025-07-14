@@ -13,6 +13,7 @@ import {
   CheckCircle,
   AlertCircle,
   Video,
+  Facebook,
 } from "lucide-react";
 import axios from "axios";
 
@@ -69,7 +70,7 @@ export function PlatformIntegrations() {
     {
       platformId: "facebook",
       name: "Facebook",
-      icon: Globe,
+      icon: Facebook,
       description: "Connect your Facebook page to manage posts and engagement",
     },
     {
