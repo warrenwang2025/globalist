@@ -11,20 +11,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Shield, Eye, Download, Trash2, Save, FileText, User, Mail, Calendar, Settings } from "lucide-react";
+import { Shield, Eye, Download, Save, FileText, User, Mail, Calendar, Settings } from "lucide-react";
 import axios from "axios";
 
 export function PrivacySettings() {
@@ -270,17 +260,17 @@ export function PrivacySettings() {
 
         <div className="pt-6 border-t space-y-4">
           <h3 className="font-semibold">Data Management</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Dialog open={viewDataDialog} onOpenChange={setViewDataDialog}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2"
+                  className="h-auto p-6 flex flex-col items-center gap-3"
                   onClick={handleViewData}
                 >
                   <Eye className="h-6 w-6" />
                   <div className="text-center">
-                    <p className="font-medium">View Data</p>
+                    <p className="font-medium text-base">View Data</p>
                     <p className="text-xs text-muted-foreground">
                       See what data we have
                     </p>
@@ -437,50 +427,18 @@ export function PrivacySettings() {
 
             <Button
               variant="outline"
-              className="h-auto p-4 flex flex-col items-center gap-2"
+              className="h-auto p-4 flex flex-col items-center gap-3"
               onClick={handleExportData}
               disabled={isExporting}
             >
               <Download className="h-6 w-6" />
               <div className="text-center">
-                <p className="font-medium">{isExporting ? 'Exporting...' : 'Export Data'}</p>
+                <p className="font-medium text-base">{isExporting ? 'Exporting...' : 'Export Data'}</p>
                 <p className="text-xs text-muted-foreground">
                   Download your data
                 </p>
               </div>
             </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-auto p-4 flex flex-col items-center gap-2 text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-6 w-6" />
-                  <div className="text-center">
-                    <p className="font-medium">Delete Account</p>
-                    <p className="text-xs text-muted-foreground">
-                      Permanently delete
-                    </p>
-                  </div>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Account</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Are you sure you want to permanently delete your account? This action cannot be undone.
-                    All your data, including email lists, subscribers, and settings will be permanently removed.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction className="bg-red-600 hover:bg-red-700">
-                    Delete Account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
 

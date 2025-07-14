@@ -4,7 +4,7 @@ import { NextResponse } from "next/server"
 export default withAuth(
   async function middleware(req) {
     const token = req.nextauth.token
-    const { pathname } = req.nextUrl
+    const { pathname, searchParams } = req.nextUrl
     
     
     // Skip middleware entirely for these paths
@@ -42,8 +42,12 @@ export default withAuth(
       }
       
       // If user is onboarded but trying to access onboarding page, redirect to dashboard
+      // UNLESS they have the force-navigation query parameter
       if (isOnboarded && pathname === '/onboarding') {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        const forceNavigation = searchParams.get('force-navigation');
+        if (!forceNavigation) {
+          return NextResponse.redirect(new URL('/dashboard', req.url))
+        }
       }
     }
     

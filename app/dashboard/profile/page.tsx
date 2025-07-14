@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useState, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useProfile } from "@/hooks/useProfile";
 import { AccountSecurity } from "@/components/profile/account-security";
 import {
   UserCircle,
@@ -30,6 +32,9 @@ import {
   Trash2,
   Upload,
   RotateCcw,
+  Loader2,
+  Building,
+  Globe,
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -52,17 +57,79 @@ export default function ProfilePage() {
   const [isHoveringAvatar, setIsHoveringAvatar] = useState(false);
   const [uploadHistory, setUploadHistory] = useState<string[]>([]);
 
-  const [profileData, setProfileData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
-    bio: "Content creator and social media strategist with 5+ years of experience in digital marketing.",
-    company: "Digital Marketing Agency",
-    website: "https://johndoe.com",
-    joinDate: "January 2023",
-    avatar: "/placeholder-avatar.jpg",
+  const {
+    profileData,
+    loading,
+    updating,
+    uploadingPicture,
+    deletingAccount,
+    updateProfile,
+    uploadProfilePicture,
+    removeProfilePicture,
+    deleteAccount,
+    refreshProfile,
+  } = useProfile();
+
+  const [editData, setEditData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    location: "",
+    bio: "",
+    company: "",
+    website: "",
   });
+
+  // Initialize edit data when profile data loads
+  React.useEffect(() => {
+    if (profileData) {
+      setEditData({
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio,
+        company: profileData.company,
+        website: profileData.website,
+      });
+    }
+  }, [profileData]);
+
+  // Avatar handling functions
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        toast({
+          title: "File Too Large",
+          description: "Please select an image smaller than 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select a valid image file.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setOriginalImageUrl(result);
+        setTempImageUrl(result);
+        setImageZoom(1);
+        setImagePosition({ x: 0, y: 0 });
+        setShowEditProfileDialog(false);
+        setShowImageEditDialog(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Create canvas to generate resized image
   const createResizedImage = useCallback((
@@ -234,10 +301,10 @@ export default function ProfilePage() {
       setUploadHistory(prev => [resizedImageUrl, ...prev.slice(0, 4)]); // Keep last 5 uploads
 
       // Update profile data
-      setProfileData(prev => ({
-        ...prev,
-        avatar: resizedImageUrl
-      }));
+      // setProfileData(prev => ({
+      //   ...prev,
+      //   profilePicture: resizedImageUrl
+      // }));
 
       // Clean up temporary states
       setShowImageEditDialog(false);
@@ -279,15 +346,15 @@ export default function ProfilePage() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Revoke the current avatar URL if it's a blob URL
-      if (profileData.avatar.startsWith('blob:')) {
-        URL.revokeObjectURL(profileData.avatar);
+      if (profileData?.profilePicture?.startsWith('blob:')) {
+        URL.revokeObjectURL(profileData.profilePicture);
       }
 
       // Reset to default avatar
-      setProfileData(prev => ({
-        ...prev,
-        avatar: "/placeholder-avatar.jpg"
-      }));
+      // setProfileData(prev => ({
+      //   ...prev,
+      //   profilePicture: "/placeholder-avatar.jpg"
+      // }));
 
       // Clear any temporary states
       setTempImageUrl("");
@@ -332,10 +399,7 @@ export default function ProfilePage() {
 
   // Handle selecting from upload history
   const handleSelectFromHistory = (imageUrl: string) => {
-    setProfileData(prev => ({
-      ...prev,
-      avatar: imageUrl
-    }));
+    setTempImageUrl(imageUrl);
     
     setShowEditProfileDialog(false);
     
@@ -345,21 +409,27 @@ export default function ProfilePage() {
     });
   };
 
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const getAvatarUrl = () => {
+    return profileData?.profilePicture;
+  };
+
   const getUserInitials = () => {
-    return profileData.name
+    return profileData?.name
       .split(" ")
       .map((n) => n[0])
       .join("")
       .toUpperCase();
   };
 
-  const handleSave = () => {
-    console.log("Saving profile data:", profileData);
-    setIsEditing(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully!",
-    });
+  const handleSave = async () => {
+    const success = await updateProfile(editData);
+    if (success) {
+      setIsEditing(false);
+    }
   };
 
   const handleCancel = () => {
@@ -368,11 +438,37 @@ export default function ProfilePage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setProfileData((prev) => ({
+    setEditData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading profile...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Profile Not Found</h2>
+            <p className="text-muted-foreground">Unable to load profile data.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 mx-0 md:mx-[5%]">
@@ -391,10 +487,22 @@ export default function ProfilePage() {
                 <X className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">Cancel</span>
               </Button>
-              <Button onClick={handleSave} className="flex-1 sm:flex-none">
-                <Save className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">Save Changes</span>
-                <span className="sm:hidden">Save</span>
+              <Button 
+                onClick={handleSave} 
+                disabled={updating}
+                className="flex-1 sm:flex-none"
+              >
+                {updating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {updating ? 'Saving...' : 'Save Changes'}
+                </span>
+                <span className="sm:hidden">
+                  {updating ? 'Saving...' : 'Save'}
+                </span>
               </Button>
             </>
           ) : (
@@ -421,7 +529,7 @@ export default function ProfilePage() {
                 >
                   <Avatar className="w-20 h-20 md:w-24 md:h-24">
                     <AvatarImage
-                      src={profileData.avatar}
+                      src={profileData.profilePicture}
                       alt={`${profileData.name}'s avatar`}
                     />
                     <AvatarFallback className="text-xl md:text-2xl bg-muted text-muted-foreground">
@@ -496,16 +604,19 @@ export default function ProfilePage() {
                       "Are you sure you want to delete your account? This action cannot be undone."
                     );
                     if (confirmed) {
-                      toast({
-                        title: "Account Deletion",
-                        description:
-                          "Account deletion process would be initiated here.",
-                        variant: "destructive",
-                      });
+                      deleteAccount();
                     }
                   }}
+                  disabled={deletingAccount}
                 >
-                  Delete Account
+                  {deletingAccount ? (
+                    <>
+                      <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Account'
+                  )}
                 </Button>
               </div>
             </div>
@@ -522,7 +633,7 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="name"
-                    value={profileData.name}
+                    value={editData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     className="mt-1"
                   />
@@ -557,14 +668,15 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="phone"
-                    value={profileData.phone}
+                    value={editData.phone}
                     onChange={(e) => handleInputChange("phone", e.target.value)}
                     className="mt-1"
+                    placeholder="Enter phone number"
                   />
                 ) : (
                   <div className="flex items-center mt-1 p-2 text-foreground">
                     <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {profileData.phone}
+                    {profileData.phone || 'Not provided'}
                   </div>
                 )}
               </div>
@@ -574,16 +686,64 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <Input
                     id="location"
-                    value={profileData.location}
+                    value={editData.location}
                     onChange={(e) =>
                       handleInputChange("location", e.target.value)
                     }
                     className="mt-1"
+                    placeholder="Enter location"
                   />
                 ) : (
                   <div className="flex items-center mt-1 p-2 text-foreground">
                     <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {profileData.location}
+                    {profileData.location || 'Not provided'}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="company">Company</Label>
+                {isEditing ? (
+                  <Input
+                    id="company"
+                    value={editData.company}
+                    onChange={(e) => handleInputChange("company", e.target.value)}
+                    className="mt-1"
+                    placeholder="Enter company name"
+                  />
+                ) : (
+                  <div className="flex items-center mt-1 p-2">
+                    <Building className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {profileData.company || 'Not provided'}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="website">Website</Label>
+                {isEditing ? (
+                  <Input
+                    id="website"
+                    value={editData.website}
+                    onChange={(e) => handleInputChange("website", e.target.value)}
+                    className="mt-1"
+                    placeholder="https://example.com"
+                  />
+                ) : (
+                  <div className="flex items-center mt-1 p-2">
+                    <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {profileData.website ? (
+                      <a 
+                        href={profileData.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {profileData.website}
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
                   </div>
                 )}
               </div>
@@ -596,10 +756,11 @@ export default function ProfilePage() {
               {isEditing ? (
                 <Textarea
                   id="bio"
-                  value={profileData.bio}
+                  value={editData.bio}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
                   className="mt-1"
                   rows={3}
+                  placeholder="Tell us about yourself..."
                 />
               ) : (
                 <p className="mt-1 p-2 text-sm text-foreground">{profileData.bio}</p>
@@ -639,7 +800,7 @@ export default function ProfilePage() {
                 <div className="relative w-32 h-32">
                   <Avatar className="w-full h-full">
                     <AvatarImage
-                      src={profileData.avatar}
+                      src={profileData.profilePicture}
                       alt="Current Profile Picture"
                     />
                     <AvatarFallback className="text-2xl bg-muted text-muted-foreground">
@@ -659,7 +820,7 @@ export default function ProfilePage() {
                   Upload from Device
                 </Button>
                 
-                {profileData.avatar !== "/placeholder-avatar.jpg" && (
+                {profileData.profilePicture !== "/placeholder-avatar.jpg" && (
                   <Button
                     onClick={handleDeleteProfilePicture}
                     variant="outline"
