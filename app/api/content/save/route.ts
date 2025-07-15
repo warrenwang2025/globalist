@@ -115,7 +115,7 @@ interface SaveContentRequest {
   blocks: AnyBlock[];
   status?: 'draft' | 'scheduled' | 'published';
   postId?: string;
-  scheduledDateTime?: string;
+  scheduledDate?: string;
   platforms?: string[];
   tags?: string[];
   isPublic?: boolean;
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
       blocks, 
       status = 'draft', 
       postId, 
-      scheduledDateTime,
+      scheduledDate,
       platforms = [],
       tags = [],
       isPublic = true
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
           platforms,
           tags,
           isPublic,
-          scheduledDateTime: scheduledDateTime ? new Date(scheduledDateTime) : undefined,
+          scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
           updatedAt: new Date(),
         },
         { new: true }
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
         platforms,
         tags,
         isPublic,
-        scheduledDateTime: scheduledDateTime ? new Date(scheduledDateTime) : undefined,
+        scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
       });
 
       await post.save();
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
         status: post.status,
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
-        scheduledDateTime: post.scheduledDateTime,
+        scheduledDate: post.scheduledDate,
       },
     });
   } catch (error) {
