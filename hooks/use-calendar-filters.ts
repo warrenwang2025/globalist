@@ -1,14 +1,5 @@
 import { useState, useMemo } from "react";
-
-interface Event {
-  id: number;
-  title: string;
-  date: Date;
-  type: string;
-  duration?: number;
-  attendees?: number;
-  description: string;
-}
+import type { Event } from "@/types/calendar";
 
 interface ScheduledPost {
   id: number;
@@ -32,8 +23,8 @@ export function useCalendarFilters(
     return events.filter((event) => {
       const matchesSearch =
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesFilter = filterType === "all" || event.type === filterType;
+        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesFilter = filterType === "all" || event.eventType === filterType;
       return matchesSearch && matchesFilter;
     });
   }, [events, searchQuery, filterType]);

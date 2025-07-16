@@ -5,6 +5,9 @@ import dbConnect from '@/lib/dbConnect';
 import Event from '@/lib/models/Event';
 import Post from '@/lib/models/Post';
 
+// Force dynamic rendering for this route since it uses authentication
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

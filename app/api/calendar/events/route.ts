@@ -3,6 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import dbConnect from '@/lib/dbConnect';
 import Event from '@/lib/models/Event';
+
+// Force dynamic rendering for this route since it uses authentication
+export const dynamic = 'force-dynamic';
 import Post from '@/lib/models/Post';
 import UserSettings from '@/lib/models/UserSettings';
 
