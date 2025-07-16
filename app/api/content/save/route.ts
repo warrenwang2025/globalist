@@ -6,6 +6,7 @@ import dbConnect from '@/lib/dbConnect';
 import Post from '@/lib/models/Post';
 import mediaUploadService from '@/lib/services/mediaUploadService';
 import type { AnyBlock } from '@/types/editor';
+import Event from '@/lib/models/Event';
 
 // Helper function to convert base64 to buffer
 function base64ToBuffer(base64Data: string): Buffer {
@@ -220,6 +221,7 @@ export async function POST(request: NextRequest) {
 
     // Create or update post
     let post;
+    let event;
     if (postId) {
       // Update existing post
       post = await Post.findByIdAndUpdate(
@@ -237,6 +239,24 @@ export async function POST(request: NextRequest) {
         },
         { new: true }
       );
+      // If post is scheduled, update or create corresponding Event
+      if (status === 'scheduled') {
+        event = await Event.findOneAndUpdate(
+          { sourcePostId: post._id },
+          {
+            userId: session.user.id,
+            title,
+            description: '',
+            startDateTime: scheduledDate ? new Date(scheduledDate) : new Date(),
+            duration: 60, // Default duration, adjust as needed
+            eventType: 'scheduled_post',
+            sourcePostId: post._id,
+            status: 'scheduled',
+            notificationSent: false,
+          },
+          { new: true, upsert: true }
+        );
+      }
     } else {
       // Create new post
       post = new Post({
@@ -250,8 +270,22 @@ export async function POST(request: NextRequest) {
         isPublic,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : undefined,
       });
-
       await post.save();
+      // If post is scheduled, create corresponding Event
+      if (status === 'scheduled') {
+        event = new Event({
+          userId: session.user.id,
+          title,
+          description: '',
+          startDateTime: scheduledDate ? new Date(scheduledDate) : new Date(),
+          duration: 60, // Default duration, adjust as needed
+          eventType: 'scheduled_post',
+          sourcePostId: post._id,
+          status: 'scheduled',
+          notificationSent: false,
+        });
+        await event.save();
+      }
     }
 
     return NextResponse.json({
