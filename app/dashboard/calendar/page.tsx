@@ -48,6 +48,7 @@ export default function SchedulePage() {
     handleUpdatePost,
     handleBulkDelete,
     handleExportSchedule,
+    handleDeleteEvent,
   } = useCalendarData();
   const {
     searchQuery,
@@ -136,6 +137,7 @@ export default function SchedulePage() {
       <CalendarView
         events={filteredEvents as import("@/types/calendar").Event[]}
         scheduledPosts={filteredPosts}
+        onDeleteEvent={handleDeleteEvent}
       />
 
       {/* Quick Stats */}
@@ -227,6 +229,7 @@ export default function SchedulePage() {
         scheduledPosts={filteredPosts}
         onEditEvent={handleEditEvent}
         onEditPost={handleEditPost}
+        onDeleteEvent={handleDeleteEvent}
       />
 
       {/* Dialogs */}
