@@ -46,13 +46,13 @@ export function EditEventDialog({
 
   useEffect(() => {
     if (event) {
-      const eventDate = new Date(event.date);
+      const eventDate = new Date(event.startDateTime);
       setFormData({
         title: event.title,
         description: event.description || "",
         date: eventDate.toISOString().split("T")[0],
         time: eventDate.toTimeString().slice(0, 5),
-        type: event.type as "event" | "meeting",
+        type: event.eventType as "event" | "meeting",
         duration: event.duration?.toString() || "",
         attendees: event.attendees?.toString() || "",
       });
@@ -68,15 +68,15 @@ export function EditEventDialog({
 
     const eventDate = new Date(`${formData.date}T${formData.time}`);
 
-    const updatedEvent: Event = {
+    const updatedEvent: any = {
       ...event,
       title: formData.title,
       description: formData.description,
-      date: eventDate,
-      type: formData.type,
-      duration: formData.duration ? parseInt(formData.duration) : undefined,
-      attendees: formData.attendees ? parseInt(formData.attendees) : undefined,
+      startDateTime: eventDate,
+      eventType: formData.type,
     };
+    if (formData.duration) updatedEvent.duration = parseInt(formData.duration);
+    if (formData.attendees) updatedEvent.attendees = parseInt(formData.attendees);
 
     onUpdateEvent(updatedEvent);
     onOpenChange(false); // Changed from true to false to close the dialog

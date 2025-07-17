@@ -33,8 +33,8 @@ export function UpcomingItems({
   nextWeek.setDate(now.getDate() + 7);
 
   const upcomingEvents = events
-    .filter((event) => event.date >= now && event.date <= nextWeek)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .filter((event) => event.startDateTime >= now && event.startDateTime <= nextWeek)
+    .sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime());
 
   const upcomingPosts = scheduledPosts
     .filter((post) => post.scheduledDate >= now && post.scheduledDate <= nextWeek)
@@ -44,8 +44,8 @@ export function UpcomingItems({
     ...upcomingEvents.map(event => ({ ...event, itemType: 'event' as const })),
     ...upcomingPosts.map(post => ({ ...post, itemType: 'post' as const }))
   ].sort((a, b) => {
-    const dateA = a.itemType === 'event' ? a.date : a.scheduledDate;
-    const dateB = b.itemType === 'event' ? b.date : b.scheduledDate;
+    const dateA = a.itemType === 'event' ? a.startDateTime : a.scheduledDate;
+    const dateB = b.itemType === 'event' ? b.startDateTime : b.scheduledDate;
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -128,12 +128,12 @@ export function UpcomingItems({
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                         <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                          {(item.itemType === 'event' ? item.date : item.scheduledDate).toLocaleDateString()}
+                          {(item.itemType === 'event' ? item.startDateTime : item.scheduledDate).toLocaleDateString()}
                         </div>
                         
                         <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                           <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                          {(item.itemType === 'event' ? item.date : item.scheduledDate).toLocaleTimeString([], {
+                          {(item.itemType === 'event' ? item.startDateTime : item.scheduledDate).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
