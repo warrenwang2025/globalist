@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -56,7 +57,7 @@ interface AIToolConfig {
 const AI_TOOLS: AIToolConfig[] = [
   {
     id: "improve",
-    label: "Improve",
+    label: "Content Improver",
     icon: TrendingUp,
     description: "Enhance existing content quality",
     requiresContent: true,
@@ -64,7 +65,7 @@ const AI_TOOLS: AIToolConfig[] = [
   },
   {
     id: "seo",
-    label: "SEO",
+    label: "SEO support",
     icon: Search,
     description: "Optimize for search engines",
     requiresContent: true,
@@ -72,21 +73,21 @@ const AI_TOOLS: AIToolConfig[] = [
   },
   {
     id: "ideas",
-    label: "Ideas",
+    label: "Idea Generation",
     icon: Lightbulb,
     description: "Generate content ideas",
     requiresContent: false,
   },
   {
     id: "headlines",
-    label: "Headlines",
+    label: "Content Creation",
     icon: Target,
     description: "Create catchy headlines",
     requiresContent: false,
   },
   {
     id: "summarize",
-    label: "Summarize",
+    label: "Content Atomizer",
     icon: FileText,
     description: "Create a summary of your written content",
     requiresContent: true,
@@ -723,7 +724,7 @@ export function FloatingAIAssistant({
                               </div>
                             ) : (
                               /* Desktop: L-Shape Container */
-                              <div className="absolute bottom-0 left-0 z-50">
+                              <div className="absolute bottom-0 right-0 z-50">
                                 <motion.div
                                   initial={{ scale: 0, opacity: 0 }}
                                   animate={{ scale: 1, opacity: 1 }}
