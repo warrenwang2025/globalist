@@ -5,6 +5,7 @@ export interface IPost extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
   blocks: any[]; // Content blocks from editor
+  contentText?: string; // Virtual field for plain text content
   status: 'draft' | 'scheduled' | 'published' | 'failed';
   scheduledDate?: Date;
   publishedDate?: Date;

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "comment": "The 'Worker': Runs every minute to send all due notifications (reminders, post statuses, etc.).",
+      "path": "/api/cron/notifications?action=process-notifications&secret=${CRON_SECRET}",
+      "schedule": "* * * * *"
+    },
+    {
+      "comment": "The 'Planner': Runs every hour to check for upcoming events/meetings in the next 24 hours and create their pending notifications ahead of time.",
+      "path": "/api/cron/notifications?action=create-event-notifications&secret=${CRON_SECRET}",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "comment": "The 'Publisher': Runs every 5 minutes to check for posts that are scheduled to be published and creates the 'published'/'failed' notifications.",
+      "path": "/api/cron/notifications?action=create-post-notifications&secret=${CRON_SECRET}",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "comment": "The 'Analyst': Runs once a week on Sunday at 8 AM UTC to compile and send the weekly digest email.",
+      "path": "/api/cron/notifications?action=weekly-digest&secret=${CRON_SECRET}",
+      "schedule": "0 8 * * 0"
+    },
+    {
+      "comment": "The 'Housekeeper': Runs once a day at 3 AM UTC to delete old, processed notifications from the database.",
+      "path": "/api/cron/notifications?action=cleanup&secret=${CRON_SECRET}",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

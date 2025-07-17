@@ -6,21 +6,33 @@ import type { Event, ScheduledPost } from "@/types/calendar";
 export function useCalendarData() {
   const [events, setEvents] = useState<Event[]>([
     {
-      id: 1,
+      _id: "1",
+      userId: "user1",
       title: "Team Meeting",
       description: "Weekly team sync",
-      date: new Date(2024, 2, 20, 10, 0),
-      type: "meeting",
+      startDateTime: new Date(2024, 2, 20, 10, 0),
       duration: 60,
+      eventType: "meeting",
       attendees: 8,
+      isRecurring: false,
+      status: "scheduled",
+      notificationSent: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
-      id: 2,
+      _id: "2",
+      userId: "user1",
       title: "Product Launch",
       description: "Launch event for new product",
-      date: new Date(2024, 2, 25, 14, 0),
-      type: "event",
+      startDateTime: new Date(2024, 2, 25, 14, 0),
       duration: 120,
+      eventType: "event",
+      isRecurring: false,
+      status: "scheduled",
+      notificationSent: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   ]);
 
@@ -49,10 +61,13 @@ export function useCalendarData() {
 
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
 
-  const handleCreateEvent = (eventData: Omit<Event, 'id'>) => {
+  const handleCreateEvent = (eventData: Omit<Event, '_id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
     const newEvent: Event = {
       ...eventData,
-      id: Date.now(),
+      _id: Date.now().toString(),
+      userId: "user1", // This should come from auth context
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     setEvents(prev => [...prev, newEvent]);
   };
@@ -60,7 +75,7 @@ export function useCalendarData() {
   const handleUpdateEvent = (updatedEvent: Event) => {
     setEvents(prev => 
       prev.map(event => 
-        event.id === updatedEvent.id ? updatedEvent : event
+        event._id === updatedEvent._id ? { ...updatedEvent, updatedAt: new Date() } : event
       )
     );
   };
@@ -74,7 +89,7 @@ export function useCalendarData() {
   };
 
   const handleBulkDelete = () => {
-    setEvents(prev => prev.filter(event => !selectedItems.includes(event.id)));
+    setEvents(prev => prev.filter(event => !selectedItems.includes(parseInt(event._id))));
     setScheduledPosts(prev => prev.filter(post => !selectedItems.includes(post.id)));
     setSelectedItems([]);
   };
@@ -85,7 +100,7 @@ export function useCalendarData() {
         type: 'Event',
         title: event.title,
         description: event.description,
-        date: event.date.toISOString(),
+        date: event.startDateTime.toISOString(),
         duration: event.duration,
         attendees: event.attendees,
       })),

@@ -51,14 +51,14 @@ export function CreateEventDialog({
 
     const eventDate = new Date(`${formData.date}T${formData.time}`);
     
-    const newEvent: Omit<Event, 'id'> = {
+    const newEvent: any = {
       title: formData.title,
       description: formData.description,
-      date: eventDate,
-      type: formData.type,
-      duration: formData.duration ? parseInt(formData.duration) : undefined,
-      attendees: formData.attendees ? parseInt(formData.attendees) : undefined,
+      startDateTime: eventDate,
+      eventType: formData.type,
     };
+    if (formData.duration) newEvent.duration = parseInt(formData.duration);
+    if (formData.attendees) newEvent.attendees = parseInt(formData.attendees);
 
     onCreateEvent(newEvent);
     
