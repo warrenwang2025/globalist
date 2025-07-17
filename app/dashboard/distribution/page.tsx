@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 import { PlatformSelector } from "@/components/platform-selector";
 import { UploadMedia } from "@/components/upload-media";
@@ -20,6 +21,8 @@ import {
   Brain
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
+import { useRouter } from "next/navigation";
+import ContentPreview from "@/components/distribution/content-preview";
 
 export default function CreatePostPage() {
   const [title, setTitle] = useState("");
@@ -30,8 +33,25 @@ export default function CreatePostPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [blocks, setBlocks] = useState<AnyBlock[]>([]);
+  const [showSchedule, setShowSchedule] = useState(false);
 
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Load content from sessionStorage if returning from editor
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const editorData = sessionStorage.getItem('editorContent');
+      if (editorData) {
+        try {
+          const { title: editorTitle, blocks: editorBlocks } = JSON.parse(editorData);
+          if (editorTitle) setTitle(editorTitle);
+          if (editorBlocks) setBlocks(editorBlocks);
+          sessionStorage.removeItem('editorContent');
+        } catch {}
+      }
+    }
+  }, []);
 
   const handleImportAIContent = (aiTitle: string, aiBlocks: AnyBlock[]) => {
     setTitle(aiTitle);
@@ -241,6 +261,14 @@ export default function CreatePostPage() {
     }
   };
 
+  // Sample data for preview if no content is present
+  const sampleTitle = "Sample Post Title";
+  const sampleBlocks = [
+    { id: "1", type: "heading", content: { text: "Welcome to the Content Preview!", level: 2 } },
+    { id: "2", type: "text", content: { text: "This is a sample block of text. You can edit or add your own content using the editor." } }
+  ];
+  const hasContent = title.trim() || (blocks && blocks.length > 0);
+
   return (
     <div className="container mx-auto py-4 md:py-8 px-4 max-w-7xl">
       <div className="mb-6 md:mb-8">
@@ -260,6 +288,31 @@ export default function CreatePostPage() {
           showDismiss={true}
         />
       </div>
+
+      {/* Content Editor Block or Preview */}
+      {hasContent ? (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="font-semibold"
+              onClick={() => router.push('/dashboard/content-editor')}
+            >
+              Edit Content
+            </Button>
+          </div>
+          <ContentPreview title={title || sampleTitle} blocks={blocks.length > 0 ? blocks : sampleBlocks} />
+        </div>
+      ) : (
+        <Card className="mb-6 cursor-pointer hover:shadow-lg transition" onClick={() => router.push('/dashboard/content-editor')}>
+          <CardContent className="flex items-center justify-center py-8">
+            <Button variant="outline" size="lg" className="text-lg font-semibold">
+              + Add Content
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="space-y-6">
         {/* Platform Selection - Moved to top */}
@@ -285,43 +338,59 @@ export default function CreatePostPage() {
           </CardContent>
         </Card>
 
-        {/* Scheduling */}
+        {/* Scheduling Toggle in Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Schedule Post (Optional)</CardTitle>
+            <CardTitle className="text-lg md:text-xl lg:text-2xl flex items-center justify-between w-full">
+              <span className="font-semibold">Schedule Post (Optional)</span>
+              <Switch
+                id="schedule-toggle"
+                checked={showSchedule}
+                onCheckedChange={setShowSchedule}
+              />
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="schedule-date">Date</Label>
-                <div className="relative mt-1">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="schedule-date"
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(e) => setScheduleDate(e.target.value)}
-                    className="pl-10"
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="schedule-time">Time</Label>
-                <div className="relative mt-1">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="schedule-time"
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
         </Card>
+
+        {/* Scheduling Section (conditionally rendered) */}
+        {showSchedule && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Select Date & Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="schedule-date">Date</Label>
+                  <div className="relative mt-1">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="schedule-date"
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      className="pl-10"
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="schedule-time">Time</Label>
+                  <div className="relative mt-1">
+                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="schedule-time"
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Action Buttons */}

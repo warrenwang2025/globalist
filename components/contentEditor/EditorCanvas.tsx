@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -125,19 +126,16 @@ export function EditorCanvas({
   };
 
   return (
-    <div className={cn("flex h-screen overflow-hidden", className)}>
-      {/* Main Editor Area */}
-      <motion.div
+    <div className={cn("flex h-screen overflow-hidden relative", className)}>
+      {/* Main Editor Area - Fixed position, no padding changes */}
+      <div
         className={cn(
           "flex flex-col flex-1 min-w-0 relative",
-          editorState.isFullscreen && "fixed inset-0 z-50 bg-background",
-          !editorState.isFullscreen && sidebarOpen && "pr-80"
+          editorState.isFullscreen && "fixed inset-0 z-50 bg-background"
         )}
-        layout
-        transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        {/* ✅ CHANGED z-50 to z-10 */}
-        <div className="sticky top-0 z-10 bg-background border-b flex-shrink-0 shadow-sm">
+        {/* Header - Fixed position */}
+        <div className="sticky top-0 z-40 bg-background border-b flex-shrink-0 shadow-sm">
           <div className="flex items-center justify-between p-4 min-h-[64px]">
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-semibold text-foreground">Content Editor</h1>
@@ -165,11 +163,9 @@ export function EditorCanvas({
           </div>
         </div>
 
+        {/* Content Area - Always in the same position */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
-          <div
-            className={cn("p-4 pb-20 min-h-full", editorState.isFullscreen && "pt-4")}
-            style={{ paddingTop: "64px" }} // ✅ Adjusted for sticky header height
-          >
+          <div className="p-4 pb-20 min-h-full">
             <DragDropContext onDragEnd={onDragEnd}>
               <Droppable droppableId="editor-blocks">
                 {(provided, snapshot) => (
@@ -193,7 +189,7 @@ export function EditorCanvas({
                               exit={{ opacity: 0, y: -20 }}
                               className={cn(
                                 "group relative w-full",
-                                snapshot.isDragging && "z-40 rotate-2 shadow-lg"
+                                snapshot.isDragging && "z-50 rotate-2 shadow-lg"
                               )}
                             >
                               <BlockWrapper
@@ -251,35 +247,52 @@ export function EditorCanvas({
             </DragDropContext>
           </div>
         </div>
-      </motion.div>
+      </div>
 
+      {/* Sidebar - Overlay that doesn't affect main content */}
       {!editorState.isFullscreen && (
-        <motion.div
-          className="fixed top-0 right-0 h-full z-30 w-80"
-          initial={false}
-          animate={{
-            x: sidebarOpen ? 0 : 320,
-          }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-        >
-          <EditorSidebar
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            editorState={editorState}
-            actionButtons={actionButtons}
-            onActionButtonsChange={setActionButtons}
-            onAddBlock={addBlock}
-            onDeleteBlock={deleteBlock}
-            onSelectBlock={selectBlock}
-            onRemoveActionButton={handleRemoveActionButton}
-            onClearAllActionButtons={handleClearAllActionButtons}
-            onReorderActionButtons={handleReorderActionButtons}
-            onMoveBlockUp={handleMoveBlockUp}
-            onMoveBlockDown={handleMoveBlockDown}
-            onMoveActionButtonUp={handleMoveActionButtonUp}
-            onMoveActionButtonDown={handleMoveActionButtonDown}
-          />
-        </motion.div>
+        <>
+          {/* Backdrop */}
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/20 z-30 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Sidebar */}
+          <motion.div
+            className="fixed top-0 right-0 h-full z-40 w-80 bg-background border-l shadow-xl"
+            initial={false}
+            animate={{
+              x: sidebarOpen ? 0 : 320,
+            }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <EditorSidebar
+              isOpen={sidebarOpen}
+              onClose={() => setSidebarOpen(false)}
+              editorState={editorState}
+              actionButtons={actionButtons}
+              onActionButtonsChange={setActionButtons}
+              onAddBlock={addBlock}
+              onDeleteBlock={deleteBlock}
+              onSelectBlock={selectBlock}
+              onRemoveActionButton={handleRemoveActionButton}
+              onClearAllActionButtons={handleClearAllActionButtons}
+              onReorderActionButtons={handleReorderActionButtons}
+              onMoveBlockUp={handleMoveBlockUp}
+              onMoveBlockDown={handleMoveBlockDown}
+              onMoveActionButtonUp={handleMoveActionButtonUp}
+              onMoveActionButtonDown={handleMoveActionButtonDown}
+            />
+          </motion.div>
+        </>
       )}
     </div>
   );

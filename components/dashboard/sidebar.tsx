@@ -41,19 +41,13 @@ const routes = [
     premium: false,
   },
   {
-    label: "Distribution",
-    icon: Share2,
-    href: "/dashboard/distribution",
-    premium: false,
-  },
-  {
     label: "Analytics ",
     icon: BarChart3,
     href: "/dashboard/analytics",
     premium: true, // Analytics is premium only
   },
   {
-    label: "Content Editor",
+    label: "Distribution",
     icon: Brain,
     href: "/dashboard/content-editor",
     premium: false,
