@@ -25,16 +25,29 @@ import {
   FileText,
   Share2,
   Edit,
+  Trash2,
 } from "lucide-react";
 import type { Event, ScheduledPost } from "@/types/calendar";
 import { EditEventDialog } from "./edit-event-dialog";
 import { EditPostDialog } from "./edit-post-dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface CalendarViewProps {
   events: Event[];
   scheduledPosts: ScheduledPost[];
   onUpdateEvent?: (event: Event) => void;
   onUpdatePost?: (post: ScheduledPost) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
 export function CalendarView({
@@ -42,6 +55,7 @@ export function CalendarView({
   scheduledPosts,
   onUpdateEvent,
   onUpdatePost,
+  onDeleteEvent,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
@@ -49,6 +63,8 @@ export function CalendarView({
     Event | ScheduledPost | null
   >(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Add theme detection
   const { theme, resolvedTheme } = useTheme();
@@ -495,6 +511,22 @@ export function CalendarView({
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </Button>
+                        {onDeleteEvent && "eventType" in item && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-red-600 hover:text-red-700 ml-2"
+                              onClick={() => {
+                                setPendingDeleteId(item._id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -534,6 +566,32 @@ export function CalendarView({
           onUpdatePost={handleUpdatePost}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteId && onDeleteEvent) {
+                  onDeleteEvent(pendingDeleteId);
+                }
+                setDeleteDialogOpen(false);
+                setPendingDeleteId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -13,12 +13,25 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Event, ScheduledPost } from "@/types/calendar";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface UpcomingItemsProps {
   events: Event[];
   scheduledPosts: ScheduledPost[];
   onEditEvent: (event: Event) => void;
   onEditPost: (post: ScheduledPost) => void;
+  onDeleteEvent: (eventId: string) => void;
 }
 
 export function UpcomingItems({
@@ -26,7 +39,10 @@ export function UpcomingItems({
   scheduledPosts,
   onEditEvent,
   onEditPost,
+  onDeleteEvent,
 }: UpcomingItemsProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   // Get upcoming items (next 7 days)
   const now = new Date();
   const nextWeek = new Date();
@@ -179,15 +195,22 @@ export function UpcomingItems({
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline ml-1">Edit</span>
                       </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 sm:px-3 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline ml-1">Delete</span>
-                      </Button>
+                      {item.itemType === 'event' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 sm:px-3 text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              setPendingDeleteId((item as Event)._id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline ml-1">Delete</span>
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -206,6 +229,31 @@ export function UpcomingItems({
           </div>
         )}
       </CardContent>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteId) {
+                  onDeleteEvent(pendingDeleteId);
+                }
+                setDeleteDialogOpen(false);
+                setPendingDeleteId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
