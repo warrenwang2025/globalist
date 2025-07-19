@@ -3,15 +3,15 @@ import { UsageStats, type IUsageStats } from '@/lib/models/usageStatsSchema';
 
 // Rate limits constants
 const RATE_LIMITS = {
-  FREE_HOURLY_LIMIT: parseInt(process.env.FREE_HOURLY_LIMIT || '10'),
-  PLUS_HOURLY_LIMIT: parseInt(process.env.PLUS_HOURLY_LIMIT || '50'),
-  PRO_HOURLY_LIMIT: parseInt(process.env.PRO_HOURLY_LIMIT || '200'),
+  FREE_HOURLY_LIMIT: parseInt(process.env.FREE_HOURLY_LIMIT!),
+  PLUS_HOURLY_LIMIT: parseInt(process.env.PLUS_HOURLY_LIMIT!),
+  PRO_HOURLY_LIMIT: parseInt(process.env.PRO_HOURLY_LIMIT!),
   
-  FREE_HOURLY_TOKENS: parseInt(process.env.FREE_HOURLY_TOKENS || '100000'), // 100k tokens
-  PLUS_HOURLY_TOKENS: parseInt(process.env.PLUS_HOURLY_TOKENS || '500000'), // 500k tokens
-  PRO_HOURLY_TOKENS: parseInt(process.env.PRO_HOURLY_TOKENS || '2000000'), // 2M tokens
+  FREE_HOURLY_TOKENS: parseInt(process.env.FREE_HOURLY_TOKENS!), // 100k tokens
+  PLUS_HOURLY_TOKENS: parseInt(process.env.PLUS_HOURLY_TOKENS!), // 500k tokens
+  PRO_HOURLY_TOKENS: parseInt(process.env.PRO_HOURLY_TOKENS!), // 2M tokens
   
-  RESET_INTERVAL_MS: parseInt(process.env.RESET_INTERVAL_MS || '3600000'), // 1 hour
+  RESET_INTERVAL_MS: parseInt(process.env.RESET_INTERVAL_MS!), // 1 hour
 };
 
 export class UsageStatsService {
