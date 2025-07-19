@@ -56,12 +56,8 @@ export function EditorSidebar({
       />
 
       {/* Sidebar */}
-      <motion.div
+      <div
         className="fixed right-0 top-0 h-full w-80 bg-background border-l z-50 flex flex-col shadow-xl"
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 20, stiffness: 300 }}
       >
         {/* Sidebar Header */}
         <SidebarHeader onClose={onClose} />
@@ -107,7 +103,7 @@ export function EditorSidebar({
             />
           </div>
         </ScrollArea>
-      </motion.div>
+      </div>
     </>
   );
 }
