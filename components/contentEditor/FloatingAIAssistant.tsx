@@ -547,9 +547,9 @@ export function FloatingAIAssistant({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            style={{ marginBottom: isMobile ? '5.5rem' : '4.5rem' }}
+            className="mb-4"
           >
-            <Card className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-96'} max-w-[96vw] p-3 sm:p-4 shadow-xl border-2 bg-card/95 backdrop-blur-sm max-h-[90vh] overflow-y-auto` }>
+            <Card className={`${isMobile ? 'w-[calc(100vw-2rem)]' : 'w-96'} max-w-[96vw] p-3 sm:p-4 shadow-xl border-2 bg-card/95 backdrop-blur-sm`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -1002,7 +1002,10 @@ export function FloatingAIAssistant({
       </AnimatePresence>
 
       {/* Responsive Floating Button */}
-      <div className="fixed z-50" style={{bottom: isMobile ? '1rem' : '1.5rem', right: position === 'bottom-right' ? (isMobile ? '1rem' : '1.5rem') : 'auto', left: position === 'bottom-left' ? (isMobile ? '1rem' : '1.5rem') : 'auto'}}>
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
         <Button
           onClick={() => setIsOpen(!isOpen)}
           className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} rounded-full shadow-lg`}
@@ -1014,7 +1017,7 @@ export function FloatingAIAssistant({
             <Brain className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
           )}
         </Button>
-      </div>
+      </motion.div>
       
       {/* Responsive Suggestions Panel */}
       <AnimatePresence>
