@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Mail, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import axios from "axios"
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("")
@@ -36,15 +37,19 @@ export function ForgotPasswordForm() {
     setIsLoading(true)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      const response = await axios.post("/api/auth/forgotPassword", { email })
       
-      // Here you would typically make an API call to send reset email
-      console.log("Password reset requested for:", email)
-      
-      setIsSuccess(true)
-    } catch (error) {
-      setErrors({ general: "Failed to send reset email. Please try again." })
+      if (response.data.success) {
+        setIsSuccess(true)
+      } else {
+        setErrors({ general: response.data.error || "Failed to send reset email. Please try again." })
+      }
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response) {
+        setErrors({ general: error.response.data.error || "Failed to send reset email. Please try again." })
+      } else {
+        setErrors({ general: "Failed to send reset email. Please try again." })
+      }
     } finally {
       setIsLoading(false)
     }

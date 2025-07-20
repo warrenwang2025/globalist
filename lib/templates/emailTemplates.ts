@@ -8,6 +8,7 @@ export interface EmailTemplateData {
   user: IUser;
   reminderTime?: number;
   platformNames?: string;
+  resetUrl?: string;
 }
 
 export class EmailTemplates {
@@ -326,6 +327,82 @@ export class EmailTemplates {
             
             <div class="footer">
               <p>Thank you for using Media Suite!</p>
+              <p>© 2024 Media Suite. All rights reserved.</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return { subject, html };
+  }
+
+  // Password reset template
+  static getPasswordResetTemplate(data: EmailTemplateData): { subject: string; html: string } {
+    const { user, resetUrl } = data;
+    if (!resetUrl) throw new Error('Reset URL is required for password reset template');
+
+    const subject = 'Password Reset Request - Media Suite';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+          .reset-card { background: white; padding: 25px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .reset-title { color: #dc3545; font-size: 24px; margin: 0 0 15px 0; }
+          .reset-button { display: inline-block; background: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+          .reset-button:hover { background: #c82333; }
+          .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 15px 0; border: 1px solid #ffeaa7; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+          .security-badge { background: #dc3545; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; display: inline-block; margin-bottom: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Password Reset Request</h1>
+            <p>You requested to reset your password</p>
+          </div>
+          
+          <div class="content">
+            <div class="security-badge">🔒 Secure Password Reset</div>
+            
+            <div class="reset-card">
+              <h2 class="reset-title">Reset Your Password</h2>
+              
+              <p>Hello ${user.name},</p>
+              
+              <p>We received a request to reset your password for your Media Suite account. If you didn't make this request, you can safely ignore this email.</p>
+              
+              <p>To reset your password, click the button below:</p>
+              
+              <div style="text-align: center;">
+                <a href="${resetUrl}" class="reset-button">Reset Password</a>
+              </div>
+              
+              <div class="warning">
+                <strong>⚠️ Important:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                  <li>This link will expire in 10 minutes</li>
+                  <li>If you didn't request this reset, please ignore this email</li>
+                  <li>For security, this link can only be used once</li>
+                </ul>
+              </div>
+              
+              <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #007bff;">${resetUrl}</p>
+            </div>
+            
+            <div class="footer">
+              <p>This is an automated message from Media Suite. Please do not reply to this email.</p>
               <p>© 2024 Media Suite. All rights reserved.</p>
             </div>
           </div>
