@@ -3,6 +3,7 @@
 import mongoose, { Schema, Document} from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // Define an interface for a single Login Session
 export interface ISession extends Document {
@@ -36,6 +37,8 @@ export interface IUser extends Document {
 
   // --- Security (from the UI) ---
   passwordChangedAt?: Date;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   twoFactorEnabled: boolean;
   twoFactorSecret?: string;
   sessions: ISession[];
@@ -51,6 +54,10 @@ export interface IUser extends Document {
   
   createdAt: Date; // Handled by timestamps
   updatedAt: Date; // Handled by timestamps
+
+  // --- Methods ---
+  comparePassword(userEnteredPassword: string, actualPassword: string): Promise<boolean>;
+  createPasswordResetToken(): string;
 }
 
 // Sub-schema for login sessions
@@ -175,6 +182,8 @@ const UserSchema: Schema<IUser> = new Schema(
 
     // --- Security ---
     passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     twoFactorEnabled: {
       type: Boolean,
       default: false,
@@ -250,6 +259,19 @@ UserSchema.methods.comparePassword = async function (
   actualPassword: string
 ): Promise<boolean> {
   return await bcrypt.compare(userEnteredPassword, actualPassword);
+};
+
+UserSchema.methods.createPasswordResetToken = function(): string {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+  
+  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  
+  return resetToken;
 };
 
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
