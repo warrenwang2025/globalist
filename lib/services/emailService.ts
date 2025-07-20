@@ -149,6 +149,28 @@ class EmailService {
     }
   }
 
+  // Send password reset email
+  async sendPasswordResetEmail(user: IUser, resetUrl: string): Promise<boolean> {
+    try {
+      const template = EmailTemplates.getPasswordResetTemplate({
+        user,
+        resetUrl,
+      });
+
+      await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || 'noreply@mediasuite.com',
+        to: user.email,
+        subject: template.subject,
+        html: template.html,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      return false;
+    }
+  }
+
 }
 
 // Create singleton instance
