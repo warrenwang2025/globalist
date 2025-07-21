@@ -5,6 +5,7 @@ export { TextBlock } from "./TextBlock";
 export { HeadingBlock } from "./HeadingBlock";
 export { ImageBlock } from "./ImageBlock";
 export { VideoBlock } from "./VideoBlock";
+export { AudioBlock } from "./AudioBlock";
 export { QuoteBlock } from "./QuoteBlock";
 export { ListBlock } from "./ListBlock";
 export { EmbedBlock } from "./EmbedBlock";
