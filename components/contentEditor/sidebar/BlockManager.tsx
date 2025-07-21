@@ -19,6 +19,7 @@ import {
   EyeOff,
   ChevronUp,
   ChevronDown,
+  Music,
 } from "lucide-react";
 import type { AnyBlock, EditorState } from "@/types/editor";
 
@@ -31,11 +32,12 @@ interface BlockManagerProps {
 }
 
 const getBlockIcon = (type: AnyBlock["type"]) => {
-  const iconMap = {
+  const iconMap: Record<AnyBlock["type"], any> = {
     text: Type,
     heading: Heading1,
     image: ImageIcon,
     video: Video,
+    audio: Music,
     embed: Link2,
     quote: Quote,
     list: List,
@@ -44,11 +46,12 @@ const getBlockIcon = (type: AnyBlock["type"]) => {
 };
 
 const getBlockLabel = (type: AnyBlock["type"]) => {
-  const labelMap = {
+  const labelMap: Record<AnyBlock["type"], string> = {
     text: "Text",
     heading: "Heading",
     image: "Image",
     video: "Video",
+    audio: "Audio",
     embed: "Embed",
     quote: "Quote",
     list: "List",
@@ -78,6 +81,17 @@ const getBlockPreview = (block: AnyBlock) => {
     case "video":
       const videoUrl = (block.content as any).url || "";
       return videoUrl ? "Video embedded" : "No video URL";
+    case "audio":
+      const audioUrl = (block.content as any).url || "";
+      const audioTitle = (block.content as any).title || "";
+      const audioArtist = (block.content as any).artist || "";
+      if (audioUrl) {
+        if (audioTitle && audioArtist) {
+          return `${audioTitle} - ${audioArtist}`;
+        }
+        return audioTitle || "Audio embedded";
+      }
+      return "No audio URL";
     case "embed":
       const embedUrl = (block.content as any).url || "";
       return embedUrl ? "Content embedded" : "No embed URL";

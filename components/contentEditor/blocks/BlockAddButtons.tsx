@@ -9,6 +9,7 @@ import {
   Heading1,
   Quote,
   List,
+  Music,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 
@@ -22,6 +23,7 @@ const blockTypes = [
   { type: "heading" as const, icon: Heading1, label: "Heading" },
   { type: "image" as const, icon: ImageIcon, label: "Image" },
   { type: "video" as const, icon: Video, label: "Video" },
+  { type: "audio" as const, icon: Music, label: "Audio" },
   { type: "embed" as const, icon: Link2, label: "Embed" },
   { type: "quote" as const, icon: Quote, label: "Quote" },
   { type: "list" as const, icon: List, label: "List" },

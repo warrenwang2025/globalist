@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ImageIcon, Maximize2, RotateCcw, RotateCw, Save, RefreshCw, ZoomIn, ZoomOut } from "lucide-react";
+import { ImageIcon, Maximize2, RotateCcw, RotateCw, Save, RefreshCw, ZoomIn, ZoomOut, Upload, X } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -25,11 +25,14 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
   const [cropRect, setCropRect] = useState({ x: 50, y: 50, width: 200, height: 150 });
   const [isSaving, setIsSaving] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const cropBoxRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const SAFETY_MARGIN = 10;
 
@@ -66,12 +69,74 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
 
   const handleUrlChange = (value: string) => {
     setUrl(value);
+    setUploadedFile(null); // Clear uploaded file when URL is manually entered
     onUpdate({ url: value, alt, size: imageSize, rotation });
   };
 
   const handleAltChange = (value: string) => {
     setAlt(value);
     onUpdate({ url, alt: value, size: imageSize, rotation });
+  };
+
+  // File upload handlers
+  const handleFileSelect = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      setUrl(result);
+      setUploadedFile(file);
+      onUpdate({ url: result, alt: alt || file.name, size: imageSize, rotation });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      handleFileSelect(imageFile);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUrl("");
+    setUploadedFile(null);
+    onUpdate({ url: "", alt, size: imageSize, rotation });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -388,6 +453,7 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
 
   return (
     <div className="space-y-4">
+      {/* Image URL Input */}
       <div className="space-y-2">
         <Label htmlFor="image-url">Image URL</Label>
         <Input
@@ -397,6 +463,70 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
           placeholder="https://example.com/image.jpg"
         />
       </div>
+
+      {/* File Upload Section */}
+      <div className="space-y-2">
+        <Label>Or Upload from Computer</Label>
+        <div 
+          className={`
+            border-2 border-dashed rounded-lg p-6 text-center transition-colors
+            ${isDragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'}
+            ${uploadedFile ? 'bg-muted/50' : 'hover:border-primary hover:bg-primary/5'}
+          `}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {uploadedFile ? (
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <ImageIcon className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm font-medium truncate">
+                  {uploadedFile.name}
+                </span>
+                <span className="text-xs text-muted-foreground flex-shrink-0">
+                  ({(uploadedFile.size / 1024 / 1024).toFixed(2)} MB)
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRemoveFile}
+                className="flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Drop image here or click to browse</p>
+                <p className="text-xs text-muted-foreground">
+                  Supports: JPG, PNG, GIF, WebP (max 10MB)
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-2"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Choose File
+              </Button>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+        </div>
+      </div>
+
+      {/* Alt Text Input */}
       <div className="space-y-2">
         <Label htmlFor="image-alt">Alt text</Label>
         <Input
@@ -406,6 +536,8 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
           placeholder="Describe the image..."
         />
       </div>
+
+      {/* Image Preview/Editor */}
       {url ? (
         <div className="relative">
           {!isEditing ? (
@@ -614,7 +746,7 @@ export function ImageBlock({ block, isSelected, onUpdate }: ImageBlockProps) {
         <div className="flex items-center justify-center h-48 bg-muted rounded-lg">
           <div className="text-center text-muted-foreground">
             <ImageIcon className="h-12 w-12 mx-auto mb-2" />
-            <p>Add an image URL above</p>
+            <p>Add an image URL above or upload a file</p>
           </div>
         </div>
       )}
