@@ -11,8 +11,6 @@ export default withAuth(
     if (pathname.startsWith('/api/') || 
         pathname.startsWith('/signin') || 
         pathname.startsWith('/signup') ||
-        pathname.startsWith('/forgot-password') ||
-        pathname.startsWith('/reset-password') ||
         pathname.startsWith('/_next/') ||
         pathname.startsWith('/favicon.ico') ||
         pathname.startsWith('/apple-touch-icon.png') ||
@@ -75,9 +73,7 @@ export const config = {
      * - / (the public home page)
      * - /signin (the login page)
      * - /signup (the register page)
-     * - /forgot-password (the forgot password page)
-     * - /reset-password (the reset password page)
      */
-    '/((?!api/auth|api/public|_next/static|_next/image|favicon.ico|signin|signup|forgot-password|reset-password|$).*)',
+    '/((?!api/auth|api/public|_next/static|_next/image|favicon.ico|signin|signup|$).*)',
   ],
 };
