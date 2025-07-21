@@ -89,10 +89,13 @@ export interface AudioBlock extends Block {
   type: "audio";
   content: {
     url: string;
-    title?: string;
-    artist?: string;
+    fileName?: string;
+    fileType?: string;
+    size?: number;
     duration?: number;
-    provider?: "upload" | "spotify" | "soundcloud";
+    thumbnailUrl?: string;
+    title?: string;
+    // Add any other audio-specific fields as needed
   };
 }
 

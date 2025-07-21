@@ -32,6 +32,85 @@ export class S3Service {
   }
 
   /**
+   * Upload a media file to S3
+   * @param buffer - File buffer
+   * @param fileName - Original file name
+   * @param mimeType - MIME type
+   * @param userId - User ID for organizing files
+   * @param postId - Optional post ID for organizing files
+   * @returns Upload result with key and URL
+   */
+  public async uploadMediaFile(
+    buffer: Buffer,
+    fileName: string,
+    mimeType: string,
+    userId: string,
+    postId?: string
+  ): Promise<S3UploadResult> {
+    try {
+      // Generate unique key for the file
+      const fileExtension = this.getFileExtension(fileName);
+      const key = postId 
+        ? `MediaSuite/posts/${userId}/${postId}/${uuidv4()}.${fileExtension}`
+        : `MediaSuite/media/${userId}/${uuidv4()}.${fileExtension}`;
+
+      // Upload to S3
+      const uploadCommand = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: mimeType,
+        Metadata: {
+          'original-filename': fileName,
+          'uploaded-by': userId,
+          'uploaded-at': new Date().toISOString(),
+          ...(postId && { 'post-id': postId }),
+        },
+      });
+
+      await this.s3Client.send(uploadCommand);
+
+      // Generate URL
+      const url = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
+
+      return {
+        key,
+        url,
+        size: buffer.length,
+        format: fileExtension,
+      };
+    } catch (error) {
+      throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Delete a media file from S3
+   * @param url - S3 URL of the file to delete
+   * @returns Success status
+   */
+  public async deleteMedia(url: string): Promise<boolean> {
+    try {
+      const key = this.extractKeyFromUrl(url);
+      if (!key) {
+        console.error('Invalid S3 URL:', url);
+        return false;
+      }
+
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      await this.s3Client.send(deleteCommand);
+      return true;
+    } catch (error) {
+      console.error('S3 delete failed:', error);
+      return false;
+    }
+  }
+
+  /**
    * Upload an image to S3
    * @param buffer - Image buffer
    * @param fileName - Original file name
@@ -140,6 +219,15 @@ export class S3Service {
    */
   public isS3Url(url: string): boolean {
     return url.includes(`${this.bucketName}.s3.${this.region}.amazonaws.com`);
+  }
+
+  /**
+   * Get file extension from filename
+   * @param filename - File name
+   * @returns File extension
+   */
+  private getFileExtension(filename: string): string {
+    return filename.split('.').pop()?.toLowerCase() || 'bin';
   }
 }
 

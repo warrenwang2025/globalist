@@ -1,66 +1,81 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Event, ScheduledPost } from "@/types/calendar";
+import axios from "axios";
 
 export function useCalendarData() {
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: 1,
-      title: "Team Meeting",
-      description: "Weekly team sync",
-      date: new Date(2024, 2, 20, 10, 0),
-      type: "meeting",
-      duration: 60,
-      attendees: 8,
-    },
-    {
-      id: 2,
-      title: "Product Launch",
-      description: "Launch event for new product",
-      date: new Date(2024, 2, 25, 14, 0),
-      type: "event",
-      duration: 120,
-    },
-  ]);
-
-  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([
-    {
-      id: 1,
-      title: "Weekly Newsletter",
-      content: "This week's social media insights and trends",
-      scheduledDate: new Date(2024, 2, 18, 9, 0),
-      platforms: [1, 2, 3],
-      mediaCount: 2,
-      mediaTypes: ["image"],
-      status: "scheduled",
-    },
-    {
-      id: 2,
-      title: "Product Announcement",
-      content: "Excited to announce our new AI-powered features!",
-      scheduledDate: new Date(2024, 2, 22, 15, 30),
-      platforms: [1, 2, 4],
-      mediaCount: 1,
-      mediaTypes: ["video"],
-      status: "scheduled",
-    },
-  ]);
-
+  const [events, setEvents] = useState<Event[]>([]);
+  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
   const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCreateEvent = (eventData: Omit<Event, 'id'>) => {
-    const newEvent: Event = {
-      ...eventData,
-      id: Date.now(),
+  // Fetch events and scheduled posts from API
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await axios.get("/api/calendar/all");
+        const data = res.data;
+        // Convert date strings to Date objects for events
+        setEvents(
+          (data.events || []).map((event: any) => ({
+            ...event,
+            startDateTime: new Date(event.startDateTime),
+            createdAt: event.createdAt ? new Date(event.createdAt) : undefined,
+            updatedAt: event.updatedAt ? new Date(event.updatedAt) : undefined,
+          }))
+        );
+        // Convert date strings to Date objects for scheduledPosts
+        setScheduledPosts(
+          (data.scheduledPosts || []).map((post: any) => ({
+            ...post,
+            scheduledDate: new Date(post.scheduledDate),
+          }))
+        );
+      } catch (err: any) {
+        setError(err.message || "Unknown error");
+      } finally {
+        setLoading(false);
+      }
     };
-    setEvents(prev => [...prev, newEvent]);
+    fetchCalendarData();
+  }, []);
+
+  const handleCreateEvent = async (eventData: Omit<Event, '_id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const res = await axios.post("/api/calendar/events", {
+        title: eventData.title,
+        description: eventData.description,
+        date: eventData.startDateTime,
+        type: eventData.eventType,
+        duration: eventData.duration,
+        attendees: eventData.attendees,
+      });
+      const result = res.data;
+      if (result.event) {
+        setEvents(prev => [
+          ...prev,
+          {
+            ...result.event,
+            startDateTime: new Date(result.event.startDateTime),
+            createdAt: result.event.createdAt ? new Date(result.event.createdAt) : undefined,
+            updatedAt: result.event.updatedAt ? new Date(result.event.updatedAt) : undefined,
+          },
+        ]);
+      }
+    } catch (err) {
+      // Optionally handle error (e.g., toast)
+      console.error(err);
+    }
   };
 
   const handleUpdateEvent = (updatedEvent: Event) => {
     setEvents(prev => 
       prev.map(event => 
-        event.id === updatedEvent.id ? updatedEvent : event
+        event._id === updatedEvent._id ? { ...updatedEvent, updatedAt: new Date() } : event
       )
     );
   };
@@ -74,7 +89,7 @@ export function useCalendarData() {
   };
 
   const handleBulkDelete = () => {
-    setEvents(prev => prev.filter(event => !selectedItems.includes(event.id)));
+    setEvents(prev => prev.filter(event => !selectedItems.includes(parseInt(event._id))));
     setScheduledPosts(prev => prev.filter(post => !selectedItems.includes(post.id)));
     setSelectedItems([]);
   };
@@ -85,7 +100,7 @@ export function useCalendarData() {
         type: 'Event',
         title: event.title,
         description: event.description,
-        date: event.date.toISOString(),
+        date: event.startDateTime.toISOString(),
         duration: event.duration,
         attendees: event.attendees,
       })),
@@ -120,6 +135,15 @@ export function useCalendarData() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await axios.delete(`/api/calendar/events?eventId=${eventId}`);
+      setEvents(prev => prev.filter(event => event._id !== eventId));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return {
     events,
     scheduledPosts,
@@ -129,6 +153,9 @@ export function useCalendarData() {
     handleUpdateEvent,
     handleUpdatePost,
     handleBulkDelete,
-    handleExportSchedule
+    handleExportSchedule,
+    handleDeleteEvent,
+    loading,
+    error,
   };
 }

@@ -6,6 +6,25 @@ export interface INotificationSettings {
   pushNotifications: boolean;
   marketingEmails: boolean;
   weeklyDigest: boolean;
+  
+  // Calendar notification preferences
+  calendarNotifications: {
+    events: {
+      emailReminder: boolean;
+      reminderTime: number; // minutes before event
+      pushNotification: boolean;
+    };
+    meetings: {
+      emailReminder: boolean;
+      reminderTime: number; // minutes before meeting
+      pushNotification: boolean;
+    };
+    scheduledPosts: {
+      emailReminder: boolean;
+      reminderTime: number; // minutes before post
+      pushNotification: boolean;
+    };
+  };
 }
 
 export interface IPlatformIntegration {
@@ -86,6 +105,25 @@ const NotificationSettingsSchema = new Schema(
     pushNotifications: { type: Boolean, default: true },
     marketingEmails: { type: Boolean, default: false },
     weeklyDigest: { type: Boolean, default: true },
+    
+    // Calendar notification preferences
+    calendarNotifications: {
+      events: {
+        emailReminder: { type: Boolean, default: true },
+        reminderTime: { type: Number, default: 15, min: 0 }, // minutes before event
+        pushNotification: { type: Boolean, default: true },
+      },
+      meetings: {
+        emailReminder: { type: Boolean, default: true },
+        reminderTime: { type: Number, default: 30, min: 0 }, // minutes before meeting
+        pushNotification: { type: Boolean, default: true },
+      },
+      scheduledPosts: {
+        emailReminder: { type: Boolean, default: false }, // Default false for posts
+        reminderTime: { type: Number, default: 5, min: 0 }, // minutes before post
+        pushNotification: { type: Boolean, default: true },
+      },
+    },
   },
   { _id: false }
 );

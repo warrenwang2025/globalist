@@ -25,16 +25,29 @@ import {
   FileText,
   Share2,
   Edit,
+  Trash2,
 } from "lucide-react";
 import type { Event, ScheduledPost } from "@/types/calendar";
 import { EditEventDialog } from "./edit-event-dialog";
 import { EditPostDialog } from "./edit-post-dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 interface CalendarViewProps {
   events: Event[];
   scheduledPosts: ScheduledPost[];
   onUpdateEvent?: (event: Event) => void;
   onUpdatePost?: (post: ScheduledPost) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
 export function CalendarView({
@@ -42,6 +55,7 @@ export function CalendarView({
   scheduledPosts,
   onUpdateEvent,
   onUpdatePost,
+  onDeleteEvent,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
@@ -49,6 +63,8 @@ export function CalendarView({
     Event | ScheduledPost | null
   >(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // Add theme detection
   const { theme, resolvedTheme } = useTheme();
@@ -105,7 +121,7 @@ export function CalendarView({
 
   // Check if item is an Event
   const isEvent = (item: Event | ScheduledPost): item is Event => {
-    return "type" in item;
+    return "eventType" in item;
   };
 
   // Get platform names for scheduled posts
@@ -151,7 +167,7 @@ export function CalendarView({
   const getItemsForDate = (date: Date) => {
     const dateStr = date.toDateString();
     const dayEvents = events.filter(
-      (event) => event.date.toDateString() === dateStr
+      (event) => event.startDateTime.toDateString() === dateStr
     );
     const dayPosts = scheduledPosts.filter(
       (post) => post.scheduledDate.toDateString() === dateStr
@@ -321,7 +337,7 @@ export function CalendarView({
                                 className={`
                                 text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 group
                                 ${
-                                  "type" in item
+                                  "eventType" in item
                                     ? isDark 
                                       ? "bg-blue-900 text-blue-200" 
                                       : "bg-blue-100 text-blue-800"
@@ -334,7 +350,7 @@ export function CalendarView({
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="truncate">
-                                    {"type" in item ? item.title : item.title}
+                                    {"eventType" in item ? item.title : item.title}
                                   </span>
                                   <Edit className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
@@ -389,7 +405,7 @@ export function CalendarView({
                           className={`
                             text-xs p-2 rounded-lg border-l-4 cursor-pointer hover:opacity-80 group
                             ${
-                              "type" in item
+                              "eventType" in item
                                 ? "bg-blue-50 border-blue-400 text-blue-800"
                                 : "bg-green-50 border-green-400 text-green-800"
                             }
@@ -398,11 +414,11 @@ export function CalendarView({
                         >
                           <div className="flex items-center justify-between">
                             <div className="font-medium truncate">
-                              {"type" in item ? item.title : item.title}
+                              {"eventType" in item ? item.title : item.title}
                             </div>
                             <Edit className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </div>
-                          {"type" in item && item.duration && (
+                          {"eventType" in item && item.duration && (
                             <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
                               <Clock className="h-3 w-3" />
                               {item.duration}min
@@ -423,8 +439,8 @@ export function CalendarView({
               <div className="space-y-4">
                 {[...events, ...scheduledPosts]
                   .sort((a, b) => {
-                    const dateA = "type" in a ? a.date : a.scheduledDate;
-                    const dateB = "type" in b ? b.date : b.scheduledDate;
+                    const dateA = "eventType" in a ? a.startDateTime : a.scheduledDate;
+                    const dateB = "eventType" in b ? b.startDateTime : b.scheduledDate;
                     return dateA.getTime() - dateB.getTime();
                   })
                   .map((item, index) => (
@@ -436,11 +452,11 @@ export function CalendarView({
                         <div
                           className={`
                             p-2 rounded-full
-                            ${"type" in item ? "bg-blue-100" : "bg-green-100"}
+                            ${"eventType" in item ? "bg-blue-100" : "bg-green-100"}
                           `}
                         >
-                          {"type" in item ? (
-                            item.type === "meeting" ? (
+                          {"eventType" in item ? (
+                            item.eventType === "meeting" ? (
                               <Users className="h-4 w-4 text-blue-600" />
                             ) : (
                               <Calendar className="h-4 w-4 text-blue-600" />
@@ -453,31 +469,31 @@ export function CalendarView({
 
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold truncate">
-                          {"type" in item ? item.title : item.title}
+                          {"eventType" in item ? item.title : item.title}
                         </h3>
                         <p className="text-sm text-muted-foreground truncate">
-                          {"type" in item
+                          {"eventType" in item
                             ? item.description
                             : `Scheduled for ${item.platforms.length} platforms`}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
-                            {("type" in item
-                              ? item.date
+                            {("eventType" in item
+                              ? item.startDateTime
                               : item.scheduledDate
                             ).toLocaleDateString()}
                           </Badge>
-                          {"type" in item && item.duration && (
+                          {"eventType" in item && item.duration && (
                             <Badge variant="outline" className="text-xs">
                               {item.duration} min
                             </Badge>
                           )}
-                          {"type" in item && item.attendees && (
+                          {"eventType" in item && item.attendees && (
                             <Badge variant="outline" className="text-xs">
                               {item.attendees} attendees
                             </Badge>
                           )}
-                          {!("type" in item) && (
+                          {!("eventType" in item) && (
                             <Badge variant="outline" className="text-xs">
                               {item.status}
                             </Badge>
@@ -495,6 +511,22 @@ export function CalendarView({
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </Button>
+                        {onDeleteEvent && "eventType" in item && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full sm:w-auto text-red-600 hover:text-red-700 ml-2"
+                              onClick={() => {
+                                setPendingDeleteId(item._id);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -534,6 +566,32 @@ export function CalendarView({
           onUpdatePost={handleUpdatePost}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteId && onDeleteEvent) {
+                  onDeleteEvent(pendingDeleteId);
+                }
+                setDeleteDialogOpen(false);
+                setPendingDeleteId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -48,6 +48,7 @@ export default function SchedulePage() {
     handleUpdatePost,
     handleBulkDelete,
     handleExportSchedule,
+    handleDeleteEvent,
   } = useCalendarData();
   const {
     searchQuery,
@@ -136,6 +137,7 @@ export default function SchedulePage() {
       <CalendarView
         events={filteredEvents as import("@/types/calendar").Event[]}
         scheduledPosts={filteredPosts}
+        onDeleteEvent={handleDeleteEvent}
       />
 
       {/* Quick Stats */}
@@ -150,7 +152,7 @@ export default function SchedulePage() {
               {filteredEvents.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {events.filter((e) => e.date > new Date()).length} upcoming
+              {events.filter((e) => e.startDateTime > new Date()).length} upcoming
             </p>
           </CardContent>
         </Card>
@@ -192,7 +194,7 @@ export default function SchedulePage() {
                 weekEnd.setDate(weekStart.getDate() + 6);
 
                 const thisWeekEvents = events.filter(
-                  (e) => e.date >= weekStart && e.date <= weekEnd
+                  (e) => e.startDateTime >= weekStart && e.startDateTime <= weekEnd
                 ).length;
 
                 const thisWeekPosts = scheduledPosts.filter(
@@ -214,7 +216,7 @@ export default function SchedulePage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl md:text-2xl font-bold">
-              {filteredEvents.filter((e) => e.type === "meeting").length}
+              {filteredEvents.filter((e) => e.eventType === "meeting").length}
             </div>
             <p className="text-xs text-muted-foreground">total meetings</p>
           </CardContent>
@@ -227,6 +229,7 @@ export default function SchedulePage() {
         scheduledPosts={filteredPosts}
         onEditEvent={handleEditEvent}
         onEditPost={handleEditPost}
+        onDeleteEvent={handleDeleteEvent}
       />
 
       {/* Dialogs */}

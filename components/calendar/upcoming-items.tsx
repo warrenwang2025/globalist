@@ -13,12 +13,25 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { Event, ScheduledPost } from "@/types/calendar";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface UpcomingItemsProps {
   events: Event[];
   scheduledPosts: ScheduledPost[];
   onEditEvent: (event: Event) => void;
   onEditPost: (post: ScheduledPost) => void;
+  onDeleteEvent: (eventId: string) => void;
 }
 
 export function UpcomingItems({
@@ -26,15 +39,18 @@ export function UpcomingItems({
   scheduledPosts,
   onEditEvent,
   onEditPost,
+  onDeleteEvent,
 }: UpcomingItemsProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   // Get upcoming items (next 7 days)
   const now = new Date();
   const nextWeek = new Date();
   nextWeek.setDate(now.getDate() + 7);
 
   const upcomingEvents = events
-    .filter((event) => event.date >= now && event.date <= nextWeek)
-    .sort((a, b) => a.date.getTime() - b.date.getTime());
+    .filter((event) => event.startDateTime >= now && event.startDateTime <= nextWeek)
+    .sort((a, b) => a.startDateTime.getTime() - b.startDateTime.getTime());
 
   const upcomingPosts = scheduledPosts
     .filter((post) => post.scheduledDate >= now && post.scheduledDate <= nextWeek)
@@ -44,8 +60,8 @@ export function UpcomingItems({
     ...upcomingEvents.map(event => ({ ...event, itemType: 'event' as const })),
     ...upcomingPosts.map(post => ({ ...post, itemType: 'post' as const }))
   ].sort((a, b) => {
-    const dateA = a.itemType === 'event' ? a.date : a.scheduledDate;
-    const dateB = b.itemType === 'event' ? b.date : b.scheduledDate;
+    const dateA = a.itemType === 'event' ? a.startDateTime : a.scheduledDate;
+    const dateB = b.itemType === 'event' ? b.startDateTime : b.scheduledDate;
     return dateA.getTime() - dateB.getTime();
   });
 
@@ -128,12 +144,12 @@ export function UpcomingItems({
                       <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2">
                         <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                           <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-                          {(item.itemType === 'event' ? item.date : item.scheduledDate).toLocaleDateString()}
+                          {(item.itemType === 'event' ? item.startDateTime : item.scheduledDate).toLocaleDateString()}
                         </div>
                         
                         <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                           <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                          {(item.itemType === 'event' ? item.date : item.scheduledDate).toLocaleTimeString([], {
+                          {(item.itemType === 'event' ? item.startDateTime : item.scheduledDate).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
@@ -179,15 +195,22 @@ export function UpcomingItems({
                         <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline ml-1">Edit</span>
                       </Button>
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 sm:px-3 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span className="hidden sm:inline ml-1">Delete</span>
-                      </Button>
+                      {item.itemType === 'event' && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 px-2 sm:px-3 text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              setPendingDeleteId((item as Event)._id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline ml-1">Delete</span>
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -206,6 +229,31 @@ export function UpcomingItems({
           </div>
         )}
       </CardContent>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteId) {
+                  onDeleteEvent(pendingDeleteId);
+                }
+                setDeleteDialogOpen(false);
+                setPendingDeleteId(null);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

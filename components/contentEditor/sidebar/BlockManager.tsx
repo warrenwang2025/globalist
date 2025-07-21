@@ -19,6 +19,7 @@ import {
   EyeOff,
   ChevronUp,
   ChevronDown,
+  Volume2,
   Music,
 } from "lucide-react";
 import type { AnyBlock, EditorState } from "@/types/editor";
@@ -34,13 +35,14 @@ interface BlockManagerProps {
 const getBlockIcon = (type: AnyBlock["type"]) => {
   const iconMap: Record<AnyBlock["type"], any> = {
     text: Type,
-    heading: Heading1,
     image: ImageIcon,
     video: Video,
     audio: Music,
     embed: Link2,
+    heading: Heading1,
     quote: Quote,
     list: List,
+    audio: Volume2,
   };
   return iconMap[type] || Type;
 };
@@ -55,6 +57,7 @@ const getBlockLabel = (type: AnyBlock["type"]) => {
     embed: "Embed",
     quote: "Quote",
     list: "List",
+    audio: "Audio",
   };
   return labelMap[type] || "Unknown";
 };
