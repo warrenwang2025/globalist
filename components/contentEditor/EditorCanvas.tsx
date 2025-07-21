@@ -126,7 +126,7 @@ export function EditorCanvas({
   };
 
   return (
-    <div className={cn("flex h-screen overflow-hidden relative", className)}>
+    <div className={cn("flex flex-col h-screen overflow-x-hidden relative", className)}>
       {/* Main Editor Area - Fixed position, no padding changes */}
       <div
         className={cn(
@@ -164,8 +164,8 @@ export function EditorCanvas({
         </div>
 
         {/* Content Area - Always in the same position */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden relative">
-          <div className="p-4 pb-20 min-h-full">
+        <div className="flex-1 w-full overflow-y-auto pt-[128px] pb-24"> {/* Increased top padding to prevent overlap */}
+          <div className="p-4 max-w-4xl mx-auto space-y-4 w-full relative">
             <DragDropContext onDragEnd={onDragEnd}>
               <Droppable droppableId="editor-blocks">
                 {(provided, snapshot) => (
@@ -173,7 +173,7 @@ export function EditorCanvas({
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                     className={cn(
-                      "max-w-4xl mx-auto space-y-4 w-full relative",
+                      "space-y-4 w-full relative",
                       snapshot.isDraggingOver && "bg-muted/50 rounded-lg p-2"
                     )}
                   >

@@ -7,6 +7,7 @@ import { VideoBlock } from "./VideoBlock";
 import { QuoteBlock } from "./QuoteBlock";
 import { ListBlock } from "./ListBlock";
 import { EmbedBlock } from "./EmbedBlock";
+import { AudioBlock } from "./AudioBlock";
 import type { AnyBlock } from "@/types/editor";
 
 interface BlockProps {
@@ -45,6 +46,14 @@ export function Block({ block, isSelected, onUpdate }: BlockProps) {
       return (
         <VideoBlock
           block={block}
+          isSelected={isSelected}
+          onUpdate={onUpdate}
+        />
+      );
+    case "audio":
+      return (
+        <AudioBlock
+          block={block as any}
           isSelected={isSelected}
           onUpdate={onUpdate}
         />

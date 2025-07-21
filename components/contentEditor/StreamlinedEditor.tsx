@@ -14,7 +14,6 @@ import {
   Eye,
   FileText,
   Sparkles,
-  Clock,
   CheckCircle,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
@@ -74,7 +73,7 @@ export function StreamlinedEditor({
         description: "Your content has been saved successfully",
       });
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error("Save failed:", error);
       toast({
         title: "Save Failed",
         description: "Failed to save your content. Please try again.",
@@ -99,15 +98,15 @@ export function StreamlinedEditor({
 
   const getWordCount = () => {
     return blocks
-      .filter(block => block.type === 'text' || block.type === 'heading')
+      .filter((block) => block.type === "text" || block.type === "heading")
       .reduce((count, block) => {
-        let text = '';
-        if (block.type === 'text' && block.content?.text) {
+        let text = "";
+        if (block.type === "text" && block.content?.text) {
           text = block.content.text;
-        } else if (block.type === 'heading' && block.content?.text) {
+        } else if (block.type === "heading" && block.content?.text) {
           text = block.content.text;
         }
-        
+
         if (text.trim()) {
           const words = text.trim().split(/\s+/).filter((word: string) => word.length > 0);
           return count + words.length;
@@ -116,7 +115,12 @@ export function StreamlinedEditor({
       }, 0);
   };
 
-  const handleAIEnhancement = (originalContent: string, enhancedContent: string, tool: string, enhancedBlocks?: ContentBlock[]) => {
+  const handleAIEnhancement = (
+    originalContent: string,
+    enhancedContent: string,
+    tool: string,
+    enhancedBlocks?: ContentBlock[]
+  ) => {
     setAIEnhancement({
       originalContent,
       enhancedContent,
@@ -127,36 +131,38 @@ export function StreamlinedEditor({
   };
 
   const handleAcceptEnhancement = (enhancedContent: string) => {
-    if (aiEnhancement && aiEnhancement.enhancedBlocks && aiEnhancement.enhancedBlocks.length > 0) {
-      // Convert ContentBlock[] to AnyBlock[] for the editor
+    if (aiEnhancement?.enhancedBlocks?.length) {
       const newBlocks: AnyBlock[] = aiEnhancement.enhancedBlocks.map((block, index) => {
         switch (block.type) {
-          case 'text':
+          case "text":
             return {
               id: Math.random().toString(36).substr(2, 9),
-              type: 'text',
+              type: "text",
               content: { text: block.content as string, html: block.content as string },
               order: index,
             };
-          case 'heading':
+          case "heading":
             return {
               id: Math.random().toString(36).substr(2, 9),
-              type: 'heading',
+              type: "heading",
               content: { text: block.content as string, level: block.level || 1 },
               order: index,
             };
-          case 'quote':
+          case "quote":
             return {
               id: Math.random().toString(36).substr(2, 9),
-              type: 'quote',
-              content: { text: block.content as string, author: block.author || '' },
+              type: "quote",
+              content: { text: block.content as string, author: block.author || "" },
               order: index,
             };
-          case 'list':
+          case "list":
             return {
               id: Math.random().toString(36).substr(2, 9),
-              type: 'list',
-              content: { items: Array.isArray(block.content) ? block.content : [block.content as string], ordered: block.ordered || false },
+              type: "list",
+              content: {
+                items: Array.isArray(block.content) ? block.content : [block.content as string],
+                ordered: block.ordered || false,
+              },
               order: index,
             };
           default:
@@ -164,49 +170,42 @@ export function StreamlinedEditor({
         }
       }).filter(Boolean) as AnyBlock[];
       setBlocks(newBlocks);
-      setAIEnhancement(null);
-      setShowEnhancementView(false);
-      toast({
-        title: "Enhancement Applied",
-        description: "AI enhancement has been applied to your content",
-      });
-      return;
-    }
-    // fallback: old logic (should not be used for block-based enhancements)
-    if (aiEnhancement) {
-      const updatedBlocks = blocks.map(block => {
-        if (block.type === 'text' && 
-            block.content?.text && 
-            block.content.text.includes(aiEnhancement.originalContent)) {
+    } else if (aiEnhancement) {
+      const updatedBlocks = blocks.map((block) => {
+        if (block.type === "text" && block.content?.text?.includes(aiEnhancement.originalContent)) {
           return {
             ...block,
             content: {
               ...block.content,
               text: block.content.text.replace(aiEnhancement.originalContent, enhancedContent),
-              html: block.content.html?.replace(aiEnhancement.originalContent, enhancedContent) || enhancedContent
-            }
+              html:
+                block.content.html?.replace(aiEnhancement.originalContent, enhancedContent) ||
+                enhancedContent,
+            },
           };
-        } else if (block.type === 'heading' && 
-                   block.content?.text && 
-                   block.content.text.includes(aiEnhancement.originalContent)) {
+        } else if (
+          block.type === "heading" &&
+          block.content?.text?.includes(aiEnhancement.originalContent)
+        ) {
           return {
             ...block,
             content: {
               ...block.content,
-              text: block.content.text.replace(aiEnhancement.originalContent, enhancedContent)
-            }
+              text: block.content.text.replace(aiEnhancement.originalContent, enhancedContent),
+            },
           };
         }
         return block;
       });
       setBlocks(updatedBlocks);
-      setAIEnhancement(null);
-      setShowEnhancementView(false);
-      toast({
-        title: "Enhancement Applied",
-        description: "AI enhancement has been applied to your content",
-      });
     }
+
+    setAIEnhancement(null);
+    setShowEnhancementView(false);
+    toast({
+      title: "Enhancement Applied",
+      description: "AI enhancement has been applied to your content",
+    });
   };
 
   const handleRejectEnhancement = () => {
@@ -222,12 +221,10 @@ export function StreamlinedEditor({
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <h1 className="text-xl font-semibold">Content Editor</h1>
-              </div>
+              <FileText className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold">Content Editor</h1>
               {user.isPremium && (
                 <Badge variant="secondary" className="text-xs">
                   <Sparkles className="h-3 w-3 mr-1" />
@@ -235,9 +232,8 @@ export function StreamlinedEditor({
                 </Badge>
               )}
             </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Stats */}
+
+            <div className="flex flex-col gap-2 items-end sm:flex-row sm:items-center">
               <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <FileText className="h-4 w-4" />
@@ -251,22 +247,12 @@ export function StreamlinedEditor({
                 )}
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreview}
-                  disabled={!title.trim()}
-                >
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handlePreview} disabled={!title.trim()}>
                   <Eye className="h-4 w-4 mr-2" />
                   Preview
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={isSaving || !title.trim()}
-                >
+                <Button size="sm" onClick={handleSave} disabled={isSaving || !title.trim()}>
                   <Save className="h-4 w-4 mr-2" />
                   {isSaving ? "Saving..." : "Save"}
                 </Button>
@@ -279,7 +265,6 @@ export function StreamlinedEditor({
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* Title Input */}
           <Card className="p-6 mb-6">
             <Input
               placeholder="Enter your title..."
@@ -289,7 +274,6 @@ export function StreamlinedEditor({
             />
           </Card>
 
-          {/* Editor Canvas */}
           <Card className="p-6 min-h-[500px]">
             <EditorCanvas
               initialBlocks={blocks}
@@ -298,7 +282,6 @@ export function StreamlinedEditor({
             />
           </Card>
 
-          {/* Empty State */}
           {blocks.length === 0 && (
             <div className="text-center py-12">
               <div className="text-muted-foreground">
@@ -313,7 +296,6 @@ export function StreamlinedEditor({
         </div>
       </div>
 
-      {/* Floating AI Assistant */}
       <FloatingAIAssistant
         blocks={blocks}
         onContentUpdate={setBlocks}
@@ -323,7 +305,6 @@ export function StreamlinedEditor({
         position="bottom-right"
       />
 
-      {/* AI Enhancement Viewer */}
       {aiEnhancement && (
         <AIEnhancementViewer
           originalContent={aiEnhancement.originalContent}

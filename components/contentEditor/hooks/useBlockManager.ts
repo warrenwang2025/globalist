@@ -64,6 +64,8 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
         return { ...baseBlock, type: "image", content: { url: "", alt: "" } };
       case "video":
         return { ...baseBlock, type: "video", content: { url: "" } };
+      case "audio":
+        return { ...baseBlock, type: "audio", content: { url: "", title: "", artist: "" } };
       case "embed":
         return { ...baseBlock, type: "embed", content: { url: "" } };
       case "quote":

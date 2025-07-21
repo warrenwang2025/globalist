@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Upload, Link2, Play, Image as ImageIcon } from "lucide-react";
+import { Upload, Link2, Play, Image as ImageIcon, Music } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 
 interface BlockRendererProps {
@@ -38,6 +38,8 @@ export function BlockRenderer({ block, isSelected, onUpdate }: BlockRendererProp
         return <ImageBlockRenderer block={block} onUpdate={onUpdate} isSelected={isSelected} />;
       case 'video':
         return <VideoBlockRenderer block={block} onUpdate={onUpdate} isSelected={isSelected} />;
+      case 'audio':
+        return <AudioBlockRenderer block={block} onUpdate={onUpdate} isSelected={isSelected} />;
       case 'embed':
         return <EmbedBlockRenderer block={block} onUpdate={onUpdate} isSelected={isSelected} />;
       case 'quote':
@@ -549,6 +551,115 @@ function ListBlockRenderer({ block, onUpdate, isSelected }: {
           </li>
         ))}
       </ListTag>
+    </div>
+  );
+}
+
+function AudioBlockRenderer({ block, onUpdate, isSelected }: { 
+  block: AnyBlock; 
+  onUpdate: (content: any) => void; 
+  isSelected: boolean; 
+}) {
+  const content = block.content as any;
+
+  const handleUrlChange = (url: string) => {
+    onUpdate({ ...content, url });
+  };
+
+  const handleTitleChange = (title: string) => {
+    onUpdate({ ...content, title });
+  };
+
+  const handleArtistChange = (artist: string) => {
+    onUpdate({ ...content, artist });
+  };
+
+  const getAudioProvider = (url: string) => {
+    if (url.includes('spotify.com')) return 'spotify';
+    if (url.includes('soundcloud.com')) return 'soundcloud';
+    return 'upload';
+  };
+
+  const getEmbedUrl = (url: string) => {
+    if (url.includes('spotify.com/track/')) {
+      const trackId = url.split('track/')[1]?.split('?')[0];
+      return `https://open.spotify.com/embed/track/${trackId}`;
+    }
+    if (url.includes('soundcloud.com/')) {
+      return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  };
+
+  if (!content.url) {
+    return (
+      <div className="space-y-4">
+        <div className="border-2 border-dashed rounded-lg p-8 text-center">
+          <Music className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <Input
+            placeholder="Audio URL (Spotify, SoundCloud, or direct link)"
+            value={content.url || ''}
+            onChange={(e) => handleUrlChange(e.target.value)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const provider = getAudioProvider(content.url);
+  const embedUrl = getEmbedUrl(content.url);
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-card p-4">
+        {provider === 'upload' ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Music className="h-8 w-8 text-primary" />
+              <div className="flex-1 min-w-0">
+                <h4 className="font-medium truncate">{content.title || 'Untitled'}</h4>
+                {content.artist && <p className="text-sm text-muted-foreground">{content.artist}</p>}
+              </div>
+            </div>
+            <audio controls className="w-full">
+              <source src={embedUrl} />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        ) : (
+          <iframe
+            src={embedUrl}
+            className="w-full rounded-lg"
+            height={152}
+            frameBorder="0"
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+          />
+        )}
+      </div>
+
+      {isSelected && (
+        <div className="space-y-2">
+          <Input
+            placeholder="Audio URL"
+            value={content.url}
+            onChange={(e) => handleUrlChange(e.target.value)}
+          />
+          <Input
+            placeholder="Title (optional)"
+            value={content.title || ''}
+            onChange={(e) => handleTitleChange(e.target.value)}
+          />
+          <Input
+            placeholder="Artist (optional)"
+            value={content.artist || ''}
+            onChange={(e) => handleArtistChange(e.target.value)}
+          />
+        </div>
+      )}
+
+      <div className="flex justify-center">
+        <Badge variant="secondary">{provider}</Badge>
+      </div>
     </div>
   );
 }
