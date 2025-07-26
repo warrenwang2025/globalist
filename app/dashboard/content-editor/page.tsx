@@ -22,6 +22,16 @@ import {
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 
+// Platform mapping utility
+const platformMapping: Record<number, string> = {
+  1: 'twitter',    // X
+  2: 'linkedin',   // LinkedIn  
+  3: 'instagram',  // Instagram
+  4: 'youtube',    // YouTube
+  5: 'tiktok',     // TikTok
+  6: 'personal'    // Personal site/newsletter
+};
+
 export default function DistributionPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [user, setUser] = useState({ isPremium: false });
@@ -34,6 +44,8 @@ export default function DistributionPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showScheduling, setShowScheduling] = useState(false);
   const [showPublishingHub, setShowPublishingHub] = useState(false);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
@@ -45,6 +57,18 @@ export default function DistributionPage() {
       setUser({ isPremium: session.user.userSubscriptionLevel !== "free" });
     }
   }, [session, status]);
+
+  // Load post from URL parameter if editing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get('postId');
+      
+      if (postId && status === "authenticated") {
+        loadPost(postId);
+      }
+    }
+  }, [status]);
 
 
 
@@ -63,16 +87,49 @@ export default function DistributionPage() {
       setIsSaving(true);
       setTitle(editorTitle);
       setBlocks(editorBlocks);
-      // saveAIContent was removed with the old AI Assistant. If you want to save, implement logic here or use another method.
+
+      // Prepare the save payload
+      const savePayload = {
+        title: editorTitle,
+        blocks: editorBlocks,
+        status: 'draft' as const,
+        platforms: selectedPlatforms.map(id => platformMapping[id]).filter(Boolean),
+        tags: [], // TODO: Add tags functionality later
+        isPublic: true,
+        ...(currentPostId && { postId: currentPostId }), // Include postId if editing existing post
+      };
+
+      // Call the save API
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save content');
+      }
+
+      const result = await response.json();
+      
+      // Update post state management
+      if (result.post?.id) {
+        setCurrentPostId(result.post.id);
+        setIsEditing(true);
+      }
 
       toast({
         title: "Success",
-        description: "Your content has been saved successfully!",
+        description: `Content ${isEditing ? 'updated' : 'saved'} successfully!`,
       });
     } catch (error) {
+      console.error('Save error:', error);
       toast({
         title: "Error",
-        description: "Failed to save content. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save content. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -220,18 +277,75 @@ export default function DistributionPage() {
     router.push("/pricing");
   };
 
+  // Function to load existing post
+  const loadPost = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/content/load?postId=${postId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load post');
+      }
+
+      const postData = await response.json();
+      
+      setTitle(postData.title);
+      setBlocks(postData.blocks);
+      setCurrentPostId(postData.id);
+      setIsEditing(true);
+      
+      // Map backend platform names back to frontend IDs
+      const platformIds = postData.platforms
+        ?.map((platformName: string) => {
+          const entry = Object.entries(platformMapping).find(([_, name]) => name === platformName);
+          return entry ? parseInt(entry[0]) : null;
+        })
+        .filter((id: number | null) => id !== null) || [];
+      
+      setSelectedPlatforms(platformIds);
+      
+      toast({
+        title: "Post Loaded",
+        description: "Your post has been loaded successfully!",
+      });
+    } catch (error) {
+      console.error('Load error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background w-full flex flex-col">
       <div className="w-full px-4 md:px-8 py-6 flex-1 flex flex-col">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            Distribution
-          </h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            Create, edit, and distribute your content across platforms
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-primary" />
+                Distribution
+              </h1>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Create, edit, and distribute your content across platforms
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isEditing && currentPostId && (
+                <div className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                  Editing Post #{currentPostId.slice(-6)}
+                </div>
+              )}
+              {isSaving && (
+                <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  Saving...
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Platform Selector */}
@@ -301,6 +415,7 @@ export default function DistributionPage() {
         {/* Content Editor */}
         <div className="w-full space-y-6">
           <StreamlinedEditor
+            key={currentPostId || 'new-post'} // Force re-mount when post changes
             user={user}
             onSave={handleSave}
             onPreview={(title, blocks) => handlePreview(title, blocks)}
