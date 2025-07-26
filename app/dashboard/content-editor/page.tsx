@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlatformSelector } from "@/components/platform-selector";
-import { AIContentBanner } from "@/components/ai-content-banner";
+
 import {
   Calendar,
   Clock,
@@ -46,10 +46,7 @@ export default function DistributionPage() {
     }
   }, [session, status]);
 
-  const handleImportAIContent = (aiTitle: string, aiBlocks: AnyBlock[]) => {
-    setTitle(aiTitle);
-    setBlocks(aiBlocks);
-  };
+
 
   const handlePlatformToggle = (platformId: number) => {
     setSelectedPlatforms((prev) =>
@@ -301,9 +298,8 @@ export default function DistributionPage() {
           )}
         </Card>
 
-        {/* AI Banner and Content Editor */}
+        {/* Content Editor */}
         <div className="w-full space-y-6">
-          <AIContentBanner onImport={handleImportAIContent} showDismiss />
           <StreamlinedEditor
             user={user}
             onSave={handleSave}
