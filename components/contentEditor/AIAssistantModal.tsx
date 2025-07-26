@@ -22,12 +22,6 @@ const TOOLS = [
     description: "Generate a full article draft.",
   },
   {
-    id: "contentAtomizer",
-    label: "Content Atomizer",
-    icon: Wand2,
-    description: "Repurpose article for social platforms.",
-  },
-  {
     id: "contentImprover",
     label: "Content Improver",
     icon: TrendingUp,
@@ -41,13 +35,7 @@ const TOOLS = [
   },
 ];
 
-const ATOMIZER_PLATFORMS = [
-  "X (Twitter)",
-  "LinkedIn",
-  "YouTube",
-  "TikTok",
-  "Personal Site / Newsletter",
-];
+
 
 const IMPROVER_MODES = [
   "Clarity",
@@ -67,8 +55,6 @@ function parseAIResponse(tool: string | null, response: any) {
     case "ideaGeneration":
       return { content: result.ideas || [], usageStats };
     case "contentCreation":
-      return { content: result, usageStats };
-    case "contentAtomizer":
       return { content: result, usageStats };
     case "contentImprover":
       return { content: result, usageStats };
@@ -151,34 +137,7 @@ function renderResult({
       </div>
     );
   }
-  if (selectedTool === "contentAtomizer" && typeof content === "object") {
-    return (
-      <div>
-        {usageStatsDisplay}
-        <div className="space-y-4">
-          {Object.entries(content).map(([platform, platformContent]) => (
-            <Card key={platform} className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold">{platform}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => {
-                    navigator.clipboard.writeText(platformContent as string);
-                    setCopiedKey(platform);
-                    setTimeout(() => setCopiedKey(null), 1500);
-                  }}
-                >
-                  {copiedKey === platform ? <span className="text-xs">Copied!</span> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-              <Textarea value={platformContent as string} readOnly className="min-h-[80px]" />
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
+
   if (selectedTool === "seoSupport" && typeof content === "object") {
     return (
       <div>
@@ -293,7 +252,6 @@ export function AIAssistantModal({
   const [creationHeadline, setCreationHeadline] = useState("");
   const [creationMeta, setCreationMeta] = useState("");
   const [creationTone, setCreationTone] = useState("");
-  const [atomizerPlatforms, setAtomizerPlatforms] = useState<string[]>([]);
   const [improverModes, setImproverModes] = useState<string[]>([]);
   const [seoHeadline, setSeoHeadline] = useState("");
   const [loading, setLoading] = useState(false);
@@ -310,7 +268,6 @@ export function AIAssistantModal({
     setCreationHeadline("");
     setCreationMeta("");
     setCreationTone("");
-    setAtomizerPlatforms([]);
     setImproverModes([]);
     setSeoHeadline("");
     setResult(null);
@@ -363,14 +320,6 @@ export function AIAssistantModal({
             headline: creationHeadline,
             metaDescription: creationMeta,
             tone: creationTone,
-          },
-        };
-      case "contentAtomizer":
-        return {
-          tool: "contentAtomizer",
-          payload: {
-            articleContent,
-            platforms: atomizerPlatforms,
           },
         };
       case "contentImprover":
@@ -464,26 +413,6 @@ export function AIAssistantModal({
             />
           </div>
         );
-      case "contentAtomizer":
-        return (
-          <div className="space-y-4">
-            <label className="block font-medium">Select Platforms</label>
-            <div className="flex flex-wrap gap-2">
-              {ATOMIZER_PLATFORMS.map(platform => (
-                <Badge
-                  key={platform}
-                  variant={atomizerPlatforms.includes(platform) ? "default" : "outline"}
-                  onClick={() => setAtomizerPlatforms(prev => prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform])}
-                  className="cursor-pointer select-none"
-                >
-                  {platform}
-                </Badge>
-              ))}
-            </div>
-            <label className="block font-medium mt-4">Article Preview</label>
-            <Textarea value={articleContent} readOnly className="min-h-[120px] opacity-70" />
-          </div>
-        );
       case "contentImprover":
         return (
           <div className="space-y-4">
@@ -529,8 +458,6 @@ export function AIAssistantModal({
         return !!topicPrompt.trim();
       case "contentCreation":
         return !!creationHeadline.trim() && !!creationMeta.trim() && !!creationTone.trim();
-      case "contentAtomizer":
-        return atomizerPlatforms.length > 0 && !!articleContent.trim();
       case "contentImprover":
         return improverModes.length > 0 && !!articleContent.trim();
       case "seoSupport":
