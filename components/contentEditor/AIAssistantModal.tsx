@@ -331,13 +331,24 @@ export function AIAssistantModal({
           },
         };
       case "seoSupport":
-        return {
-          tool: "seoSupport",
-          payload: {
-            ...(articleContent ? { articleContent } : {}),
-            ...(seoHeadline ? { draftHeadline: seoHeadline } : {}),
-          },
-        };
+        // Prioritize headline if provided, otherwise use article content
+        if (seoHeadline.trim()) {
+          return {
+            tool: "seoSupport",
+            payload: {
+              draftHeadline: seoHeadline,
+            },
+          };
+        } else if (articleContent.trim()) {
+          return {
+            tool: "seoSupport",
+            payload: {
+              articleContent,
+            },
+          };
+        } else {
+          return null;
+        }
       default:
         return null;
     }
@@ -436,14 +447,34 @@ export function AIAssistantModal({
       case "seoSupport":
         return (
           <div className="space-y-4">
-            <label className="block font-medium">Headline (optional)</label>
+            <div className="text-sm text-muted-foreground mb-4">
+              <p>Enter a headline to get SEO recommendations, or leave it empty to analyze your article content.</p>
+            </div>
+            <label className="block font-medium">Headline for SEO Analysis</label>
             <Input
               placeholder="e.g. Remote Work Revolution"
               value={seoHeadline}
               onChange={e => setSeoHeadline(e.target.value)}
             />
-            <label className="block font-medium mt-4">Article Preview (optional)</label>
-            <Textarea value={articleContent} readOnly className="min-h-[120px] opacity-70" />
+            {seoHeadline.trim() ? (
+              <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                ✓ Will analyze headline: "{seoHeadline}"
+              </div>
+            ) : articleContent.trim() ? (
+              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                ✓ Will analyze article content ({articleContent.length} characters)
+              </div>
+            ) : (
+              <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
+                ⚠ Please enter a headline or ensure your article has content
+              </div>
+            )}
+            {!seoHeadline.trim() && (
+              <>
+                <label className="block font-medium mt-4">Article Content (will be analyzed if no headline provided)</label>
+                <Textarea value={articleContent} readOnly className="min-h-[120px] opacity-70" />
+              </>
+            )}
           </div>
         );
       default:
@@ -461,7 +492,8 @@ export function AIAssistantModal({
       case "contentImprover":
         return improverModes.length > 0 && !!articleContent.trim();
       case "seoSupport":
-        return !!articleContent.trim() || !!seoHeadline.trim();
+        // Require either headline or article content
+        return !!seoHeadline.trim() || !!articleContent.trim();
       default:
         return false;
     }
