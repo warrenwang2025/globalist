@@ -11,7 +11,7 @@ interface BlockWrapperProps {
   block: AnyBlock;
   isSelected: boolean;
   isDragging: boolean;
-  onSelect: () => void;
+  onSelect: (e: React.MouseEvent) => void;
   onDelete: () => void;
   dragHandleProps: any;
   children: ReactNode;
