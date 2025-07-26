@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
-import { useAIContent } from "@/hooks/use-ai-content";
 import { StreamlinedEditor } from "@/components/contentEditor/StreamlinedEditor";
 import { UpgradeModal } from "@/components/contentEditor/UpgradeModal";
+import { PublishingHubModal } from "@/components/PublishingHubModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,10 +33,11 @@ export default function DistributionPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showScheduling, setShowScheduling] = useState(false);
+  const [showPublishingHub, setShowPublishingHub] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
-  const { saveAIContent } = useAIContent();
+  // saveAIContent was removed with the old AI Assistant. If you want to save, implement logic here or use another method.
   const { data: session, status } = useSession();
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export default function DistributionPage() {
       setIsSaving(true);
       setTitle(editorTitle);
       setBlocks(editorBlocks);
-      saveAIContent(editorTitle, editorBlocks);
+      // saveAIContent was removed with the old AI Assistant. If you want to save, implement logic here or use another method.
 
       toast({
         title: "Success",
@@ -139,7 +140,10 @@ export default function DistributionPage() {
     });
   };
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
+    console.log("Publishing with blocks:", blocks);
+    console.log("Publishing with title:", title);
+    
     const contentText = blocks
       .map((block) => {
         switch (block.type) {
@@ -155,6 +159,9 @@ export default function DistributionPage() {
       })
       .join(" ");
 
+    console.log("Extracted content text:", contentText);
+    console.log("Content text length:", contentText.length);
+
     if (!contentText.trim()) {
       toast({
         title: "Content required",
@@ -164,18 +171,19 @@ export default function DistributionPage() {
       return;
     }
 
-    if (selectedPlatforms.length === 0) {
-      toast({
-        title: "Select platforms",
-        description: "Please choose at least one platform",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Allow publishing without platforms (will go to Globalist.live only)
+    // The Publishing Hub will handle platform selection if needed
 
+    // Open the Publishing Hub modal
+    setShowPublishingHub(true);
+  };
+
+  const handlePublishingHubPublish = async (socialContent: Record<string, string>) => {
     setIsPublishing(true);
 
     try {
+      // TODO: Implement actual publishing logic here
+      // This would send the main article content AND the social media posts to the backend
       await new Promise((res) => setTimeout(res, 2000));
 
       const platformNames = selectedPlatforms
@@ -300,6 +308,11 @@ export default function DistributionPage() {
             user={user}
             onSave={handleSave}
             onPreview={(title, blocks) => handlePreview(title, blocks)}
+            onPublish={handlePublish}
+            onContentChange={(newTitle: string, newBlocks: AnyBlock[]) => {
+              setTitle(newTitle);
+              setBlocks(newBlocks);
+            }}
             initialTitle={title}
             initialBlocks={blocks}
           />
@@ -310,6 +323,15 @@ export default function DistributionPage() {
         open={showUpgradeModal}
         onOpenChange={setShowUpgradeModal}
         onUpgrade={handleUpgradeFromModal}
+      />
+
+      <PublishingHubModal
+        open={showPublishingHub}
+        onOpenChange={setShowPublishingHub}
+        title={title}
+        blocks={blocks}
+        selectedPlatforms={selectedPlatforms}
+        onPublish={handlePublishingHubPublish}
       />
     </div>
   );
