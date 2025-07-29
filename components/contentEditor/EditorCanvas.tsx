@@ -29,14 +29,12 @@ import { AIAssistantModal } from "./AIAssistantModal";
 interface EditorCanvasProps {
   initialBlocks?: AnyBlock[];
   onContentChange?: (blocks: AnyBlock[]) => void;
-  setBlocks?: React.Dispatch<React.SetStateAction<AnyBlock[]>>;
   className?: string;
 }
 
 export function EditorCanvas({
   initialBlocks = [],
   onContentChange,
-  setBlocks,
   className,
 }: EditorCanvasProps) {
   const { toast } = useToast();
@@ -437,26 +435,30 @@ export function EditorCanvas({
             setSelectedBlockIndices([]);
             if (aiBlocks && aiBlocks.length > 0) {
               setTimeout(() => {
-                if (!setBlocks) return;
-                setBlocks((prevBlocks: AnyBlock[]) => {
-                  if (blockToImprove.id === 'bulk') {
-                    // Replace only the selected blocks (can be non-contiguous)
-                    let newBlocks = [...prevBlocks];
-                    // Sort indices descending so splicing doesn't affect subsequent indices
-                    const sortedIndices = [...selectedBlockIndices].sort((a, b) => b - a);
-                    sortedIndices.forEach((idx, i) => {
-                      newBlocks.splice(idx, 1, ...aiBlocks.slice(i, i + 1).map((b: any) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx })));
-                    });
-                    return newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
-                  } else {
-                    // Single block replace
-                    const idx = prevBlocks.findIndex((b: AnyBlock) => b.id === blockToImprove.id);
-                    if (idx === -1) return prevBlocks;
-                    const newBlocks = [...prevBlocks];
-                    newBlocks.splice(idx, 1, ...aiBlocks.map((b: any, i: number) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx + i })));
-                    return newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
-                  }
-                });
+                if (!onContentChange) return;
+                
+                const currentBlocks = editorState.blocks;
+                let newBlocks: AnyBlock[];
+                
+                if (blockToImprove.id === 'bulk') {
+                  // Replace only the selected blocks (can be non-contiguous)
+                  newBlocks = [...currentBlocks];
+                  // Sort indices descending so splicing doesn't affect subsequent indices
+                  const sortedIndices = [...selectedBlockIndices].sort((a, b) => b - a);
+                  sortedIndices.forEach((idx, i) => {
+                    newBlocks.splice(idx, 1, ...aiBlocks.slice(i, i + 1).map((b: any) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx })));
+                  });
+                  newBlocks = newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
+                } else {
+                  // Single block replace
+                  const idx = currentBlocks.findIndex((b: AnyBlock) => b.id === blockToImprove.id);
+                  if (idx === -1) return;
+                  newBlocks = [...currentBlocks];
+                  newBlocks.splice(idx, 1, ...aiBlocks.map((b: any, i: number) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx + i })));
+                  newBlocks = newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
+                }
+                
+                onContentChange(newBlocks);
                 toast({
                   title: blockToImprove.id === 'bulk' ? "Blocks Improved" : "Block Improved",
                   description: blockToImprove.id === 'bulk' ? "The selected blocks have been improved by AI." : "The block has been improved by AI.",

@@ -49,9 +49,13 @@ export function StreamlinedEditor({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  // Sync changes back to parent component
+  // Sync changes back to parent component with debouncing
   useEffect(() => {
-    onContentChange?.(title, blocks);
+    const timeoutId = setTimeout(() => {
+      onContentChange?.(title, blocks);
+    }, 300); // Debounce to prevent excessive updates
+
+    return () => clearTimeout(timeoutId);
   }, [title, blocks, onContentChange]);
 
   const handleSave = async () => {
@@ -226,7 +230,6 @@ export function StreamlinedEditor({
             <EditorCanvas
               initialBlocks={blocks}
               onContentChange={setBlocks}
-              setBlocks={setBlocks}
               className="focus-within:ring-2 focus-within:ring-primary/20 rounded-lg"
             />
           </Card>
