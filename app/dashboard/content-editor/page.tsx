@@ -24,12 +24,12 @@ import type { AnyBlock } from "@/types/editor";
 
 // Platform mapping utility
 const platformMapping: Record<number, string> = {
-  1: 'twitter',    // X
-  2: 'linkedin',   // LinkedIn  
-  3: 'instagram',  // Instagram
-  4: 'youtube',    // YouTube
-  5: 'tiktok',     // TikTok
-  6: 'personal'    // Personal site/newsletter
+  1: 'Twitter',    // Twitter
+  2: 'LinkedIn',   // LinkedIn  
+  3: 'Instagram',  // Instagram
+  4: 'YouTube',    // YouTube
+  5: 'TikTok',     // TikTok
+  6: 'Facebook'    // Facebook
 };
 
 export default function DistributionPage() {
@@ -232,7 +232,7 @@ export default function DistributionPage() {
     setShowPublishingHub(true);
   };
 
-  const handlePublishingHubPublish = async (socialContent: Record<string, string>) => {
+  const handlePublishingHubPublish = async (socialContent: Record<string, string>, platformMedia: Record<string, File[]>) => {
     setIsPublishing(true);
 
     try {
@@ -242,7 +242,7 @@ export default function DistributionPage() {
 
       const platformNames = selectedPlatforms
         .map((id) =>
-          ["X", "LinkedIn", "Instagram", "YouTube", "TikTok", "Personal"][
+          ["Twitter", "LinkedIn", "Instagram", "YouTube", "TikTok", "Facebook"][
             id - 1
           ]
         )
