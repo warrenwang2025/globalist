@@ -263,7 +263,7 @@ export function PublishingHubModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw] max-w-full mx-4">
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto w-[95vw] mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
@@ -271,45 +271,47 @@ export function PublishingHubModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Article Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Article Preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-base sm:text-lg">{title}</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
-                  {getArticleContent().substring(0, 200)}...
-                </p>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {getSelectedPlatformNames().map((platform) => (
-                    <Badge key={platform} variant="secondary" className="text-xs">
-                      {platform}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="space-y-4">
+          {/* Compact Article Preview */}
+          <div className="flex items-start gap-3 p-3 bg-muted/30 rounded-lg">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-sm truncate">{title}</h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {getArticleContent().substring(0, 120)}...
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {getSelectedPlatformNames().slice(0, 3).map((platform) => (
+                <Badge key={platform} variant="secondary" className="text-xs">
+                  {platform}
+                </Badge>
+              ))}
+              {getSelectedPlatformNames().length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{getSelectedPlatformNames().length - 3}
+                </Badge>
+              )}
+            </div>
+          </div>
 
           {/* AI Optimization Button */}
           {selectedPlatforms.length > 0 && (
             <div className="flex justify-center">
-                          <Button
-              onClick={handleOptimizeForSocial}
-              disabled={isOptimizing}
-              className="w-full sm:w-auto min-w-[200px]"
-            >
+              <Button
+                onClick={handleOptimizeForSocial}
+                disabled={isOptimizing}
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
                 {isOptimizing ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-3 w-3 animate-spin" />
                     Optimizing...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-3 w-3" />
                     Optimize for Social Media
                   </>
                 )}
@@ -356,11 +358,6 @@ export function PublishingHubModal({
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Social Media Content ({selectedPlatforms.length} platforms)
                 </h3>
-                {selectedPlatforms.length > 3 && (
-                  <div className="hidden sm:block text-xs text-muted-foreground">
-                    ← Scroll to see all platforms →
-                  </div>
-                )}
               </div>
               <Tabs defaultValue={getSelectedPlatformNames()[0]} className="w-full">
                 <TabsList className="flex w-full overflow-x-auto scrollbar-none">
@@ -368,7 +365,7 @@ export function PublishingHubModal({
                     <TabsTrigger 
                       key={platform} 
                       value={platform} 
-                      className="flex-shrink-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
+                      className="flex-shrink-0 px-3 py-1.5 text-xs whitespace-nowrap"
                     >
                       {platform}
                     </TabsTrigger>
@@ -376,10 +373,10 @@ export function PublishingHubModal({
                 </TabsList>
 
               {getSelectedPlatformNames().map((platform) => (
-                <TabsContent key={platform} value={platform} className="space-y-4">
+                <TabsContent key={platform} value={platform} className="space-y-3">
                   <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-lg">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <Edit3 className="h-4 w-4" />
                         {platform} Content
                         {hasOptimized && (
@@ -390,14 +387,14 @@ export function PublishingHubModal({
                         )}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <Textarea
                         value={socialContent[platform] || ""}
                         onChange={(e) => handleContentChange(platform, e.target.value)}
                         placeholder={`Content for ${platform}...`}
-                        className="min-h-[150px] sm:min-h-[200px] resize-none text-sm"
+                        className="min-h-[120px] resize-none text-sm"
                       />
-                      <div className="mt-2 text-sm text-muted-foreground">
+                      <div className="mt-2 text-xs text-muted-foreground">
                         {hasOptimized 
                           ? "Edit the AI-generated content to match your voice and style"
                           : "This is an excerpt of your article. Use the 'Optimize for Social Media' button above to generate platform-specific content."
@@ -419,56 +416,38 @@ export function PublishingHubModal({
           )}
 
           {/* Scheduling Section */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-4 w-4" />
-                Schedule Post
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-2 mb-4">
-                <Switch
-                  id="schedule-toggle"
-                  checked={isScheduled}
-                  onCheckedChange={setIsScheduled}
+          <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="schedule-toggle"
+                checked={isScheduled}
+                onCheckedChange={setIsScheduled}
+              />
+              <Label htmlFor="schedule-toggle" className="text-sm font-medium">
+                Schedule for later
+              </Label>
+            </div>
+            
+            {isScheduled && (
+              <div className="flex gap-2">
+                <Input
+                  id="schedule-date"
+                  type="date"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                  className="w-32 text-xs"
+                  min={new Date().toISOString().split("T")[0]}
                 />
-                <Label htmlFor="schedule-toggle" className="text-sm font-medium">
-                  Schedule this post for later
-                </Label>
+                <Input
+                  id="schedule-time"
+                  type="time"
+                  value={scheduleTime}
+                  onChange={(e) => setScheduleTime(e.target.value)}
+                  className="w-24 text-xs"
+                />
               </div>
-              
-              {isScheduled && (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="schedule-date" className="flex gap-2 items-center font-semibold text-sm">
-                      <Calendar className="h-3 w-3 text-primary" /> Select Date
-                    </Label>
-                    <Input
-                      id="schedule-date"
-                      type="date"
-                      value={scheduleDate}
-                      onChange={(e) => setScheduleDate(e.target.value)}
-                      className="mt-2"
-                      min={new Date().toISOString().split("T")[0]}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="schedule-time" className="flex gap-2 items-center font-semibold text-sm">
-                      <Clock className="h-3 w-3 text-primary" /> Select Time
-                    </Label>
-                    <Input
-                      id="schedule-time"
-                      type="time"
-                      value={scheduleTime}
-                      onChange={(e) => setScheduleTime(e.target.value)}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
           {/* Publishing Actions */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
