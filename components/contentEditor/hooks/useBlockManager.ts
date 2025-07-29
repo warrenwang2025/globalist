@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { AnyBlock, EditorState } from "@/types/editor";
 
@@ -10,6 +10,10 @@ interface UseBlockManagerProps {
 }
 
 export function useBlockManager({ initialBlocks = [], onContentChange }: UseBlockManagerProps) {
+  // Debouncing setup
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastBlocksRef = useRef<AnyBlock[]>(initialBlocks);
+
   function createTextBlock(): AnyBlock {
     return {
       id: uuidv4(),
@@ -44,6 +48,15 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
       };
     });
   }, [initialBlocks]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const createBlock = useCallback((type: AnyBlock["type"]): AnyBlock => {
     const baseBlock = {
@@ -87,7 +100,19 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
         const newBlocks = prev.blocks.map((block) =>
           block.id === blockId ? { ...block, content } : block
         );
-        onContentChange?.(newBlocks);
+        
+        // Debounce the onContentChange callback
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
+        }
+        
+        debounceTimeoutRef.current = setTimeout(() => {
+          if (onContentChange && !areBlocksEqual(lastBlocksRef.current, newBlocks)) {
+            lastBlocksRef.current = newBlocks;
+            onContentChange(newBlocks);
+          }
+        }, 300); // 300ms debounce delay
+        
         return { ...prev, blocks: newBlocks };
       });
     },
@@ -116,7 +141,12 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
           ...block,
           order: index,
         }));
-        onContentChange?.(newBlocks);
+        
+        // Immediate callback for structural changes
+        if (onContentChange) {
+          lastBlocksRef.current = newBlocks;
+          onContentChange(newBlocks);
+        }
 
         return {
           ...prev,
@@ -138,7 +168,12 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
           ...block,
           order: index,
         }));
-        onContentChange?.(reorderedBlocks);
+        
+        // Immediate callback for structural changes
+        if (onContentChange) {
+          lastBlocksRef.current = reorderedBlocks;
+          onContentChange(reorderedBlocks);
+        }
 
         return {
           ...prev,
@@ -162,7 +197,12 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
           ...block,
           order: index,
         }));
-        onContentChange?.(reorderedBlocks);
+        
+        // Immediate callback for structural changes
+        if (onContentChange) {
+          lastBlocksRef.current = reorderedBlocks;
+          onContentChange(reorderedBlocks);
+        }
 
         return { ...prev, blocks: reorderedBlocks };
       });
@@ -178,6 +218,16 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
     setEditorState((prev) => ({ ...prev, isFullscreen: !prev.isFullscreen }));
   }, []);
 
+  // Force immediate content change (useful for save operations)
+  const forceContentChange = useCallback(() => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    if (onContentChange) {
+      onContentChange(editorState.blocks);
+    }
+  }, [onContentChange, editorState.blocks]);
+
   return {
     editorState,
     setEditorState,
@@ -187,5 +237,6 @@ export function useBlockManager({ initialBlocks = [], onContentChange }: UseBloc
     reorderBlocks,
     selectBlock,
     toggleFullscreen,
+    forceContentChange,
   };
 }
