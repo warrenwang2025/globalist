@@ -175,7 +175,9 @@ export function PublishingHubModal({
       try {
         const response = await fetch('/publishing-criteria.json');
         const data = await response.json();
-        const criteria = data.platforms[platform];
+        // Convert platform name to lowercase to match the JSON keys
+        const platformKey = platform.toLowerCase();
+        const criteria = data.platforms[platformKey];
         
         if (criteria) {
           const platformFiles = platformMedia[platform] || [];

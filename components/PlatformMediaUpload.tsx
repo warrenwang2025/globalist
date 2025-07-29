@@ -54,11 +54,13 @@ export function PlatformMediaUpload({
       try {
         const response = await fetch('/publishing-criteria.json');
         const data = await response.json();
-        const criteria = data.platforms[platform];
+        // Convert platform name to lowercase to match the JSON keys
+        const platformKey = platform.toLowerCase();
+        const criteria = data.platforms[platformKey];
         if (criteria) {
           setPlatformCriteria(criteria);
         } else {
-          console.error('No criteria found for platform:', platform);
+          console.error('No criteria found for platform:', platformKey);
         }
       } catch (error) {
         console.error('Failed to load platform criteria:', error);
