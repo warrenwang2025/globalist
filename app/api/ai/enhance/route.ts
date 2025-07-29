@@ -16,7 +16,6 @@ import dbConnect from '@/lib/dbConnect';
 import User from '@/lib/models/User';
 
 export async function POST(request: NextRequest) {
-  console.log('POST request received');
   try {
     // 1. Authentication
     const session = await getServerSession(authOptions);
@@ -27,8 +26,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const userId = session.user.id;
-    const subscriptionLevel = (session.user as any).subscriptionLevel || 'free';
-
+    const subscriptionLevel = (session.user as any).userSubscriptionLevel || 'free';
     // 2. DB Connect
     await dbConnect();
 
