@@ -37,12 +37,11 @@ const getBlockIcon = (type: AnyBlock["type"]) => {
     text: Type,
     image: ImageIcon,
     video: Video,
-    audio: Music,
+    audio: Volume2,
     embed: Link2,
     heading: Heading1,
     quote: Quote,
     list: List,
-    audio: Volume2,
   };
   return iconMap[type] || Type;
 };
@@ -57,7 +56,6 @@ const getBlockLabel = (type: AnyBlock["type"]) => {
     embed: "Embed",
     quote: "Quote",
     list: "List",
-    audio: "Audio",
   };
   return labelMap[type] || "Unknown";
 };

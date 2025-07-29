@@ -5,28 +5,27 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
-import { useAIContent } from "@/hooks/use-ai-content";
 import { StreamlinedEditor } from "@/components/contentEditor/StreamlinedEditor";
 import { UpgradeModal } from "@/components/contentEditor/UpgradeModal";
+import { PublishingHubModal } from "@/components/PublishingHubModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { PlatformSelector } from "@/components/platform-selector";
-import { AIContentBanner } from "@/components/ai-content-banner";
-import { 
-  Calendar, 
-  Clock, 
-  Send, 
-  Save, 
-  Eye, 
-  Sparkles, 
-  ChevronDown,
-  ChevronUp
+
+import {
+  Sparkles,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
+
+// Platform mapping utility
+const platformMapping: Record<number, string> = {
+  1: 'Twitter',    // Twitter
+  2: 'LinkedIn',   // LinkedIn  
+  3: 'Instagram',  // Instagram
+  4: 'YouTube',    // YouTube
+  5: 'TikTok',     // TikTok
+  6: 'Facebook'    // Facebook
+};
 
 export default function DistributionPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -34,15 +33,15 @@ export default function DistributionPage() {
   const [title, setTitle] = useState("");
   const [blocks, setBlocks] = useState<AnyBlock[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showScheduling, setShowScheduling] = useState(false);
+  const [showPublishingHub, setShowPublishingHub] = useState(false);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const router = useRouter();
   const { toast } = useToast();
-  const { saveAIContent } = useAIContent();
+  // saveAIContent was removed with the old AI Assistant. If you want to save, implement logic here or use another method.
   const { data: session, status } = useSession();
 
   // Get user data from session
@@ -55,10 +54,19 @@ export default function DistributionPage() {
     }
   }, [session, status]);
 
-  const handleImportAIContent = (aiTitle: string, aiBlocks: AnyBlock[]) => {
-    setTitle(aiTitle);
-    setBlocks(aiBlocks);
-  };
+  // Load post from URL parameter if editing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get('postId');
+      
+      if (postId && status === "authenticated") {
+        loadPost(postId);
+      }
+    }
+  }, [status]);
+
+
 
   const handlePlatformToggle = (platformId: number) => {
     setSelectedPlatforms((prev) =>
@@ -79,19 +87,49 @@ export default function DistributionPage() {
       // Update local state
       setTitle(editorTitle);
       setBlocks(editorBlocks);
+
+      // Prepare the save payload
+      const savePayload = {
+        title: editorTitle,
+        blocks: editorBlocks,
+        status: 'draft' as const,
+        platforms: selectedPlatforms.map(id => platformMapping[id].toLowerCase()).filter(Boolean),
+        tags: [], // TODO: Add tags functionality later
+        isPublic: true,
+        ...(currentPostId && { postId: currentPostId }), // Include postId if editing existing post
+      };
+
+      // Call the save API
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save content');
+      }
+
+      const result = await response.json();
       
-      // Save to AI content store
-      saveAIContent(editorTitle, editorBlocks);
+      // Update post state management
+      if (result.post?.id) {
+        setCurrentPostId(result.post.id);
+        setIsEditing(true);
+      }
 
       toast({
         title: "Success",
-        description: "Your content has been saved successfully!",
+        description: `Content ${isEditing ? 'updated' : 'saved'} successfully!`,
       });
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error('Save error:', error);
       toast({
         title: "Error",
-        description: "Failed to save content. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save content. Please try again.",
         variant: "destructive",
       });
       throw error;
@@ -141,8 +179,6 @@ export default function DistributionPage() {
       content: contentText,
       blocks: previewBlocks,
       selectedPlatforms,
-      scheduleDate,
-      scheduleTime,
       timestamp: new Date().toISOString(),
     };
 
@@ -161,7 +197,10 @@ export default function DistributionPage() {
     });
   };
 
-  const handlePublish = async () => {
+  const handlePublish = () => {
+    console.log("Publishing with blocks:", blocks);
+    console.log("Publishing with title:", title);
+    
     const contentText = blocks
       .map(block => {
         switch (block.type) {
@@ -179,6 +218,9 @@ export default function DistributionPage() {
       })
       .join(' ');
 
+    console.log("Extracted content text:", contentText);
+    console.log("Content text length:", contentText.length);
+
     if (!contentText.trim()) {
       toast({
         title: "Content required",
@@ -188,56 +230,68 @@ export default function DistributionPage() {
       return;
     }
 
-    if (selectedPlatforms.length === 0) {
-      toast({
-        title: "Select platforms",
-        description: "Please select at least one platform to publish to",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Allow publishing without platforms (will go to Globalist.live only)
+    // The Publishing Hub will handle platform selection if needed
 
+    // Open the Publishing Hub modal
+    setShowPublishingHub(true);
+  };
+
+  const handlePublishingHubPublish = async (socialContent: Record<string, string>, platformMedia: Record<string, File[]>, isScheduled: boolean = false, scheduledDate?: string) => {
     setIsPublishing(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Save the post with scheduling information
+      const savePayload = {
+        title,
+        blocks,
+        status: isScheduled ? 'scheduled' as const : 'published' as const,
+        platforms: selectedPlatforms.map(id => platformMapping[id].toLowerCase()).filter(Boolean),
+        tags: [], // TODO: Add tags functionality later
+        isPublic: true,
+        ...(isScheduled && scheduledDate && { scheduledDate }),
+        ...(currentPostId && { postId: currentPostId }),
+      };
+
+      // Call the save API
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save content');
+      }
+
+      const result = await response.json();
+      
+      // Update post state management
+      if (result.post?.id) {
+        setCurrentPostId(result.post.id);
+        setIsEditing(true);
+      }
 
       const platformNames = selectedPlatforms
-        .map((id) => {
-          const platforms = [
-            "X",
-            "LinkedIn",
-            "Instagram",
-            "YouTube",
-            "TikTok",
-            "Personal",
-          ];
-          return platforms[id - 1];
-        })
+        .map((id) => platformMapping[id])
         .join(", ");
 
-      if (scheduleDate && scheduleTime) {
-        const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`);
-        toast({
-          title: "Post scheduled successfully!",
-          description: `Your post will be published on ${scheduledDateTime.toLocaleString()} to: ${platformNames}`,
-        });
-      } else {
-        toast({
-          title: "Post published successfully!",
-          description: `Your post has been published to: ${platformNames}`,
-        });
-      }
+      const description = isScheduled && scheduledDate
+        ? `Scheduled for ${new Date(scheduledDate).toLocaleString()} on ${platformNames}`
+        : `Published to: ${platformNames}`;
+
+      toast({ title: "Success", description });
 
       // Reset distribution settings
       setSelectedPlatforms([]);
-      setScheduleDate("");
-      setScheduleTime("");
-      setShowScheduling(false);
     } catch (error) {
+      console.error('Publishing error:', error);
       toast({
         title: "Publishing failed",
-        description: "Please try again",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -250,18 +304,75 @@ export default function DistributionPage() {
     router.push("/pricing");
   };
 
+  // Function to load existing post
+  const loadPost = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/content/load?postId=${postId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to load post');
+      }
+
+      const postData = await response.json();
+      
+      setTitle(postData.title);
+      setBlocks(postData.blocks);
+      setCurrentPostId(postData.id);
+      setIsEditing(true);
+      
+      // Map backend platform names back to frontend IDs
+      const platformIds = postData.platforms
+        ?.map((platformName: string) => {
+          const entry = Object.entries(platformMapping).find(([_, name]) => name.toLowerCase() === platformName);
+          return entry ? parseInt(entry[0]) : null;
+        })
+        .filter((id: number | null) => id !== null) || [];
+      
+      setSelectedPlatforms(platformIds);
+      
+      toast({
+        title: "Post Loaded",
+        description: "Your post has been loaded successfully!",
+      });
+    } catch (error) {
+      console.error('Load error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load post. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-4 md:py-8 px-4 max-w-7xl">
         {/* Header */}
-        <div className="mb-4 md:mb-6">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-            Distribution
-          </h1>
-          <p className="text-muted-foreground text-xs md:text-sm lg:text-base">
-            Create, edit, and distribute your content across multiple platforms
-          </p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-primary" />
+                Distribution
+              </h1>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Create, edit, and distribute your content across platforms
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isEditing && currentPostId && (
+                <div className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                  Editing Post #{currentPostId.slice(-6)}
+                </div>
+              )}
+              {isSaving && (
+                <div className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  Saving...
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Publishing Platforms - Always on top, horizontal layout */}
@@ -279,136 +390,23 @@ export default function DistributionPage() {
           </CardContent>
         </Card>
 
-        {/* Main Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Editor Section */}
-          <div className="lg:col-span-2 space-y-4 md:space-y-6">
-            {/* AI Content Import Banner */}
-            <div className="w-full">
-              <AIContentBanner 
-                onImport={handleImportAIContent}
-                showDismiss={true}
-              />
-            </div>
 
-            {/* Content Editor */}
-            <div className="w-full">
-              <StreamlinedEditor
-                user={user}
-                onSave={handleSave}
-                onPreview={(title, blocks) => handlePreview(title, blocks)}
-                initialTitle={title}
-                initialBlocks={blocks}
-              />
-            </div>
-          </div>
 
-          {/* Settings Panel */}
-          <div className="lg:col-span-1 space-y-4 md:space-y-6">
-            {/* Schedule Post Toggle */}
-            <Card className="w-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base md:text-lg flex items-center justify-between">
-                  <span>Schedule Post</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowScheduling(!showScheduling)}
-                    className="h-8 w-8 p-0 shrink-0"
-                  >
-                    {showScheduling ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              {showScheduling && (
-                <CardContent className="pt-0">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="schedule-toggle"
-                        checked={showScheduling}
-                        onCheckedChange={setShowScheduling}
-                      />
-                      <Label htmlFor="schedule-toggle" className="text-sm">
-                        Enable scheduling
-                      </Label>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="space-y-4">
-                      <div className="w-full">
-                        <Label htmlFor="schedule-date" className="text-sm font-medium">
-                          Date
-                        </Label>
-                        <div className="relative mt-1">
-                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                          <Input
-                            id="schedule-date"
-                            type="date"
-                            value={scheduleDate}
-                            onChange={(e) => setScheduleDate(e.target.value)}
-                            className="pl-10 w-full"
-                            min={new Date().toISOString().split("T")[0]}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="w-full">
-                        <Label htmlFor="schedule-time" className="text-sm font-medium">
-                          Time
-                        </Label>
-                        <div className="relative mt-1">
-                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                          <Input
-                            id="schedule-time"
-                            type="time"
-                            value={scheduleTime}
-                            onChange={(e) => setScheduleTime(e.target.value)}
-                            className="pl-10 w-full"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
-            {/* Action Buttons */}
-            <Card className="w-full">
-              <CardContent className="pt-6">
-                <div className="flex flex-col space-y-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => handlePreview(title, blocks)}
-                    className="w-full justify-center"
-                    disabled={!title.trim() || blocks.length === 0}
-                  >
-                    <Eye className="mr-2 h-4 w-4" />
-                    Preview
-                  </Button>
-                  
-                  <Button
-                    onClick={handlePublish}
-                    disabled={isPublishing || selectedPlatforms.length === 0}
-                    className="w-full justify-center"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    {isPublishing
-                      ? "Publishing..."
-                      : scheduleDate && scheduleTime
-                      ? "Schedule Post"
-                      : "Publish Now"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Content Editor */}
+        <div className="w-full space-y-6">
+          <StreamlinedEditor
+            key={currentPostId || 'new-post'} // Force re-mount when post changes
+            user={user}
+            onSave={handleSave}
+            onPreview={(title, blocks) => handlePreview(title, blocks)}
+            onPublish={handlePublish}
+            onContentChange={(newTitle: string, newBlocks: AnyBlock[]) => {
+              setTitle(newTitle);
+              setBlocks(newBlocks);
+            }}
+            initialTitle={title}
+            initialBlocks={blocks}
+          />
         </div>
       </div>
 
@@ -416,6 +414,15 @@ export default function DistributionPage() {
         open={showUpgradeModal}
         onOpenChange={setShowUpgradeModal}
         onUpgrade={handleUpgradeFromModal}
+      />
+
+      <PublishingHubModal
+        open={showPublishingHub}
+        onOpenChange={setShowPublishingHub}
+        title={title}
+        blocks={blocks}
+        selectedPlatforms={selectedPlatforms}
+        onPublish={handlePublishingHubPublish}
       />
     </div>
   );

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EditorCanvas } from "./EditorCanvas";
-import { FloatingAIAssistant } from "./FloatingAIAssistant";
-import { AIEnhancementViewer } from "./AIEnhancementViewer";
+import { AIAssistantModal } from "./AIAssistantModal";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
-import type { ContentBlock } from "@/types/ai";
 
 interface User {
   isPremium: boolean;
@@ -27,22 +25,20 @@ interface StreamlinedEditorProps {
   user: User;
   onSave?: (title: string, blocks: AnyBlock[]) => Promise<void>;
   onPreview?: (title: string, blocks: AnyBlock[]) => void;
+  onPublish?: () => void;
+  onContentChange?: (title: string, blocks: AnyBlock[]) => void;
   initialTitle?: string;
   initialBlocks?: AnyBlock[];
 }
 
-interface AIEnhancement {
-  originalContent: string;
-  enhancedContent: string;
-  tool: string;
-  blockIndex?: number;
-  enhancedBlocks?: ContentBlock[];
-}
+
 
 export function StreamlinedEditor({
   user,
   onSave,
   onPreview,
+  onPublish,
+  onContentChange,
   initialTitle = "",
   initialBlocks = [],
 }: StreamlinedEditorProps) {
@@ -50,9 +46,16 @@ export function StreamlinedEditor({
   const [blocks, setBlocks] = useState<AnyBlock[]>(initialBlocks);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [aiEnhancement, setAIEnhancement] = useState<AIEnhancement | null>(null);
-  const [showEnhancementView, setShowEnhancementView] = useState(false);
   const { toast } = useToast();
+
+  // Sync changes back to parent component with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onContentChange?.(title, blocks);
+    }, 300); // Debounce to prevent excessive updates
+
+    return () => clearTimeout(timeoutId);
+  }, [title, blocks, onContentChange]);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -96,6 +99,18 @@ export function StreamlinedEditor({
     onPreview?.(title, blocks);
   };
 
+  const handlePublish = () => {
+    if (!title.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please enter a title to publish your content",
+        variant: "destructive",
+      });
+      return;
+    }
+    onPublish?.();
+  };
+
   const getWordCount = () => {
     return blocks
       .filter((block) => block.type === "text" || block.type === "heading")
@@ -115,106 +130,7 @@ export function StreamlinedEditor({
       }, 0);
   };
 
-  const handleAIEnhancement = (
-    originalContent: string,
-    enhancedContent: string,
-    tool: string,
-    enhancedBlocks?: ContentBlock[]
-  ) => {
-    setAIEnhancement({
-      originalContent,
-      enhancedContent,
-      tool,
-      enhancedBlocks,
-    });
-    setShowEnhancementView(true);
-  };
 
-  const handleAcceptEnhancement = (enhancedContent: string) => {
-    if (aiEnhancement?.enhancedBlocks?.length) {
-      const newBlocks: AnyBlock[] = aiEnhancement.enhancedBlocks.map((block, index) => {
-        switch (block.type) {
-          case "text":
-            return {
-              id: Math.random().toString(36).substr(2, 9),
-              type: "text",
-              content: { text: block.content as string, html: block.content as string },
-              order: index,
-            };
-          case "heading":
-            return {
-              id: Math.random().toString(36).substr(2, 9),
-              type: "heading",
-              content: { text: block.content as string, level: block.level || 1 },
-              order: index,
-            };
-          case "quote":
-            return {
-              id: Math.random().toString(36).substr(2, 9),
-              type: "quote",
-              content: { text: block.content as string, author: block.author || "" },
-              order: index,
-            };
-          case "list":
-            return {
-              id: Math.random().toString(36).substr(2, 9),
-              type: "list",
-              content: {
-                items: Array.isArray(block.content) ? block.content : [block.content as string],
-                ordered: block.ordered || false,
-              },
-              order: index,
-            };
-          default:
-            return null;
-        }
-      }).filter(Boolean) as AnyBlock[];
-      setBlocks(newBlocks);
-    } else if (aiEnhancement) {
-      const updatedBlocks = blocks.map((block) => {
-        if (block.type === "text" && block.content?.text?.includes(aiEnhancement.originalContent)) {
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              text: block.content.text.replace(aiEnhancement.originalContent, enhancedContent),
-              html:
-                block.content.html?.replace(aiEnhancement.originalContent, enhancedContent) ||
-                enhancedContent,
-            },
-          };
-        } else if (
-          block.type === "heading" &&
-          block.content?.text?.includes(aiEnhancement.originalContent)
-        ) {
-          return {
-            ...block,
-            content: {
-              ...block.content,
-              text: block.content.text.replace(aiEnhancement.originalContent, enhancedContent),
-            },
-          };
-        }
-        return block;
-      });
-      setBlocks(updatedBlocks);
-    }
-
-    setAIEnhancement(null);
-    setShowEnhancementView(false);
-    toast({
-      title: "Enhancement Applied",
-      description: "AI enhancement has been applied to your content",
-    });
-  };
-
-  const handleRejectEnhancement = () => {
-    setAIEnhancement(null);
-    toast({
-      title: "Enhancement Rejected",
-      description: "Original content kept unchanged",
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -296,31 +212,39 @@ export function StreamlinedEditor({
         </div>
       </div>
 
-      <FloatingAIAssistant
-        blocks={blocks}
-        onContentUpdate={setBlocks}
-        onTitleUpdate={setTitle}
-        onAIEnhancement={handleAIEnhancement}
-        user={user}
-        position="bottom-right"
+      {/* Floating AI Assistant */}
+      <AIAssistantModal
+        articleContent={blocks
+          .map((block) => {
+            switch (block.type) {
+              case "text":
+              case "heading":
+              case "quote":
+                return (block.content as any).text || "";
+              case "list":
+                return (block.content as any).items?.join("\n") || "";
+              default:
+                return "";
+            }
+          })
+          .join("\n\n")}
+        headline={title}
+        onInsertBlocks={(aiBlocks) => {
+          // Ensure each new block has a unique id
+          const newBlocks = aiBlocks.map((b, i) => ({
+            ...b,
+            id: b.id && typeof b.id === 'string' ? b.id : Math.random().toString(36).substr(2, 9),
+            order: i,
+          }));
+          setBlocks(newBlocks);
+          // Clear selection state after insertion
+          // Note: Selection state is managed by EditorCanvas internally
+          toast({
+            title: "AI Content Inserted",
+            description: "The generated content has been added to your editor.",
+          });
+        }}
       />
-
-      {aiEnhancement && (
-        <AIEnhancementViewer
-          originalContent={aiEnhancement.originalContent}
-          enhancedContent={aiEnhancement.enhancedContent}
-          tool={aiEnhancement.tool}
-          isVisible={showEnhancementView}
-          onAccept={() => handleAcceptEnhancement(aiEnhancement.enhancedContent)}
-          onReject={handleRejectEnhancement}
-          onCopy={() => {
-            toast({
-              title: "Copied",
-              description: "Enhanced content copied to clipboard",
-            });
-          }}
-        />
-      )}
     </div>
   );
 }

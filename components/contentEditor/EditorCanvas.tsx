@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Block, BlockWrapper } from "./blocks";
+import { Toolbar } from "./Toolbar";
 import { ActionButtonBlock } from "./blocks/ActionButtonBlock";
 import { FullscreenToggle } from "./FullscreenToggle";
 import { EditorSidebar } from "./EditorSidebar";
@@ -23,6 +24,7 @@ import {
   PanelRightOpen,
 } from "lucide-react";
 import type { AnyBlock, ActionButton } from "@/types/editor";
+import { AIAssistantModal } from "./AIAssistantModal";
 
 interface EditorCanvasProps {
   initialBlocks?: AnyBlock[];
@@ -39,6 +41,10 @@ export function EditorCanvas({
   const [actionButtons, setActionButtons] = useState<ActionButton[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // State for AI improvement modal
+  const [improveModalOpen, setImproveModalOpen] = useState(false);
+  const [blockToImprove, setBlockToImprove] = useState<AnyBlock | null>(null);
+
   const {
     editorState,
     updateBlock,
@@ -48,6 +54,36 @@ export function EditorCanvas({
     selectBlock,
     toggleFullscreen,
   } = useBlockManager({ initialBlocks, onContentChange });
+
+  // Multi-select state
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+  // Track the indices of selected blocks (for non-contiguous selection)
+  const [selectedBlockIndices, setSelectedBlockIndices] = useState<number[]>([]);
+
+  // Multi-select logic
+  const handleBlockSelect = (blockId: string, index: number, event?: React.MouseEvent) => {
+    if (event && event.shiftKey) {
+      // Shift+Click: toggle selection (custom, non-contiguous)
+      setSelectedBlockIds(prev =>
+        prev.includes(blockId)
+          ? prev.filter(id => id !== blockId)
+          : [...prev, blockId]
+      );
+      setSelectedBlockIndices(prev =>
+        prev.includes(index)
+          ? prev.filter(i => i !== index)
+          : [...prev, index]
+      );
+      setLastSelectedIndex(index);
+    } else {
+      // Single select
+      setSelectedBlockIds([blockId]);
+      setSelectedBlockIndices([index]);
+      setLastSelectedIndex(index);
+    }
+    selectBlock(blockId);
+  };
 
   const onDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -125,6 +161,61 @@ export function EditorCanvas({
     }
   };
 
+  // Handler to trigger AI improvement for a block
+  const handleImproveWithAI = (block: AnyBlock) => {
+    console.log('handleImproveWithAI called', block);
+    setBlockToImprove(block);
+    setImproveModalOpen(true);
+  };
+
+  // Helper: get selected text-based blocks
+  const textBasedTypes = ['text', 'heading', 'quote', 'list'];
+  const selectedTextBlocks = editorState.blocks.filter(
+    (block) => selectedBlockIds.includes(block.id) && textBasedTypes.includes(block.type)
+  );
+
+  // Handler for bulk improve
+  const handleBulkImproveWithAI = () => {
+    if (selectedTextBlocks.length > 0) {
+      setBlockToImprove({
+        id: 'bulk',
+        type: 'text', // dummy type
+        content: { 
+          text: selectedTextBlocks.map(b => {
+            if (b.type === 'list') return b.content.items?.join('\n') || '';
+            if (b.type === 'text' || b.type === 'heading' || b.type === 'quote') return b.content.text || '';
+            return '';
+          }).join('\n\n'),
+          html: selectedTextBlocks.map(b => {
+            if (b.type === 'list') return b.content.items?.join('\n') || '';
+            if (b.type === 'text' || b.type === 'heading' || b.type === 'quote') return b.content.text || '';
+            return '';
+          }).join('\n\n')
+        },
+        order: 0, // Add required order property
+      });
+      setImproveModalOpen(true);
+    }
+  };
+
+  // Helper to get text content for AI (ensures both text and html for text blocks)
+  function getBlockTextContent(b: AnyBlock): string {
+    if (b.type === 'list') {
+      return b.content.items?.join('\n') || '';
+    } else if (b.type === 'text' && b.content && typeof b.content.text === 'string') {
+      // Only include html if it's different from text and not empty
+      if (b.content.html && b.content.html !== b.content.text) {
+        return b.content.text + '\n' + b.content.html;
+      }
+      return b.content.text;
+    } else if (b.type === 'heading' && b.content && typeof b.content.text === 'string') {
+      return b.content.text;
+    } else if (b.type === 'quote' && b.content && typeof b.content.text === 'string') {
+      return b.content.text;
+    }
+    return '';
+  }
+
   return (
     <div className={cn("flex flex-col h-screen overflow-x-hidden relative", className)}>
       {/* Main Editor Area - Fixed position, no padding changes */}
@@ -194,15 +285,31 @@ export function EditorCanvas({
                             >
                               <BlockWrapper
                                 block={block}
-                                isSelected={editorState.selectedBlockId === block.id}
+                                isSelected={selectedBlockIds.includes(block.id)}
                                 isDragging={snapshot.isDragging}
-                                onSelect={() => selectBlock(block.id)}
+                                onSelect={(e) => {
+                                  console.log('Block selected:', block.id, block.type);
+                                  handleBlockSelect(block.id, index, e);
+                                }}
                                 onDelete={() => deleteBlock(block.id)}
                                 dragHandleProps={provided.dragHandleProps}
                               >
+                                {/* Render toolbar if selected (single or multi) */}
+                                {(() => {
+                                  const textBasedTypes = ['text', 'heading', 'quote', 'list'];
+                                  return selectedBlockIds.includes(block.id) && textBasedTypes.includes(block.type);
+                                })() && (
+                                  <Toolbar
+                                    selectedBlock={block}
+                                    onImproveWithAI={(blk) => {
+                                      console.log('Toolbar Improve with AI clicked', blk);
+                                      handleImproveWithAI(blk);
+                                    }}
+                                  />
+                                )}
                                 <Block
                                   block={block}
-                                  isSelected={editorState.selectedBlockId === block.id}
+                                  isSelected={selectedBlockIds.includes(block.id)}
                                   onUpdate={(content) =>
                                     updateBlock(block.id, content)
                                   }
@@ -293,6 +400,73 @@ export function EditorCanvas({
             />
           </motion.div>
         </>
+      )}
+
+      {/* Floating Bulk Improve with AI Button */}
+      {selectedTextBlocks.length > 1 && (
+        <div className="fixed bottom-24 right-8 z-50">
+          <Button
+            size="lg"
+            className="rounded-full shadow-lg bg-primary text-white hover:bg-primary/90"
+            onClick={handleBulkImproveWithAI}
+          >
+            Bulk Improve with AI
+          </Button>
+        </div>
+      )}
+
+      {blockToImprove && (
+        <AIAssistantModal
+          open={improveModalOpen}
+          onOpenChange={setImproveModalOpen}
+          articleContent={(() => {
+            if (blockToImprove.id === 'bulk') {
+              return selectedTextBlocks.map(getBlockTextContent).join('\n\n');
+            }
+            return blockToImprove.type === "text" && blockToImprove.content && typeof blockToImprove.content.text === 'string'
+              ? getBlockTextContent(blockToImprove)
+              : "";
+          })()}
+          headline={""}
+          onInsertBlocks={(aiBlocks) => {
+            setImproveModalOpen(false);
+            setBlockToImprove(null);
+            setSelectedBlockIds([]);
+            setSelectedBlockIndices([]);
+            if (aiBlocks && aiBlocks.length > 0) {
+              setTimeout(() => {
+                if (!onContentChange) return;
+                
+                const currentBlocks = editorState.blocks;
+                let newBlocks: AnyBlock[];
+                
+                if (blockToImprove.id === 'bulk') {
+                  // Replace only the selected blocks (can be non-contiguous)
+                  newBlocks = [...currentBlocks];
+                  // Sort indices descending so splicing doesn't affect subsequent indices
+                  const sortedIndices = [...selectedBlockIndices].sort((a, b) => b - a);
+                  sortedIndices.forEach((idx, i) => {
+                    newBlocks.splice(idx, 1, ...aiBlocks.slice(i, i + 1).map((b: any) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx })));
+                  });
+                  newBlocks = newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
+                } else {
+                  // Single block replace
+                  const idx = currentBlocks.findIndex((b: AnyBlock) => b.id === blockToImprove.id);
+                  if (idx === -1) return;
+                  newBlocks = [...currentBlocks];
+                  newBlocks.splice(idx, 1, ...aiBlocks.map((b: any, i: number) => ({ ...b, id: Math.random().toString(36).substr(2, 9), order: idx + i })));
+                  newBlocks = newBlocks.map((b: any, i: number) => ({ ...b, order: i }));
+                }
+                
+                onContentChange(newBlocks);
+                toast({
+                  title: blockToImprove.id === 'bulk' ? "Blocks Improved" : "Block Improved",
+                  description: blockToImprove.id === 'bulk' ? "The selected blocks have been improved by AI." : "The block has been improved by AI.",
+                });
+              }, 0);
+            }
+          }}
+        />
       )}
     </div>
   );

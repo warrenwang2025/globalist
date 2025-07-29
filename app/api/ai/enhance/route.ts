@@ -23,9 +23,8 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id;
-    const subscriptionLevel = (session.user as any).subscriptionLevel || 'free';
-
-    // Connect to database
+    const subscriptionLevel = (session.user as any).userSubscriptionLevel || 'free';
+    // 2. DB Connect
     await dbConnect();
     const requestsLeft = (await UsageStatsService.checkRateLimit(userId,subscriptionLevel)).canProceed; // Check if requests or tokens are zero
 

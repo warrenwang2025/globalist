@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       platforms: post.platforms,
       tags: post.tags,
       isPublic: post.isPublic,
-      scheduledDateTime: post.scheduledDateTime,
+      scheduledDate: post.scheduledDate,
       publishedDate: post.publishedDate,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
