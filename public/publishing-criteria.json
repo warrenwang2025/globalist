@@ -1,0 +1,201 @@
+{
+  "platforms": {
+    "instagram": {
+      "name": "Instagram",
+      "text": {
+        "maxCharacters": 2200,
+        "truncatedAfter": 125,
+        "hashtags": {
+          "max": 30,
+          "description": "Up to 30 hashtags allowed"
+        },
+        "mentions": {
+          "allowed": true,
+          "format": "@username"
+        }
+      },
+      "image": {
+        "required": true,
+        "formats": ["JPG", "PNG"],
+        "maxFileSize": "30MB",
+        "dimensions": {
+          "square": "1080 x 1080 px",
+          "portrait": "1080 x 1350 px",
+          "landscape": "1080 x 566 px"
+        }
+      },
+      "video": {
+        "required": false,
+        "formats": ["MP4", "MOV"],
+        "maxFileSize": "4GB",
+        "duration": {
+          "feed": "Up to 10 minutes",
+          "reels": "Up to 90 seconds",
+          "stories": "15 sec per story (max 100/day)"
+        },
+        "aspectRatio": {
+          "reels": "9:16",
+          "stories": "9:16",
+          "feed": ["1:1", "4:5"]
+        }
+      },
+      "mediaLimit": 10,
+      "description": "Visual platform - media is required (up to 10 files)"
+    },
+    "facebook": {
+      "name": "Facebook",
+      "text": {
+        "maxCharacters": 63206,
+        "bestLength": "<80 characters",
+        "hashtags": {
+          "required": false,
+          "description": "Optional but not critical"
+        }
+      },
+      "image": {
+        "required": false,
+        "formats": ["JPG", "PNG"],
+        "maxFileSize": "30MB",
+        "dimensions": {
+          "post": "1200 x 630 px",
+          "stories": "1080 x 1920 px"
+        }
+      },
+      "video": {
+        "required": false,
+        "formats": ["MP4", "MOV"],
+        "maxFileSize": "10GB",
+        "maxDuration": "Up to 240 minutes",
+        "recommendedDimensions": ["1080 x 1080", "1280 x 720"],
+        "aspectRatio": ["1:1", "16:9", "9:16"]
+      },
+      "mediaLimit": 9,
+      "description": "Social posts with optional media (up to 9 files)"
+    },
+    "twitter": {
+      "name": "X (Twitter)",
+      "text": {
+        "maxCharacters": 280,
+        "blueMaxCharacters": 25000,
+        "hashtags": {
+          "limit": "no limit",
+          "recommended": "1-2 hashtags"
+        },
+        "mentions": {
+          "allowed": true,
+          "format": "@username"
+        }
+      },
+      "image": {
+        "required": false,
+        "formats": ["JPG", "PNG", "GIF"],
+        "maxFileSize": {
+          "images": "5MB",
+          "gifs": "15MB"
+        },
+        "dimensions": {
+          "single": "1200 x 675 px (2:1 ratio best)"
+        },
+        "maxCount": 4
+      },
+      "video": {
+        "required": false,
+        "formats": ["MP4 (H264)", "MOV"],
+        "maxFileSize": "512MB",
+        "maxDuration": {
+          "free": "2 minutes 20 seconds",
+          "blue": "2 hours"
+        },
+        "aspectRatio": ["1:1", "16:9", "9:16"]
+      },
+      "mediaLimit": 4,
+      "description": "Text posts with optional media (up to 4 files)"
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "text": {
+        "maxCharacters": 3000,
+        "bestPreviewLength": "~150 characters",
+        "hashtags": {
+          "recommended": "3-5 hashtags"
+        },
+        "mentions": {
+          "allowed": true
+        }
+      },
+      "image": {
+        "required": false,
+        "formats": ["PNG", "JPG", "GIF"],
+        "maxFileSize": "5MB",
+        "dimensions": {
+          "post": "1200 x 627 px",
+          "companyBanner": "1128 x 191 px"
+        }
+      },
+      "video": {
+        "required": false,
+        "formats": ["MP4"],
+        "maxFileSize": "200MB",
+        "maxDuration": "10 minutes",
+        "recommendedDimensions": ["1080 x 1080", "1280 x 720"],
+        "aspectRatio": ["1:1", "16:9"]
+      },
+      "mediaLimit": 9,
+      "description": "Professional posts with optional media (up to 9 files)"
+    },
+    "tiktok": {
+      "name": "TikTok",
+      "text": {
+        "maxCharacters": 2200,
+        "hashtags": {
+          "description": "Crucial for discovery"
+        }
+      },
+      "image": {
+        "required": false
+      },
+      "video": {
+        "required": true,
+        "formats": ["MP4", "MOV"],
+        "maxFileSize": "2GB",
+        "duration": "15 seconds to 10 minutes",
+        "aspectRatio": "9:16 (full vertical)",
+        "recommendedResolution": "1080 x 1920"
+      },
+      "mediaLimit": 1,
+      "description": "Short-form video platform - video is required (1 video per post)"
+    },
+    "youtube": {
+      "name": "YouTube",
+      "text": {
+        "title": {
+          "maxCharacters": 100,
+          "bestLength": "60-70 characters"
+        },
+        "description": {
+          "maxCharacters": 5000,
+          "features": ["links", "hashtags", "timestamps"]
+        }
+      },
+      "image": {
+        "required": false,
+        "thumbnail": {
+          "size": "1280 x 720 px",
+          "formats": ["JPG", "PNG"],
+          "maxFileSize": "2MB",
+          "ratio": "16:9"
+        }
+      },
+      "video": {
+        "required": true,
+        "formats": ["MP4 (H.264 codec recommended)"],
+        "maxFileSize": "256GB",
+        "maxDuration": "Up to 12 hours",
+        "resolution": ["720p", "1080p", "4K"],
+        "aspectRatio": "16:9"
+      },
+      "mediaLimit": 1,
+      "description": "Video platform - video is required (1 video per post)"
+    }
+  }
+}

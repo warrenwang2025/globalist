@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
         createdAt: post.createdAt,
         updatedAt: post.updatedAt,
         // Add a thumbnail from media files if available
-        thumbnail: post.mediaFiles?.find(file => file.type === 'image')?.thumbnailUrl || 
-                  post.mediaFiles?.find(file => file.type === 'video')?.thumbnailUrl || null,
+        thumbnail: post.mediaFiles?.find((file: any) => file.type === 'image')?.thumbnailUrl || 
+                  post.mediaFiles?.find((file: any) => file.type === 'video')?.thumbnailUrl || null,
       })),
       pagination: {
         page,
