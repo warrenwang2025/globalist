@@ -95,6 +95,7 @@ export interface AudioBlock extends Block {
     duration?: number;
     thumbnailUrl?: string;
     title?: string;
+    artist?: string;
     // Add any other audio-specific fields as needed
   };
 }
