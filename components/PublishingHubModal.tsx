@@ -7,7 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Send, Edit3, CheckCircle, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Sparkles, Send, Edit3, CheckCircle, Globe, Calendar, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { AnyBlock } from "@/types/editor";
 import { PlatformMediaUpload } from "@/components/PlatformMediaUpload";
@@ -18,7 +21,7 @@ interface PublishingHubModalProps {
   title: string;
   blocks: AnyBlock[];
   selectedPlatforms: number[];
-  onPublish: (socialContent: Record<string, string>, platformMedia: Record<string, File[]>) => void;
+  onPublish: (socialContent: Record<string, string>, platformMedia: Record<string, File[]>, isScheduled?: boolean, scheduledDate?: string) => void;
 }
 
 const platformMap = {
@@ -43,6 +46,9 @@ export function PublishingHubModal({
   const [socialContent, setSocialContent] = useState<Record<string, string>>({});
   const [platformMedia, setPlatformMedia] = useState<Record<string, File[]>>({});
   const [hasOptimized, setHasOptimized] = useState(false);
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
   const { toast } = useToast();
 
   // Convert blocks to plain text for AI processing
@@ -195,6 +201,16 @@ export function PublishingHubModal({
 
   // Handle final publishing
   const handleConfirmPublish = async () => {
+    // Validate scheduling if enabled
+    if (isScheduled && (!scheduleDate || !scheduleTime)) {
+      toast({
+        title: "Scheduling incomplete",
+        description: "Please select both date and time for scheduling.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate platform requirements first
     const validationErrors = await validatePlatformRequirements();
     
@@ -209,11 +225,18 @@ export function PublishingHubModal({
     
     setIsPublishing(true);
     try {
-      await onPublish(socialContent, platformMedia);
+      const scheduledDate = isScheduled && scheduleDate && scheduleTime 
+        ? new Date(`${scheduleDate}T${scheduleTime}`).toISOString()
+        : undefined;
+      
+      await onPublish(socialContent, platformMedia, isScheduled, scheduledDate);
       onOpenChange(false);
       setSocialContent({});
       setPlatformMedia({});
       setHasOptimized(false);
+      setIsScheduled(false);
+      setScheduleDate("");
+      setScheduleTime("");
     } catch (error) {
       console.error("Publishing failed:", error);
       toast({
@@ -232,6 +255,9 @@ export function PublishingHubModal({
       setSocialContent({});
       setPlatformMedia({});
       setHasOptimized(false);
+      setIsScheduled(false);
+      setScheduleDate("");
+      setScheduleTime("");
     }
   }, [open]);
 
@@ -392,6 +418,58 @@ export function PublishingHubModal({
             </div>
           )}
 
+          {/* Scheduling Section */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Calendar className="h-4 w-4" />
+                Schedule Post
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2 mb-4">
+                <Switch
+                  id="schedule-toggle"
+                  checked={isScheduled}
+                  onCheckedChange={setIsScheduled}
+                />
+                <Label htmlFor="schedule-toggle" className="text-sm font-medium">
+                  Schedule this post for later
+                </Label>
+              </div>
+              
+              {isScheduled && (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="schedule-date" className="flex gap-2 items-center font-semibold text-sm">
+                      <Calendar className="h-3 w-3 text-primary" /> Select Date
+                    </Label>
+                    <Input
+                      id="schedule-date"
+                      type="date"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      className="mt-2"
+                      min={new Date().toISOString().split("T")[0]}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="schedule-time" className="flex gap-2 items-center font-semibold text-sm">
+                      <Clock className="h-3 w-3 text-primary" /> Select Time
+                    </Label>
+                    <Input
+                      id="schedule-time"
+                      type="time"
+                      value={scheduleTime}
+                      onChange={(e) => setScheduleTime(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Publishing Actions */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
             <Button
@@ -404,18 +482,23 @@ export function PublishingHubModal({
             </Button>
             <Button
               onClick={handleConfirmPublish}
-              disabled={isPublishing}
+              disabled={isPublishing || (isScheduled && (!scheduleDate || !scheduleTime))}
               className="w-full sm:w-auto min-w-[150px] order-1 sm:order-2"
             >
               {isPublishing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Publishing...
+                  {isScheduled ? "Scheduling..." : "Publishing..."}
                 </>
               ) : (
                 <>
                   <Send className="mr-2 h-4 w-4" />
-                  {selectedPlatforms.length > 0 ? "Confirm & Publish" : "Publish to Globalist.live"}
+                  {isScheduled 
+                    ? "Schedule Post" 
+                    : selectedPlatforms.length > 0 
+                      ? "Confirm & Publish" 
+                      : "Publish to Globalist.live"
+                  }
                 </>
               )}
             </Button>

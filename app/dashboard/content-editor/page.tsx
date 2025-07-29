@@ -9,16 +9,10 @@ import { UpgradeModal } from "@/components/contentEditor/UpgradeModal";
 import { PublishingHubModal } from "@/components/PublishingHubModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { PlatformSelector } from "@/components/platform-selector";
 
 import {
-  Calendar,
-  Clock,
   Sparkles,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
 
@@ -38,11 +32,8 @@ export default function DistributionPage() {
   const [title, setTitle] = useState("");
   const [blocks, setBlocks] = useState<AnyBlock[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<number[]>([]);
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [scheduleTime, setScheduleTime] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showScheduling, setShowScheduling] = useState(false);
   const [showPublishingHub, setShowPublishingHub] = useState(false);
   const [currentPostId, setCurrentPostId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -177,8 +168,6 @@ export default function DistributionPage() {
       content: contentText,
       blocks: previewBlocks,
       selectedPlatforms,
-      scheduleDate,
-      scheduleTime,
       timestamp: new Date().toISOString(),
     };
 
@@ -232,39 +221,60 @@ export default function DistributionPage() {
     setShowPublishingHub(true);
   };
 
-  const handlePublishingHubPublish = async (socialContent: Record<string, string>, platformMedia: Record<string, File[]>) => {
+  const handlePublishingHubPublish = async (socialContent: Record<string, string>, platformMedia: Record<string, File[]>, isScheduled: boolean = false, scheduledDate?: string) => {
     setIsPublishing(true);
 
     try {
-      // TODO: Implement actual publishing logic here
-      // This would send the main article content AND the social media posts to the backend
-      await new Promise((res) => setTimeout(res, 2000));
+      // Save the post with scheduling information
+      const savePayload = {
+        title,
+        blocks,
+        status: isScheduled ? 'scheduled' as const : 'published' as const,
+        platforms: selectedPlatforms.map(id => platformMapping[id].toLowerCase()).filter(Boolean),
+        tags: [], // TODO: Add tags functionality later
+        isPublic: true,
+        ...(isScheduled && scheduledDate && { scheduledDate }),
+        ...(currentPostId && { postId: currentPostId }),
+      };
+
+      // Call the save API
+      const response = await fetch('/api/content/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(savePayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save content');
+      }
+
+      const result = await response.json();
+      
+      // Update post state management
+      if (result.post?.id) {
+        setCurrentPostId(result.post.id);
+        setIsEditing(true);
+      }
 
       const platformNames = selectedPlatforms
-        .map((id) =>
-          ["Twitter", "LinkedIn", "Instagram", "YouTube", "TikTok", "Facebook"][
-            id - 1
-          ]
-        )
+        .map((id) => platformMapping[id])
         .join(", ");
 
-      const description =
-        scheduleDate && scheduleTime
-          ? `Scheduled for ${new Date(
-              `${scheduleDate}T${scheduleTime}`
-            ).toLocaleString()} on ${platformNames}`
-          : `Published to: ${platformNames}`;
+      const description = isScheduled && scheduledDate
+        ? `Scheduled for ${new Date(scheduledDate).toLocaleString()} on ${platformNames}`
+        : `Published to: ${platformNames}`;
 
       toast({ title: "Success", description });
 
       setSelectedPlatforms([]);
-      setScheduleDate("");
-      setScheduleTime("");
-      setShowScheduling(false);
-    } catch {
+    } catch (error) {
+      console.error('Publishing error:', error);
       toast({
         title: "Publishing failed",
-        description: "Please try again later",
+        description: error instanceof Error ? error.message : "Please try again later",
         variant: "destructive",
       });
     } finally {
@@ -361,56 +371,7 @@ export default function DistributionPage() {
           </CardContent>
         </Card>
 
-        {/* Scheduling Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center text-lg">
-              <span>Schedule Post</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowScheduling(!showScheduling)}
-              >
-                {showScheduling ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          {showScheduling && (
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="schedule-date" className="flex gap-2 items-center font-semibold">
-                    <Calendar className="h-4 w-4 text-primary" /> Select Date
-                  </Label>
-                  <Input
-                    id="schedule-date"
-                    type="date"
-                    value={scheduleDate}
-                    onChange={(e) => setScheduleDate(e.target.value)}
-                    className="mt-2"
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="schedule-time" className="flex gap-2 items-center font-semibold">
-                    <Clock className="h-4 w-4 text-primary" /> Select Time
-                  </Label>
-                  <Input
-                    id="schedule-time"
-                    type="time"
-                    value={scheduleTime}
-                    onChange={(e) => setScheduleTime(e.target.value)}
-                    className="mt-2"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          )}
-        </Card>
+
 
         {/* Content Editor */}
         <div className="w-full space-y-6">
