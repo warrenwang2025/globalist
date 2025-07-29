@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Send, Edit3, CheckCircle, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { AnyBlock } from "@/types/editor";
+import { PlatformMediaUpload } from "@/components/PlatformMediaUpload";
 
 interface PublishingHubModalProps {
   open: boolean;
@@ -17,16 +18,16 @@ interface PublishingHubModalProps {
   title: string;
   blocks: AnyBlock[];
   selectedPlatforms: number[];
-  onPublish: (socialContent: Record<string, string>) => void;
+  onPublish: (socialContent: Record<string, string>, platformMedia: Record<string, File[]>) => void;
 }
 
 const platformMap = {
-  1: "X (Twitter)",
+  1: "Twitter",
   2: "LinkedIn", 
   3: "Instagram",
   4: "YouTube",
   5: "TikTok",
-  6: "Personal Site / Newsletter"
+  6: "Facebook"
 };
 
 export function PublishingHubModal({
@@ -40,6 +41,7 @@ export function PublishingHubModal({
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [socialContent, setSocialContent] = useState<Record<string, string>>({});
+  const [platformMedia, setPlatformMedia] = useState<Record<string, File[]>>({});
   const [hasOptimized, setHasOptimized] = useState(false);
   const { toast } = useToast();
 
@@ -151,13 +153,66 @@ export function PublishingHubModal({
     }));
   };
 
+  // Handle media upload for each platform
+  const handlePlatformMediaUpload = (platform: string, files: File[]) => {
+    setPlatformMedia(prev => ({
+      ...prev,
+      [platform]: files
+    }));
+  };
+
+  // Validate platform requirements before publishing
+  const validatePlatformRequirements = async () => {
+    const errors: string[] = [];
+    
+    for (const platform of getSelectedPlatformNames()) {
+      try {
+        const response = await fetch('/publishing-criteria.json');
+        const data = await response.json();
+        const criteria = data.platforms[platform];
+        
+        if (criteria) {
+          const platformFiles = platformMedia[platform] || [];
+          const imageFiles = platformFiles.filter(f => f.type.startsWith('image/'));
+          const videoFiles = platformFiles.filter(f => f.type.startsWith('video/'));
+          
+          // Check if media is required
+          if (criteria.image.required && imageFiles.length === 0 && videoFiles.length === 0) {
+            errors.push(`${platform} requires at least one image or video`);
+          }
+          
+          if (criteria.video.required && videoFiles.length === 0) {
+            errors.push(`${platform} requires a video`);
+          }
+        }
+      } catch (error) {
+        console.error(`Failed to validate ${platform}:`, error);
+      }
+    }
+    
+    return errors;
+  };
+
   // Handle final publishing
   const handleConfirmPublish = async () => {
+    // Validate platform requirements first
+    const validationErrors = await validatePlatformRequirements();
+    
+    if (validationErrors.length > 0) {
+      toast({
+        title: "Platform requirements not met",
+        description: validationErrors.join('. '),
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsPublishing(true);
     try {
-      await onPublish(socialContent);
+      await onPublish(socialContent, platformMedia);
       onOpenChange(false);
       setSocialContent({});
+      setPlatformMedia({});
       setHasOptimized(false);
     } catch (error) {
       console.error("Publishing failed:", error);
@@ -175,6 +230,7 @@ export function PublishingHubModal({
   useEffect(() => {
     if (!open) {
       setSocialContent({});
+      setPlatformMedia({});
       setHasOptimized(false);
     }
   }, [open]);
@@ -323,6 +379,13 @@ export function PublishingHubModal({
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Platform-specific Media Upload */}
+                  <PlatformMediaUpload
+                    platform={platform}
+                    onMediaUpload={(files) => handlePlatformMediaUpload(platform, files)}
+                    uploadedFiles={platformMedia[platform] || []}
+                  />
                 </TabsContent>
               ))}
               </Tabs>
