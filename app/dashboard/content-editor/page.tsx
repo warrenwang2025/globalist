@@ -93,7 +93,7 @@ export default function DistributionPage() {
         title: editorTitle,
         blocks: editorBlocks,
         status: 'draft' as const,
-        platforms: selectedPlatforms.map(id => platformMapping[id]).filter(Boolean),
+        platforms: selectedPlatforms.map(id => platformMapping[id].toLowerCase()).filter(Boolean),
         tags: [], // TODO: Add tags functionality later
         isPublic: true,
         ...(currentPostId && { postId: currentPostId }), // Include postId if editing existing post
@@ -296,7 +296,7 @@ export default function DistributionPage() {
       // Map backend platform names back to frontend IDs
       const platformIds = postData.platforms
         ?.map((platformName: string) => {
-          const entry = Object.entries(platformMapping).find(([_, name]) => name === platformName);
+          const entry = Object.entries(platformMapping).find(([_, name]) => name.toLowerCase() === platformName);
           return entry ? parseInt(entry[0]) : null;
         })
         .filter((id: number | null) => id !== null) || [];

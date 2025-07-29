@@ -1,6 +1,6 @@
 {
   "platforms": {
-    "Instagram": {
+    "instagram": {
       "name": "Instagram",
       "text": {
         "maxCharacters": 2200,
@@ -42,7 +42,7 @@
       "mediaLimit": 10,
       "description": "Visual platform - media is required (up to 10 files)"
     },
-    "Facebook": {
+    "facebook": {
       "name": "Facebook",
       "text": {
         "maxCharacters": 63206,
@@ -72,7 +72,7 @@
       "mediaLimit": 9,
       "description": "Social posts with optional media (up to 9 files)"
     },
-    "Twitter": {
+    "twitter": {
       "name": "X (Twitter)",
       "text": {
         "maxCharacters": 280,
@@ -111,7 +111,7 @@
       "mediaLimit": 4,
       "description": "Text posts with optional media (up to 4 files)"
     },
-    "LinkedIn": {
+    "linkedin": {
       "name": "LinkedIn",
       "text": {
         "maxCharacters": 3000,
@@ -143,7 +143,7 @@
       "mediaLimit": 9,
       "description": "Professional posts with optional media (up to 9 files)"
     },
-    "TikTok": {
+    "tiktok": {
       "name": "TikTok",
       "text": {
         "maxCharacters": 2200,
@@ -165,7 +165,7 @@
       "mediaLimit": 1,
       "description": "Short-form video platform - video is required (1 video per post)"
     },
-    "YouTube": {
+    "youtube": {
       "name": "YouTube",
       "text": {
         "title": {
