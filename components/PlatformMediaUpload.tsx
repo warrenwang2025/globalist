@@ -47,23 +47,40 @@ export function PlatformMediaUpload({
   const [platformCriteria, setPlatformCriteria] = useState<PlatformCriteria | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load platform criteria
   useEffect(() => {
     const loadPlatformCriteria = async () => {
+      setIsLoading(true);
       try {
+        console.log('Loading platform requirements for', platform);
         const response = await fetch('/publishing-criteria.json');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Loaded publishing criteria data:', data);
+        
         // Convert platform name to lowercase to match the JSON keys
         const platformKey = platform.toLowerCase();
-        const criteria = data.platforms[platformKey];
+        console.log('Looking for platform key:', platformKey);
+        console.log('Available platforms:', Object.keys(data.platforms || {}));
+        
+        const criteria = data.platforms?.[platformKey];
         if (criteria) {
+          console.log('Found criteria for', platformKey, criteria);
           setPlatformCriteria(criteria);
         } else {
           console.error('No criteria found for platform:', platformKey);
+          console.error('Available platforms:', Object.keys(data.platforms || {}));
         }
       } catch (error) {
         console.error('Failed to load platform criteria:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -233,6 +250,50 @@ export function PlatformMediaUpload({
   if (!platformCriteria.image || !platformCriteria.video) {
     console.error('Invalid platform criteria structure:', platformCriteria);
     return <div>Error: Invalid platform criteria for {platform}</div>;
+  }
+
+  // Show loading state or fallback if criteria not loaded
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ImageIcon className="h-4 w-4" />
+            Media for {platform}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">Loading platform requirements...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show error state if criteria failed to load
+  if (!platformCriteria) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ImageIcon className="h-4 w-4" />
+            Media for {platform}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load platform requirements for {platform}. Please try refreshing the page.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
   const hasRequiredMedia = (platformCriteria.image.required || platformCriteria.video.required) 

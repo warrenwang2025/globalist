@@ -21,7 +21,9 @@ export default withAuth(
         pathname.includes('.gif') ||
         pathname.includes('.svg') ||
         pathname.includes('.ico') ||
-        pathname === '/') {
+        pathname === '/' ||
+        pathname === '/terms' ||
+        pathname === '/privacy') {
       return NextResponse.next()
     }
     
