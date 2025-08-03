@@ -66,8 +66,7 @@ const PostSchema: Schema<IPost> = new Schema(
       {
         type: String,
         enum: [
-          "personal",
-          // "facebook",
+          "facebook",
           "twitter",
           "linkedin",
           "instagram",
