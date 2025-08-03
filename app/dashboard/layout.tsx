@@ -1,9 +1,10 @@
-import { Sidebar } from "@/components/dashboard/sidebar"
+"use client";
+import { Sidebar } from "@/components/dashboard/sidebar";
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <div className="h-full relative">
@@ -14,10 +15,8 @@ export default function DashboardLayout({
         <div className="md:hidden">
           <Sidebar />
         </div>
-        <div className="pt-16 md:pt-0">
-          {children}
-        </div>
+        <div className="pt-16 md:pt-0">{children}</div>
       </main>
     </div>
-  )
+  );
 }
