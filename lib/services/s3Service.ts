@@ -1,6 +1,11 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v4 as uuidv4 } from "uuid";
 
 export interface S3UploadResult {
   key: string;
@@ -15,18 +20,20 @@ export class S3Service {
   private region: string;
 
   constructor() {
-    this.bucketName = process.env.AWS_S3_BUCKET_NAME!;
-    this.region = process.env.AWS_REGION!;
-    
+    this.bucketName = process.env.NEXT_PUBLIC_AWS_S3_BUCKET_NAME!;
+    this.region = process.env.NEXT_PUBLIC_AWS_REGION!;
+
     if (!this.bucketName || !this.region) {
-      throw new Error('AWS S3 configuration missing. Please check environment variables.');
+      throw new Error(
+        "AWS S3 configuration missing. Please check environment variables."
+      );
     }
 
     this.s3Client = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
       },
     });
   }
@@ -50,7 +57,7 @@ export class S3Service {
     try {
       // Generate unique key for the file
       const fileExtension = this.getFileExtension(fileName);
-      const key = postId 
+      const key = postId
         ? `MediaSuite/posts/${userId}/${postId}/${uuidv4()}.${fileExtension}`
         : `MediaSuite/media/${userId}/${uuidv4()}.${fileExtension}`;
 
@@ -61,10 +68,10 @@ export class S3Service {
         Body: buffer,
         ContentType: mimeType,
         Metadata: {
-          'original-filename': fileName,
-          'uploaded-by': userId,
-          'uploaded-at': new Date().toISOString(),
-          ...(postId && { 'post-id': postId }),
+          "original-filename": fileName,
+          "uploaded-by": userId,
+          "uploaded-at": new Date().toISOString(),
+          ...(postId && { "post-id": postId }),
         },
       });
 
@@ -80,7 +87,11 @@ export class S3Service {
         format: fileExtension,
       };
     } catch (error) {
-      throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `S3 upload failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -93,7 +104,7 @@ export class S3Service {
     try {
       const key = this.extractKeyFromUrl(url);
       if (!key) {
-        console.error('Invalid S3 URL:', url);
+        console.error("Invalid S3 URL:", url);
         return false;
       }
 
@@ -105,7 +116,7 @@ export class S3Service {
       await this.s3Client.send(deleteCommand);
       return true;
     } catch (error) {
-      console.error('S3 delete failed:', error);
+      console.error("S3 delete failed:", error);
       return false;
     }
   }
@@ -122,7 +133,7 @@ export class S3Service {
     buffer: Buffer,
     fileName: string,
     userId: string,
-    format: string = 'webp'
+    format: string = "webp"
   ): Promise<S3UploadResult> {
     try {
       // Generate unique key for the file
@@ -136,9 +147,9 @@ export class S3Service {
         Body: buffer,
         ContentType: `image/${fileExtension}`,
         Metadata: {
-          'original-filename': fileName,
-          'uploaded-by': userId,
-          'uploaded-at': new Date().toISOString(),
+          "original-filename": fileName,
+          "uploaded-by": userId,
+          "uploaded-at": new Date().toISOString(),
         },
       });
 
@@ -154,7 +165,11 @@ export class S3Service {
         format: fileExtension,
       };
     } catch (error) {
-      throw new Error(`S3 upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `S3 upload failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -173,7 +188,7 @@ export class S3Service {
       await this.s3Client.send(deleteCommand);
       return true;
     } catch (error) {
-      console.error('S3 delete failed:', error);
+      console.error("S3 delete failed:", error);
       return false;
     }
   }
@@ -184,7 +199,10 @@ export class S3Service {
    * @param expiresIn - Expiration time in seconds (default: 3600)
    * @returns Presigned URL
    */
-  private async generatePresignedUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  private async generatePresignedUrl(
+    key: string,
+    expiresIn: number = 3600
+  ): Promise<string> {
     try {
       const command = new GetObjectCommand({
         Bucket: this.bucketName,
@@ -193,7 +211,11 @@ export class S3Service {
 
       return await getSignedUrl(this.s3Client, command, { expiresIn });
     } catch (error) {
-      throw new Error(`Failed to generate presigned URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to generate presigned URL: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -205,8 +227,8 @@ export class S3Service {
   public extractKeyFromUrl(url: string): string | null {
     try {
       const urlObj = new URL(url);
-      const pathParts = urlObj.pathname.split('/');
-      return pathParts.slice(1).join('/'); // Remove leading slash
+      const pathParts = urlObj.pathname.split("/");
+      return pathParts.slice(1).join("/"); // Remove leading slash
     } catch {
       return null;
     }
@@ -227,7 +249,7 @@ export class S3Service {
    * @returns File extension
    */
   private getFileExtension(filename: string): string {
-    return filename.split('.').pop()?.toLowerCase() || 'bin';
+    return filename.split(".").pop()?.toLowerCase() || "bin";
   }
 }
 
