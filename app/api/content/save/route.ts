@@ -1,47 +1,69 @@
-export const dynamic = 'force-dynamic';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import dbConnect from '@/lib/dbConnect';
-import Post from '@/lib/models/Post';
-import mediaUploadService from '@/lib/services/mediaUploadService';
-import type { AnyBlock } from '@/types/editor';
-import Event from '@/lib/models/Event';
+export const dynamic = "force-dynamic";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import dbConnect from "@/lib/dbConnect";
+import Post from "@/lib/models/Post";
+import mediaUploadService from "@/lib/services/mediaUploadService";
+import type { AnyBlock } from "@/types/editor";
+import Event from "@/lib/models/Event";
+import axios from "axios";
 
 // Helper function to convert base64 to buffer
 function base64ToBuffer(base64Data: string): Buffer {
-  const base64String = base64Data.split(',')[1];
-  return Buffer.from(base64String, 'base64');
+  const base64String = base64Data.split(",")[1];
+  return Buffer.from(base64String, "base64");
 }
 
 // Helper function to get default file info based on block type
 function getDefaultFileInfo(blockType: string) {
   const defaults = {
-    image: { name: 'image.jpg', type: 'image/jpeg', extension: 'jpg' },
-    video: { name: 'video.mp4', type: 'video/mp4', extension: 'mp4' },
-    audio: { name: 'audio.mp3', type: 'audio/mpeg', extension: 'mp3' }
+    image: { name: "image.jpg", type: "image/jpeg", extension: "jpg" },
+    video: { name: "video.mp4", type: "video/mp4", extension: "mp4" },
+    audio: { name: "audio.mp3", type: "audio/mpeg", extension: "mp3" },
   };
-  return defaults[blockType as keyof typeof defaults] || { name: 'file', type: 'application/octet-stream', extension: 'bin' };
+  return (
+    defaults[blockType as keyof typeof defaults] || {
+      name: "file",
+      type: "application/octet-stream",
+      extension: "bin",
+    }
+  );
 }
 
 // Type guard for media block content
-function isMediaContent(content: any): content is { file: string; fileName?: string; fileType?: string; size?: number; url?: string; alt?: string; width?: number; height?: number; thumbnailUrl?: string; duration?: number; } {
-  return typeof content === 'object' && typeof content.file === 'string';
+function isMediaContent(content: any): content is {
+  file: string;
+  fileName?: string;
+  fileType?: string;
+  size?: number;
+  url?: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  thumbnailUrl?: string;
+  duration?: number;
+} {
+  return typeof content === "object" && typeof content.file === "string";
 }
 
 // Helper function to process media blocks
-async function processMediaBlock(block: AnyBlock, userId: string, postId?: string): Promise<AnyBlock> {
+async function processMediaBlock(
+  block: AnyBlock,
+  userId: string,
+  postId?: string
+): Promise<AnyBlock> {
   try {
     const { type, content } = block;
     const defaultInfo = getDefaultFileInfo(type);
-    
+
     // Ensure file exists and content is media
     if (!isMediaContent(content)) {
-      throw new Error('No file data found in block content');
+      throw new Error("No file data found in block content");
     }
     // Convert base64 to buffer
     const buffer = base64ToBuffer(content.file);
-    
+
     // Upload media
     const uploadedMedia = await mediaUploadService.uploadMedia(
       {
@@ -66,16 +88,16 @@ async function processMediaBlock(block: AnyBlock, userId: string, postId?: strin
     delete updatedContent.file;
 
     // Add type-specific metadata
-    if (type === 'image') {
+    if (type === "image") {
       updatedContent.width = uploadedMedia.width;
       updatedContent.height = uploadedMedia.height;
       updatedContent.thumbnailUrl = uploadedMedia.thumbnailUrl;
-    } else if (type === 'video') {
+    } else if (type === "video") {
       updatedContent.width = uploadedMedia.width;
       updatedContent.height = uploadedMedia.height;
       updatedContent.duration = uploadedMedia.duration;
       updatedContent.thumbnailUrl = uploadedMedia.thumbnailUrl;
-    } else if (type  === 'audio') {
+    } else if (type === "audio") {
       updatedContent.duration = uploadedMedia.duration;
     }
 
@@ -92,15 +114,21 @@ async function processMediaBlock(block: AnyBlock, userId: string, postId?: strin
 // Helper function to extract URLs from media blocks
 function extractMediaUrls(blocks: AnyBlock[]): string[] {
   return blocks
-    .filter(block => ['image', 'video', 'audio'].includes(block.type) && isMediaContent(block.content))
-    .map(block => isMediaContent(block.content) ? block.content.url : undefined)
+    .filter(
+      (block) =>
+        ["image", "video", "audio"].includes(block.type) &&
+        isMediaContent(block.content)
+    )
+    .map((block) =>
+      isMediaContent(block.content) ? block.content.url : undefined
+    )
     .filter((url): url is string => Boolean(url));
 }
 
 // Helper function to cleanup orphaned media files
 async function cleanupOrphanedMedia(oldUrls: string[], newUrls: string[]) {
-  const urlsToDelete = oldUrls.filter(url => !newUrls.includes(url));
-  
+  const urlsToDelete = oldUrls.filter((url) => !newUrls.includes(url));
+
   for (const url of urlsToDelete) {
     try {
       await mediaUploadService.deleteMedia(url);
@@ -114,7 +142,11 @@ async function cleanupOrphanedMedia(oldUrls: string[], newUrls: string[]) {
 interface SaveContentRequest {
   title: string;
   blocks: AnyBlock[];
-  status?: 'draft' | 'scheduled' | 'published';
+  category?: string[];
+  country?: string[];
+  type?: string;
+  articleImage?: any; // Base64 image string
+  status?: "draft" | "scheduled" | "published";
   postId?: string;
   scheduledDate?: string;
   platforms?: string[];
@@ -126,24 +158,24 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
     const body: SaveContentRequest = await request.json();
-    const { 
-      title, 
-      blocks, 
-      status = 'draft', 
-      postId, 
+    console.log("dgfdg", body);
+    const {
+      title,
+      blocks,
+      status = "draft",
+      postId,
       scheduledDate,
       platforms = [],
       tags = [],
-      isPublic = true
+      isPublic = true,
     } = body;
 
     if (!title || !blocks || !Array.isArray(blocks)) {
       return NextResponse.json(
-        { error: 'Title and blocks are required' },
+        { error: "Title and blocks are required" },
         { status: 400 }
       );
     }
@@ -153,20 +185,20 @@ export async function POST(request: NextRequest) {
     // Get existing post data for comparison (if updating)
     let existingPost = null;
     let existingMediaUrls: string[] = [];
-    
+
     if (postId) {
-      existingPost = await Post.findOne({ 
-        _id: postId, 
-        userId: session.user.id 
+      existingPost = await Post.findOne({
+        _id: postId,
+        userId: session.user.id,
       });
-      
+
       if (!existingPost) {
         return NextResponse.json(
-          { error: 'Post not found or access denied' },
+          { error: "Post not found or access denied" },
           { status: 404 }
         );
       }
-      
+
       // Extract existing media URLs for cleanup
       existingMediaUrls = extractMediaUrls(existingPost.blocks);
     }
@@ -177,15 +209,22 @@ export async function POST(request: NextRequest) {
         // Ensure block has proper order
         const blockWithOrder = {
           ...block,
-          order: block.order ?? index
+          order: block.order ?? index,
         };
 
         // Only process media blocks that have NEW file data (base64)
         // Skip blocks that already have URLs (existing media)
-        if (['image', 'video', 'audio'].includes(block.type) && isMediaContent(block.content)) {
-          return await processMediaBlock(blockWithOrder, session.user.id, postId);
+        if (
+          ["image", "video", "audio"].includes(block.type) &&
+          isMediaContent(block.content)
+        ) {
+          return await processMediaBlock(
+            blockWithOrder,
+            session.user.id,
+            postId
+          );
         }
-        
+
         return blockWithOrder;
       })
     );
@@ -200,8 +239,12 @@ export async function POST(request: NextRequest) {
 
     // Extract media files for the post
     const mediaFiles = processedBlocks
-      .filter(block => ['image', 'video', 'audio'].includes(block.type) && isMediaContent(block.content))
-      .map(block => {
+      .filter(
+        (block) =>
+          ["image", "video", "audio"].includes(block.type) &&
+          isMediaContent(block.content)
+      )
+      .map((block) => {
         const content = block.content;
         if (!isMediaContent(content)) return undefined;
         return {
@@ -217,7 +260,7 @@ export async function POST(request: NextRequest) {
           fileType: content.fileType,
         };
       })
-      .filter(media => media && media.url);
+      .filter((media) => media && media.url);
 
     // Create or update post
     let post;
@@ -240,18 +283,18 @@ export async function POST(request: NextRequest) {
         { new: true }
       );
       // If post is scheduled, update or create corresponding Event
-      if (status === 'scheduled') {
+      if (status === "scheduled") {
         event = await Event.findOneAndUpdate(
           { sourcePostId: post._id },
           {
             userId: session.user.id,
             title,
-            description: '',
+            description: "",
             startDateTime: scheduledDate ? new Date(scheduledDate) : new Date(),
             duration: 60, // Default duration, adjust as needed
-            eventType: 'scheduled_post',
+            eventType: "scheduled_post",
             sourcePostId: post._id,
-            status: 'scheduled',
+            status: "scheduled",
             notificationSent: false,
           },
           { new: true, upsert: true }
@@ -272,16 +315,16 @@ export async function POST(request: NextRequest) {
       });
       await post.save();
       // If post is scheduled, create corresponding Event
-      if (status === 'scheduled') {
+      if (status === "scheduled") {
         event = new Event({
           userId: session.user.id,
           title,
-          description: '',
+          description: "",
           startDateTime: scheduledDate ? new Date(scheduledDate) : new Date(),
           duration: 60, // Default duration, adjust as needed
-          eventType: 'scheduled_post',
+          eventType: "scheduled_post",
           sourcePostId: post._id,
-          status: 'scheduled',
+          status: "scheduled",
           notificationSent: false,
         });
         await event.save();
@@ -300,12 +343,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error saving content:', error);
+    console.error("Error saving content:", error);
     return NextResponse.json(
-      { error: 'Failed to save content' },
+      { error: "Failed to save content" },
       { status: 500 }
     );
   }
 }
-
- 
