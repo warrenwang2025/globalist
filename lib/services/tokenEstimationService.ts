@@ -2,8 +2,6 @@
 // Using js-tiktoken for accurate OpenAI token counting
 
 import { encodingForModel } from 'js-tiktoken';
-import fs from 'fs';
-import path from 'path';
 
 class TokenEstimationService {
   private SYSTEM_PROMPTS: Record<string, string>;
@@ -11,31 +9,21 @@ class TokenEstimationService {
   private BUFFER_PERCENTAGE: number;
 
   constructor() {
-    // Load actual system prompts from prompt.json
-    const promptFilePath = path.resolve(process.cwd(), "lib/prompts/ai-tools.json");
-    const promptJson = JSON.parse(fs.readFileSync(promptFilePath, "utf-8"));
-    
     this.SYSTEM_PROMPTS = {
-      ideaGeneration: this.buildSystemPrompt(promptJson["Idea Generation"]),
-      contentCreation: this.buildSystemPrompt(promptJson["Content Creation"]),
-      contentAtomizer: this.buildSystemPrompt(promptJson["Content Atomizer"]),
-      contentImprover: this.buildSystemPrompt(promptJson["Content Improver"]),
-      seoSupport: this.buildSystemPrompt(promptJson["SEO Support"])
+      ideas: 'You are a creative content strategist. Generate original, engaging content ideas.',
+      headlines: 'You are a skilled copywriter. Create compelling, attention-grabbing headlines.',
+      summarize: 'You are a professional editor. Create clear, concise summaries that capture key points.',
+      improve: 'You are a writing coach. Enhance content while maintaining its original structure and meaning.',
+      seo: 'You are an SEO specialist. Optimize content for search engines while keeping it readable and engaging.'
     };
-    
     this.EXPECTED_OUTPUT_TOKENS = {
-      ideaGeneration: 800,    // JSON with 5 ideas
-      contentCreation: 1600,  // Full article
-      contentAtomizer: 1200,  // Multiple platform content
-      contentImprover: 1200,  // Improved article
-      seoSupport: 1000       // SEO recommendations
+      ideas: 200,      // Usually generates multiple ideas
+      headlines: 100,  // Usually generates multiple headlines
+      summarize: 150,  // Summary length varies
+      improve: 300,    // Improved content can be longer
+      seo: 250        // SEO improvements with explanations
     };
     this.BUFFER_PERCENTAGE = 0.25; // 25% buffer
-  }
-
-  private buildSystemPrompt(section: any): string {
-    if (!section) return "You are a helpful AI assistant.";
-    return `${section.persona}\n\n${section.task}\n\n${section.output_format}`;
   }
 
   /**

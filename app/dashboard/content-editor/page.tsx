@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -45,9 +46,13 @@ export default function DistributionPage() {
   // saveAIContent was removed with the old AI Assistant. If you want to save, implement logic here or use another method.
   const { data: session, status } = useSession();
 
+  // Get user data from session
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      setUser({ isPremium: session.user.userSubscriptionLevel !== "free" });
+      const userData = { 
+        isPremium: session.user.userSubscriptionLevel !== 'free' || false 
+      };
+      setUser(userData);
     }
   }, [session, status]);
 
@@ -189,10 +194,14 @@ export default function DistributionPage() {
   };
 
   const handleSave = async (editorTitle: string, editorBlocks: AnyBlock[]) => {
-    if (!editorTitle.trim()) throw new Error("Title is required");
+    if (!editorTitle.trim()) {
+      throw new Error("Title is required");
+    }
 
     try {
       setIsSaving(true);
+      
+      // Update local state
       setTitle(editorTitle);
       setBlocks(editorBlocks);
 
@@ -253,24 +262,26 @@ export default function DistributionPage() {
 
   const handlePreview = (previewTitle: string, previewBlocks: AnyBlock[]) => {
     const contentText = previewBlocks
-      .map((block) => {
+      .map(block => {
         switch (block.type) {
-          case "text":
-          case "heading":
-          case "quote":
-            return (block.content as any).text || "";
-          case "list":
-            return (block.content as any).items?.join(", ") || "";
+          case 'text':
+            return (block.content as any).text || '';
+          case 'heading':
+            return (block.content as any).text || '';
+          case 'quote':
+            return (block.content as any).text || '';
+          case 'list':
+            return (block.content as any).items?.join(', ') || '';
           default:
-            return "";
+            return '';
         }
       })
-      .join(" ");
+      .join(' ');
 
     if (!contentText.trim() && !previewTitle.trim()) {
       toast({
         title: "Nothing to preview",
-        description: "Please add content before previewing",
+        description: "Please add some content before previewing",
         variant: "destructive",
       });
       return;
@@ -279,7 +290,7 @@ export default function DistributionPage() {
     if (selectedPlatforms.length === 0) {
       toast({
         title: "Select platforms",
-        description: "Please select at least one platform",
+        description: "Please select at least one platform to preview",
         variant: "destructive",
       });
       return;
@@ -296,12 +307,15 @@ export default function DistributionPage() {
     const previewUrl = `/preview?data=${encodeURIComponent(
       JSON.stringify(previewData)
     )}`;
-
-    window.open(previewUrl, "_blank", "width=1200,height=800,scrollbars=yes");
+    window.open(
+      previewUrl,
+      "_blank",
+      "width=1200,height=800,scrollbars=yes,resizable=yes"
+    );
 
     toast({
       title: "Preview opened",
-      description: "Check the new tab for your content preview",
+      description: "Check the new tab to see your post preview",
     });
   };
 
@@ -310,19 +324,21 @@ export default function DistributionPage() {
     console.log("Publishing with title:", title);
 
     const contentText = blocks
-      .map((block) => {
+      .map(block => {
         switch (block.type) {
-          case "text":
-          case "heading":
-          case "quote":
-            return (block.content as any).text || "";
-          case "list":
-            return (block.content as any).items?.join(", ") || "";
+          case 'text':
+            return (block.content as any).text || '';
+          case 'heading':
+            return (block.content as any).text || '';
+          case 'quote':
+            return (block.content as any).text || '';
+          case 'list':
+            return (block.content as any).items?.join(', ') || '';
           default:
-            return "";
+            return '';
         }
       })
-      .join(" ");
+      .join(' ');
 
     console.log("Extracted content text:", contentText);
     console.log("Content text length:", contentText.length);
@@ -470,6 +486,7 @@ export default function DistributionPage() {
 
       toast({ title: "Success", description });
 
+      // Reset distribution settings
       setSelectedPlatforms([]);
     } catch (error) {
       console.error("Publishing error:", error);
@@ -533,8 +550,8 @@ export default function DistributionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background w-full flex flex-col">
-      <div className="w-full px-4 md:px-8 py-6 flex-1 flex flex-col">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-4 md:py-8 px-4 max-w-7xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
@@ -563,16 +580,18 @@ export default function DistributionPage() {
           </div>
         </div>
 
-        {/* Platform Selector */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Publishing Platforms</CardTitle>
+        {/* Publishing Platforms - Always on top, horizontal layout */}
+        <Card className="mb-4 md:mb-6">
+          <CardHeader className="pb-3 md:pb-4">
+            <CardTitle className="text-base md:text-lg">Publishing Platforms</CardTitle>
           </CardHeader>
-          <CardContent>
-            <PlatformSelector
-              selectedPlatforms={selectedPlatforms}
-              onPlatformToggle={handlePlatformToggle}
-            />
+          <CardContent className="pt-0">
+            <div className="w-full overflow-x-auto">
+              <PlatformSelector
+                selectedPlatforms={selectedPlatforms}
+                onPlatformToggle={handlePlatformToggle}
+              />
+            </div>
           </CardContent>
         </Card>
 

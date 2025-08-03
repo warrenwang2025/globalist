@@ -209,6 +209,7 @@ export function StreamlinedEditor({
         } else if (block.type === "heading" && block.content?.text) {
           text = block.content.text;
         }
+
         if (text.trim()) {
           const words = text
             .trim()
@@ -222,89 +223,54 @@ export function StreamlinedEditor({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Main Content */}
-      <div className="w-full max-w-full px-2 sm:px-4 md:px-8 py-6 mx-auto">
-        <div className="w-full mx-auto">
-          {/* Header - Now part of scrollable content */}
-          <div className="border-b bg-card/50 backdrop-blur-sm mb-6 -mx-2 sm:-mx-4 md:-mx-8 px-2 sm:px-4 md:px-8 py-4">
-            <div className="flex items-center justify-between flex-wrap gap-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  <h1 className="text-xl font-semibold">Content Editor</h1>
+      {/* Header */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between flex-wrap gap-y-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-semibold">Content Editor</h1>
+              {user.isPremium && (
+                <Badge variant="secondary" className="text-xs">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  Premium
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2 items-end sm:flex-row sm:items-center">
+              <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  <span>{getWordCount()} words</span>
                 </div>
-                {user.isPremium && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    Premium
-                  </Badge>
+                {lastSaved && (
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                  </div>
                 )}
               </div>
-              <div className="flex flex-col gap-2 items-end sm:items-center sm:gap-0 sm:flex-row">
-                {/* Stats */}
-                <div className="hidden md:flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <FileText className="h-4 w-4" />
-                    <span>{getWordCount()} words</span>
-                  </div>
-                  {lastSaved && (
-                    <div className="flex items-center gap-1">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>Saved {lastSaved.toLocaleTimeString()}</span>
-                    </div>
-                  )}
-                </div>
-                {/* Actions */}
-                <div
-                  className="
-                    grid grid-cols-2 gap-3 items-center min-w-[200px]
-                    sm:flex sm:flex-row sm:gap-x-3 sm:w-auto sm:min-w-0
-                  "
-                >
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreview}
-                    disabled={!title.trim()}
-                    className="
-                      h-8 px-2 text-xs sm:text-sm sm:h-9 sm:px-4
-                      w-full sm:w-auto
-                    "
-                  >
-                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    Preview
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isSaving || !title.trim()}
-                    className="
-                      h-8 px-2 text-xs sm:text-sm sm:h-9 sm:px-4
-                      w-full sm:w-auto
-                    "
-                  >
-                    <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    {isSaving ? "Saving..." : "Save"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handlePublish}
-                    disabled={!title.trim()}
-                    className="
-                      col-span-2 w-full h-8 px-2 text-xs sm:text-sm sm:h-9 sm:px-4
-                      sm:col-span-1 sm:w-auto
-                    "
-                  >
-                    <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    Publish Now
-                  </Button>
-                </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handlePreview} disabled={!title.trim()}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={isSaving || !title.trim()}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Title Input */}
-          <Card className="p-4 sm:p-6 mb-6 w-full">
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Card className="p-6 mb-6">
             <Input
               placeholder="Enter your title..."
               value={title}
@@ -313,8 +279,10 @@ export function StreamlinedEditor({
             />
           </Card>
 
+
           {/* Editor Canvas */}
           <Card className="p-4 sm:p-6 min-h-[400px] w-full mb-6">
+
             <EditorCanvas
               initialBlocks={blocks}
               onContentChange={setBlocks}

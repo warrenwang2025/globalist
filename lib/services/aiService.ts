@@ -1,6 +1,11 @@
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
+import type {
+  AIRequest,
+  AIResponse,
+  ContentBlock,
+  AITool,
+  AITone,
+} from "@/types/ai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
