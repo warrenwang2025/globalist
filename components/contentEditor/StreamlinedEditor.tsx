@@ -3,20 +3,23 @@
 import { useState, useEffect } from "react";
 import { EditorCanvas } from "./EditorCanvas";
 import { AIAssistantModal } from "./AIAssistantModal";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Save,
-  Eye,
-  FileText,
-  Sparkles,
-  CheckCircle,
-  Send,
-} from "lucide-react";
+import { Save, Eye, FileText, Sparkles, CheckCircle, Send } from "lucide-react";
 import type { AnyBlock } from "@/types/editor";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Country } from "country-state-city"; // Import country library
+import axios from "axios";
+import { set } from "mongoose";
 
 interface User {
   isPremium: boolean;
@@ -24,39 +27,123 @@ interface User {
 
 interface StreamlinedEditorProps {
   user: User;
+  platforms: number[];
   onSave?: (title: string, blocks: AnyBlock[]) => Promise<void>;
   onPreview?: (title: string, blocks: AnyBlock[]) => void;
   onPublish?: () => void;
-  onContentChange?: (title: string, blocks: AnyBlock[]) => void;
+  onContentChange?: (
+    title: string,
+    blocks: AnyBlock[],
+    category: string[],
+    country: string[],
+    type: string,
+    imageBase64: string | null
+  ) => void;
   initialTitle?: string;
   initialBlocks?: AnyBlock[];
 }
-
-
 
 export function StreamlinedEditor({
   user,
   onSave,
   onPreview,
   onPublish,
+  platforms,
   onContentChange,
   initialTitle = "",
   initialBlocks = [],
 }: StreamlinedEditorProps) {
   const [title, setTitle] = useState(initialTitle);
+  const [type, setType] = useState("");
   const [blocks, setBlocks] = useState<AnyBlock[]>(initialBlocks);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [countries, setCountries] = useState<
+    { label: string; value: string }[]
+  >([]); // Countries state
+  const [categories, setCategories] = useState<
+    { label: string; value: string; name: string; _id: string }[]
+  >([]); // Categories state
+  const [selectedCountry, setSelectedCountry] = useState<string>(""); // Selected country
+  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null); // Image preview state
+  const [imageBase64, setImageBase64] = useState<any | null>(null as any); // Image base64 string state
+
   const { toast } = useToast();
+
+  // Function to handle image upload and convert it to base64
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Set the base64 encoded image string
+        if (reader.result) {
+          setImageBase64(file);
+          // Set the image preview URL
+          setImagePreview(URL.createObjectURL(file));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Update the onValueChange to handle multiple selections
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory([value]);
+  };
 
   // Sync changes back to parent component with debouncing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      onContentChange?.(title, blocks);
+      onContentChange?.(
+        title,
+        blocks,
+        selectedCategory,
+        [selectedCountry],
+        type,
+        imageBase64
+      );
     }, 300); // Debounce to prevent excessive updates
 
     return () => clearTimeout(timeoutId);
   }, [title, blocks, onContentChange]);
+
+  // Fetch categories
+  const getAllCategories = async () => {
+    try {
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}/categories?page=1&perPage=9999`
+      );
+
+      setCategories(
+        data?.response?.details?.map((category: any) => ({
+          label: category.name,
+          value: category._id,
+        }))
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch Categories.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fetch countries and categories
+  useEffect(() => {
+    const fetchedCountries = Country.getAllCountries().map((country) => ({
+      label: country.name,
+      value: country.isoCode,
+    }));
+    setCountries(fetchedCountries);
+    getAllCategories();
+  }, []);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -77,7 +164,7 @@ export function StreamlinedEditor({
         description: "Your content has been saved successfully",
       });
     } catch (error) {
-      console.error('Save failed:', error);
+      console.error("Save failed:", error);
       toast({
         title: "Save Failed",
         description: "Failed to save your content. Please try again.",
@@ -114,23 +201,24 @@ export function StreamlinedEditor({
 
   const getWordCount = () => {
     return blocks
-      .filter(block => block.type === 'text' || block.type === 'heading')
+      .filter((block) => block.type === "text" || block.type === "heading")
       .reduce((count, block) => {
-        let text = '';
-        if (block.type === 'text' && block.content?.text) {
+        let text = "";
+        if (block.type === "text" && block.content?.text) {
           text = block.content.text;
-        } else if (block.type === 'heading' && block.content?.text) {
+        } else if (block.type === "heading" && block.content?.text) {
           text = block.content.text;
         }
         if (text.trim()) {
-          const words = text.trim().split(/\s+/).filter((word: string) => word.length > 0);
+          const words = text
+            .trim()
+            .split(/\s+/)
+            .filter((word: string) => word.length > 0);
           return count + words.length;
         }
         return count;
       }, 0);
   };
-
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -226,7 +314,7 @@ export function StreamlinedEditor({
           </Card>
 
           {/* Editor Canvas */}
-          <Card className="p-4 sm:p-6 min-h-[400px] w-full">
+          <Card className="p-4 sm:p-6 min-h-[400px] w-full mb-6">
             <EditorCanvas
               initialBlocks={blocks}
               onContentChange={setBlocks}
@@ -234,6 +322,104 @@ export function StreamlinedEditor({
             />
           </Card>
 
+          {platforms.length === 0 && (
+            <>
+              {/* Type Dropdown */}
+              <Card className="mb-6 p-4 sm:p-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Select Type</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select value={type} onValueChange={setType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem key={"Blog"} value={"blog"}>
+                        Blog
+                      </SelectItem>
+                      <SelectItem key={"News"} value={"news"}>
+                        News
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+
+              {/* Country Dropdown */}
+              <Card className="mb-6 p-4 sm:p-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Select Country</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={selectedCountry}
+                    onValueChange={setSelectedCountry}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a Country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.value} value={country.value}>
+                          {country.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+
+              {/* Category Dropdown */}
+              <Card className="mb-6  p-4 sm:p-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Select Category</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select
+                    value={selectedCategory[0] || ""}
+                    onValueChange={(value) => handleCategoryChange(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </CardContent>
+              </Card>
+
+              {/* Image Uploader */}
+              <Card className="mb-6 p-4 sm:p-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Upload Image</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full mb-4 p-2 border rounded"
+                  />
+                  {imagePreview && (
+                    <div className="mt-4">
+                      <h3 className="font-semibold text-sm">Image Preview:</h3>
+                      <img
+                        src={imagePreview}
+                        alt="Uploaded Preview"
+                        className="mt-2 max-w-full h-auto"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          )}
           {/* Empty State */}
           {blocks.length === 0 && (
             <div className="text-center py-12">
@@ -241,7 +427,8 @@ export function StreamlinedEditor({
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">Start Writing</h3>
                 <p className="text-sm">
-                  Click anywhere to add your first block, or use the AI assistant to generate content
+                  Click anywhere to add your first block, or use the AI
+                  assistant to generate content
                 </p>
               </div>
             </div>
@@ -270,7 +457,10 @@ export function StreamlinedEditor({
           // Ensure each new block has a unique id
           const newBlocks = aiBlocks.map((b, i) => ({
             ...b,
-            id: b.id && typeof b.id === 'string' ? b.id : Math.random().toString(36).substr(2, 9),
+            id:
+              b.id && typeof b.id === "string"
+                ? b.id
+                : Math.random().toString(36).substr(2, 9),
             order: i,
           }));
           setBlocks(newBlocks);
