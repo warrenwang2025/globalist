@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { signOut , useSession} from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import {
   Calendar,
   Settings,
@@ -61,7 +61,10 @@ const routes = [
 ];
 
 export function Sidebar() {
-  const pathname = usePathname();
+  const isClient = typeof window !== "undefined";
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const pathname = isClient ? usePathname() : "";
+
   const router = useRouter();
   const { data: session } = useSession();
   const user = {
