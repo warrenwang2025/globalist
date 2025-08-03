@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 // Define interfaces for TypeScript
 export interface IPost extends Document {
@@ -6,7 +6,7 @@ export interface IPost extends Document {
   title: string;
   blocks: any[]; // Content blocks from editor
   contentText?: string; // Virtual field for plain text content
-  status: 'draft' | 'scheduled' | 'published' | 'failed';
+  status: "draft" | "scheduled" | "published" | "failed";
   scheduledDate?: Date;
   publishedDate?: Date;
   platforms: string[];
@@ -36,15 +36,15 @@ const PostSchema: Schema<IPost> = new Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       required: true,
       index: true,
     },
     title: {
       type: String,
-      required: [true, 'Post title is required'],
+      required: [true, "Post title is required"],
       trim: true,
-      maxlength: [200, 'Title cannot be more than 200 characters'],
+      maxlength: [200, "Title cannot be more than 200 characters"],
     },
     blocks: {
       type: [Schema.Types.Mixed] as any, // Flexible schema for content blocks
@@ -52,8 +52,8 @@ const PostSchema: Schema<IPost> = new Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'scheduled', 'published', 'failed'],
-      default: 'draft',
+      enum: ["draft", "scheduled", "published", "failed"],
+      default: "draft",
     },
     scheduledDate: {
       type: Date,
@@ -62,46 +62,57 @@ const PostSchema: Schema<IPost> = new Schema(
     publishedDate: {
       type: Date,
     },
-    platforms: [{
-      type: String,
-      enum: ['facebook', 'twitter', 'linkedin', 'instagram', 'youtube', 'tiktok'],
-    }],
-    mediaFiles: [{
-      url: {
+    platforms: [
+      {
         type: String,
-        required: true,
+        enum: [
+          "facebook",
+          "twitter",
+          "linkedin",
+          "instagram",
+          "youtube",
+          "tiktok",
+        ],
       },
-      thumbnailUrl: {
-        type: String,
+    ],
+    mediaFiles: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        thumbnailUrl: {
+          type: String,
+        },
+        type: {
+          type: String,
+          required: true,
+        },
+        name: {
+          type: String,
+          required: true,
+        },
+        size: {
+          type: Number,
+          required: true,
+        },
+        width: {
+          type: Number,
+        },
+        height: {
+          type: Number,
+        },
+        duration: {
+          type: Number,
+        },
+        fileName: {
+          type: String,
+        },
+        fileType: {
+          type: String,
+        },
       },
-      type: {
-        type: String,
-        required: true,
-      },
-      name: {
-        type: String,
-        required: true,
-      },
-      size: {
-        type: Number,
-        required: true,
-      },
-      width: {
-        type: Number,
-      },
-      height: {
-        type: Number,
-      },
-      duration: {
-        type: Number,
-      },
-      fileName: {
-        type: String,
-      },
-      fileType: {
-        type: String,
-      },
-    }],
+    ],
     publishAttempts: {
       type: Number,
       default: 0,
@@ -112,10 +123,12 @@ const PostSchema: Schema<IPost> = new Schema(
     errorMessage: {
       type: String,
     },
-    tags: [{
-      type: String,
-      trim: true,
-    }],
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     isPublic: {
       type: Boolean,
       default: true,
@@ -132,31 +145,31 @@ PostSchema.index({ userId: 1, scheduledDate: 1 });
 PostSchema.index({ status: 1, scheduledDate: 1 });
 
 // Virtual for getting plain text content from blocks
-PostSchema.virtual('contentText').get(function() {
-  if (!this.blocks || this.blocks.length === 0) return '';
-  
+PostSchema.virtual("contentText").get(function () {
+  if (!this.blocks || this.blocks.length === 0) return "";
+
   return this.blocks
     .map((block: any) => {
       switch (block.type) {
-        case 'text':
-          return block.content?.text || '';
-        case 'heading':
-          return block.content?.text || '';
-        case 'quote':
-          return block.content?.text || '';
-        case 'list':
-          return block.content?.items?.join(', ') || '';
+        case "text":
+          return block.content?.text || "";
+        case "heading":
+          return block.content?.text || "";
+        case "quote":
+          return block.content?.text || "";
+        case "list":
+          return block.content?.items?.join(", ") || "";
         default:
-          return '';
+          return "";
       }
     })
-    .join(' ')
+    .join(" ")
     .trim();
 });
 
 // Ensure virtuals are included when converting to JSON
-PostSchema.set('toJSON', { virtuals: true });
+PostSchema.set("toJSON", { virtuals: true });
 
-const Post = mongoose.models.Post || mongoose.model<IPost>('Post', PostSchema);
+const Post = mongoose.models.Post || mongoose.model<IPost>("Post", PostSchema);
 
-export default Post; 
+export default Post;
