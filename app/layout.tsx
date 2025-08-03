@@ -1,14 +1,13 @@
-"use client";
 import "./globals.css";
 import type { Metadata } from "next";
 import Providers from "./providers"; // 1. Import your new wrapper component
 
-// export const metadata: Metadata = {
-//   title: "Globalist Media Suite",
-//   description:
-//     "Globalist Media Suite is a modular content platform for creators, publishers, and media teams to manage AI-driven creation, SEO, publishing, and syndication.",
-//   icons: "/apple-touch-icon.png",
-// };
+export const metadata: Metadata = {
+  title: "Globalist Media Suite",
+  description:
+    "Globalist Media Suite is a modular content platform for creators, publishers, and media teams to manage AI-driven creation, SEO, publishing, and syndication.",
+  icons: "/apple-touch-icon.png",
+};
 
 export default function RootLayout({
   children,
