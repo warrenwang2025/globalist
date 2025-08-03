@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -16,7 +17,12 @@ export default function Home() {
           <Button asChild size="lg" className="w-full sm:w-auto">
             <Link href="/signup">Get Started</Link>
           </Button>
-          <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="lg"
+            asChild
+            className="w-full sm:w-auto"
+          >
             <Link href="/signin">Sign In</Link>
           </Button>
         </div>

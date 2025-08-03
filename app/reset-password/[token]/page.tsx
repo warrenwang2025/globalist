@@ -1,9 +1,10 @@
-import { ResetPasswordForm } from "@/components/auth/reset-password-form"
+"use client";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 interface ResetPasswordPageProps {
   params: {
-    token: string
-  }
+    token: string;
+  };
 }
 
 export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
@@ -13,5 +14,5 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
         <ResetPasswordForm token={params.token} />
       </div>
     </div>
-  )
-} 
+  );
+}

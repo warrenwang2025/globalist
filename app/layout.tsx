@@ -32,9 +32,7 @@ export default function RootLayout({
       </head>
       <body>
         {/* 2. Use the Providers component to wrap your children */}
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
