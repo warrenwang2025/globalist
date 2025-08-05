@@ -1,12 +1,32 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Sparkles, Lightbulb, FileText, Wand2, TrendingUp, Search, X, Loader2, Copy } from "lucide-react";
-import { parseAIBlocks, previewTextFromBlocks } from "@/lib/services/aiBlockService";
+import {
+  Sparkles,
+  Lightbulb,
+  FileText,
+  Wand2,
+  TrendingUp,
+  Search,
+  X,
+  Loader2,
+  Copy,
+} from "lucide-react";
+import {
+  parseAIBlocks,
+  previewTextFromBlocks,
+} from "@/lib/services/aiBlockService";
 
 const TOOLS = [
   {
@@ -35,15 +55,7 @@ const TOOLS = [
   },
 ];
 
-
-
-const IMPROVER_MODES = [
-  "Clarity",
-  "Tone",
-  "Structure",
-  "SEO",
-  "Punch-up",
-];
+const IMPROVER_MODES = ["Clarity", "Tone", "Structure", "SEO", "Punch-up"];
 
 // Helper to parse AI response for each tool
 function parseAIResponse(tool: string | null, response: any) {
@@ -102,16 +114,23 @@ function renderResult({
           {content.map((idea, idx) => (
             <Card key={idx} className="p-4">
               <div className="font-semibold mb-1">{idea.headline}</div>
-              <div className="text-sm mb-1 text-muted-foreground">{idea.metaDescription}</div>
-              <div className="text-xs italic text-muted-foreground">Tone: {idea.tone}</div>
+              <div className="text-sm mb-1 text-muted-foreground">
+                {idea.metaDescription}
+              </div>
+              <div className="text-xs italic text-muted-foreground">
+                Tone: {idea.tone}
+              </div>
               <div className="flex justify-end mt-2 gap-2">
                 <Button
                   size="sm"
                   variant="secondary"
                   onClick={() => {
-                    if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+                    if (
+                      typeof window !== "undefined" &&
+                      typeof window.requestAnimationFrame === "function"
+                    ) {
                       // Use a callback passed from the parent
-                      if (typeof onDraftIdea === 'function') {
+                      if (typeof onDraftIdea === "function") {
                         onDraftIdea(idea);
                       }
                     }
@@ -123,12 +142,18 @@ function renderResult({
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    navigator.clipboard.writeText(idea.headline + '\n' + idea.metaDescription);
-                    setCopiedKey('idea-' + idx);
+                    navigator.clipboard.writeText(
+                      idea.headline + "\n" + idea.metaDescription
+                    );
+                    setCopiedKey("idea-" + idx);
                     setTimeout(() => setCopiedKey(null), 1500);
                   }}
                 >
-                  {copiedKey === 'idea-' + idx ? <span className="text-xs">Copied!</span> : <Copy className="h-4 w-4" />}
+                  {copiedKey === "idea-" + idx ? (
+                    <span className="text-xs">Copied!</span>
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </Card>
@@ -152,13 +177,19 @@ function renderResult({
                   variant="ghost"
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      Array.isArray(value) ? value.join(", ") : value as string
+                      Array.isArray(value)
+                        ? value.join(", ")
+                        : (value as string)
                     );
                     setCopiedKey(key);
                     setTimeout(() => setCopiedKey(null), 1500);
                   }}
                 >
-                  {copiedKey === key ? <span className="text-xs">Copied!</span> : <Copy className="h-4 w-4" />}
+                  {copiedKey === key ? (
+                    <span className="text-xs">Copied!</span>
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
               {Array.isArray(value) ? (
@@ -168,7 +199,11 @@ function renderResult({
                   ))}
                 </ul>
               ) : (
-                <Textarea value={value as string} readOnly className="min-h-[40px]" />
+                <Textarea
+                  value={value as string}
+                  readOnly
+                  className="min-h-[40px]"
+                />
               )}
             </Card>
           ))}
@@ -177,7 +212,10 @@ function renderResult({
     );
   }
   // For text results (improver, creation)
-  if ((selectedTool === "contentCreation" || selectedTool === "contentImprover")) {
+  if (
+    selectedTool === "contentCreation" ||
+    selectedTool === "contentImprover"
+  ) {
     // Extract contentBlocks from the result object
     let blocks: any[] | undefined = undefined;
     if (content && Array.isArray(content.contentBlocks)) {
@@ -190,7 +228,9 @@ function renderResult({
         <div>
           {usageStatsDisplay}
           <Card className="p-4">
-            <pre className="whitespace-pre-wrap text-sm mb-4">{previewTextFromBlocks(blocks)}</pre>
+            <pre className="whitespace-pre-wrap text-sm mb-4">
+              {previewTextFromBlocks(blocks)}
+            </pre>
             <div className="flex justify-end gap-2 mt-2">
               <Button
                 size="sm"
@@ -207,13 +247,19 @@ function renderResult({
                 variant="ghost"
                 onClick={() => {
                   if (blocks) {
-                    navigator.clipboard.writeText(previewTextFromBlocks(blocks));
+                    navigator.clipboard.writeText(
+                      previewTextFromBlocks(blocks)
+                    );
                     setCopiedKey("text");
                     setTimeout(() => setCopiedKey(null), 1500);
                   }
                 }}
               >
-                {copiedKey === "text" ? <span className="text-xs">Copied!</span> : <Copy className="h-4 w-4" />}
+                {copiedKey === "text" ? (
+                  <span className="text-xs">Copied!</span>
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </Card>
@@ -224,7 +270,11 @@ function renderResult({
     return null;
   }
   // fallback
-  return <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">{JSON.stringify(content, null, 2)}</pre>;
+  return (
+    <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
+      {JSON.stringify(content, null, 2)}
+    </pre>
+  );
 }
 
 export function AIAssistantModal({
@@ -299,7 +349,7 @@ export function AIAssistantModal({
 
   // Handler to insert blocks into the editor (to be passed from parent)
   function handleInsertBlocks(blocks: any[]) {
-    if (typeof onInsertBlocks === 'function') {
+    if (typeof onInsertBlocks === "function") {
       onInsertBlocks(parseAIBlocks(blocks));
       setOpen(false); // Close modal after insert
     }
@@ -356,30 +406,44 @@ export function AIAssistantModal({
 
   // Handle API call
   async function handleGenerate() {
-    setLoading(true);
-    setError(null);
+    // Clear all state first to prevent stale data issues
     setResult(null);
+    setError(null);
     setCopiedKey(null);
+    setLoading(true);
+
     const payload = buildPayload();
     if (!payload) {
       setError("Please fill in all required fields.");
       setLoading(false);
       return;
     }
+
     try {
       const res = await fetch("/api/ai/enhance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
-        throw new Error((await res.text()) || "API error");
+        const errorText = await res.text();
+        throw new Error(errorText || "API error");
       }
+
       const data = await res.json();
+
+      // Double-check the response structure
+      if (!data.success) {
+        throw new Error(data.error || "AI processing failed");
+      }
+
       setResult(data);
       onResult?.(data);
     } catch (err: any) {
+      console.error("AI Assistant error:", err);
       setError(err.message || "Something went wrong");
+      setResult(null); // Ensure result is cleared on error
     } finally {
       setLoading(false);
     }
@@ -395,7 +459,7 @@ export function AIAssistantModal({
             <Textarea
               placeholder="e.g. The future of remote work in 2025"
               value={topicPrompt}
-              onChange={e => setTopicPrompt(e.target.value)}
+              onChange={(e) => setTopicPrompt(e.target.value)}
               className="min-h-[80px]"
             />
           </div>
@@ -407,20 +471,20 @@ export function AIAssistantModal({
             <Input
               placeholder="e.g. Remote Work Revolution"
               value={creationHeadline}
-              onChange={e => setCreationHeadline(e.target.value)}
+              onChange={(e) => setCreationHeadline(e.target.value)}
             />
             <label className="block font-medium">Meta Description</label>
             <Textarea
               placeholder="How remote work is reshaping business in 2025."
               value={creationMeta}
-              onChange={e => setCreationMeta(e.target.value)}
+              onChange={(e) => setCreationMeta(e.target.value)}
               className="min-h-[60px]"
             />
             <label className="block font-medium">Tone</label>
             <Input
               placeholder="e.g. analytical, provocative, humorous"
               value={creationTone}
-              onChange={e => setCreationTone(e.target.value)}
+              onChange={(e) => setCreationTone(e.target.value)}
             />
           </div>
         );
@@ -429,11 +493,17 @@ export function AIAssistantModal({
           <div className="space-y-4">
             <label className="block font-medium">Improvement Modes</label>
             <div className="flex flex-wrap gap-2">
-              {IMPROVER_MODES.map(mode => (
+              {IMPROVER_MODES.map((mode) => (
                 <Badge
                   key={mode}
                   variant={improverModes.includes(mode) ? "default" : "outline"}
-                  onClick={() => setImproverModes(prev => prev.includes(mode) ? prev.filter(m => m !== mode) : [...prev, mode])}
+                  onClick={() =>
+                    setImproverModes((prev) =>
+                      prev.includes(mode)
+                        ? prev.filter((m) => m !== mode)
+                        : [...prev, mode]
+                    )
+                  }
                   className="cursor-pointer select-none"
                 >
                   {mode}
@@ -441,28 +511,38 @@ export function AIAssistantModal({
               ))}
             </div>
             <label className="block font-medium mt-4">Article Preview</label>
-            <Textarea value={articleContent} readOnly className="min-h-[120px] opacity-70" />
+            <Textarea
+              value={articleContent}
+              readOnly
+              className="min-h-[120px] opacity-70"
+            />
           </div>
         );
       case "seoSupport":
         return (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground mb-4">
-              <p>Enter a headline to get SEO recommendations, or leave it empty to analyze your article content.</p>
+              <p>
+                Enter a headline to get SEO recommendations, or leave it empty
+                to analyze your article content.
+              </p>
             </div>
-            <label className="block font-medium">Headline for SEO Analysis</label>
+            <label className="block font-medium">
+              Headline for SEO Analysis
+            </label>
             <Input
               placeholder="e.g. Remote Work Revolution"
               value={seoHeadline}
-              onChange={e => setSeoHeadline(e.target.value)}
+              onChange={(e) => setSeoHeadline(e.target.value)}
             />
             {seoHeadline.trim() ? (
               <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                ✓ Will analyze headline: "{seoHeadline}"
+                ✓ Will analyze headline: {seoHeadline}
               </div>
             ) : articleContent.trim() ? (
               <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                ✓ Will analyze article content ({articleContent.length} characters)
+                ✓ Will analyze article content ({articleContent.length}{" "}
+                characters)
               </div>
             ) : (
               <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded">
@@ -471,8 +551,14 @@ export function AIAssistantModal({
             )}
             {!seoHeadline.trim() && (
               <>
-                <label className="block font-medium mt-4">Article Content (will be analyzed if no headline provided)</label>
-                <Textarea value={articleContent} readOnly className="min-h-[120px] opacity-70" />
+                <label className="block font-medium mt-4">
+                  Article Content (will be analyzed if no headline provided)
+                </label>
+                <Textarea
+                  value={articleContent}
+                  readOnly
+                  className="min-h-[120px] opacity-70"
+                />
               </>
             )}
           </div>
@@ -488,7 +574,11 @@ export function AIAssistantModal({
       case "ideaGeneration":
         return !!topicPrompt.trim();
       case "contentCreation":
-        return !!creationHeadline.trim() && !!creationMeta.trim() && !!creationTone.trim();
+        return (
+          !!creationHeadline.trim() &&
+          !!creationMeta.trim() &&
+          !!creationTone.trim()
+        );
       case "contentImprover":
         return improverModes.length > 0 && !!articleContent.trim();
       case "seoSupport":
@@ -519,7 +609,7 @@ export function AIAssistantModal({
         </DialogHeader>
         {/* Tool Selection */}
         <div className="flex gap-2 overflow-x-auto py-2 mb-4">
-          {TOOLS.map(tool => {
+          {TOOLS.map((tool) => {
             const Icon = tool.icon;
             return (
               <Button
@@ -537,11 +627,7 @@ export function AIAssistantModal({
         {/* Scrollable Content Area */}
         <div className="max-h-[70vh] overflow-y-auto px-1 pb-2">
           {/* Dynamic Inputs */}
-          {selectedTool && (
-            <Card className="p-4 mb-4">
-              {renderInputs()}
-            </Card>
-          )}
+          {selectedTool && <Card className="p-4 mb-4">{renderInputs()}</Card>}
           {/* Error State */}
           {error && (
             <div className="bg-red-100 text-red-700 rounded p-2 mb-2 text-sm flex items-center gap-2">
@@ -557,7 +643,17 @@ export function AIAssistantModal({
           )}
           {/* Result Display */}
           {!loading && result && (
-            <div className="mt-4">{renderResult({ selectedTool, result, copiedKey, setCopiedKey, onDraftIdea: handleDraftIdea, onInsertBlocks, setOpen })}</div>
+            <div className="mt-4">
+              {renderResult({
+                selectedTool,
+                result,
+                copiedKey,
+                setCopiedKey,
+                onDraftIdea: handleDraftIdea,
+                onInsertBlocks,
+                setOpen,
+              })}
+            </div>
           )}
         </div>
         {/* Footer: Submit Button */}
@@ -567,10 +663,14 @@ export function AIAssistantModal({
             className="w-full"
             onClick={handleGenerate}
           >
-            {loading ? "Generating..." : selectedTool ? "Generate" : "Select a Tool"}
+            {loading
+              ? "Generating..."
+              : selectedTool
+              ? "Generate"
+              : "Select a Tool"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-} 
+}
