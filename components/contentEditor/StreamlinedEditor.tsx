@@ -114,7 +114,7 @@ export function StreamlinedEditor({
   const getAllCategories = async () => {
     try {
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}/categories?page=1&perPage=9999`
+        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}categories?page=1&perPage=9999`
       );
 
       setCategories(
