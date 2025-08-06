@@ -5,7 +5,7 @@ import dbConnect from '@/lib/dbConnect';
 import OnboardingPreferences from '@/lib/models/OnboardingPreferences';
 import UserSettings from '@/lib/models/UserSettings';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {

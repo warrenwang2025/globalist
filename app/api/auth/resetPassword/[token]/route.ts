@@ -5,12 +5,12 @@ import crypto from 'crypto';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
     await dbConnect();
 
-    const { token } = params;
+    const { token } = await params;
     const { password } = await request.json();
 
     // Validate password

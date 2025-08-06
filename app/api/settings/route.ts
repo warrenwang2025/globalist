@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import UserSettings from '@/lib/models/UserSettings';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 // GET - Retrieve user settings
 export async function GET(request: NextRequest) {
