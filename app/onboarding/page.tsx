@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { OnboardingWelcome } from "@/components/onboarding/onboarding-welcome";
 import { OnboardingSteps } from "@/components/onboarding/onboarding-steps";
@@ -11,7 +11,7 @@ import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const { data: session, update } = useSession();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
@@ -234,5 +234,20 @@ export default function OnboardingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   );
 }
