@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       const lastName = fullName.split(" ").slice(1).join(" ") || "";
 
       const globalistResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}auth/media-suite/sign-up`,
+        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}/auth/media-suite/sign-up`,
         {
           method: "POST",
           headers: {
