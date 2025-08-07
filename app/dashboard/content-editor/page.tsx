@@ -374,7 +374,7 @@ export default function DistributionPage() {
 
       // Make the POST request
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}news-api/article/media-suite`,
+        `${process.env.NEXT_PUBLIC_GLOBALIST_LIVE_URL}/news-api/article/media-suite`,
         formData,
         {
           headers: {
