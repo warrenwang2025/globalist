@@ -61,9 +61,8 @@ const routes = [
 ];
 
 export function Sidebar() {
-  const isClient = typeof window !== "undefined";
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const pathname = isClient ? usePathname() : "";
+  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
 
   const router = useRouter();
   const { data: session } = useSession();
@@ -78,6 +77,11 @@ export function Sidebar() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Ensure component is mounted before using pathname to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Simulate fetching user data - replace with your actual auth logic
   // useEffect(() => {
@@ -195,6 +199,7 @@ export function Sidebar() {
             <div className="space-y-1">
               {routes.map((route) => {
                 const isPremiumRoute = route.premium && !user.isPremium;
+                const isActive = mounted && pathname === route.href;
 
                 return (
                   <Link
@@ -203,7 +208,7 @@ export function Sidebar() {
                     onClick={(e) => handleRouteClick(route, e)}
                     className={cn(
                       "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition relative",
-                      pathname === route.href
+                      isActive
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground",
                       isPremiumRoute && "opacity-60"
@@ -247,7 +252,7 @@ export function Sidebar() {
                   variant="ghost"
                   className={cn(
                     "w-full justify-start p-3 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors",
-                    pathname === "/dashboard/profile"
+                    mounted && pathname === "/dashboard/profile"
                       ? "text-primary bg-primary/10"
                       : ""
                   )}
@@ -273,7 +278,8 @@ export function Sidebar() {
               variant="secondary"
               className={cn(
                 "w-full justify-start h-auto p-3 hover:bg-primary/10 transition-colors",
-                isProfileMenuOpen || pathname === "/dashboard/profile"
+                isProfileMenuOpen ||
+                  (mounted && pathname === "/dashboard/profile")
                   ? "bg-primary/10 text-primary"
                   : ""
               )}
