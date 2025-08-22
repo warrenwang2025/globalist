@@ -1,7 +1,7 @@
 // Location: src/lib/models/User.ts
 
 import mongoose, { Schema, Document} from 'mongoose';
-import validator from 'validator';
+const validator = require("validator");
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
