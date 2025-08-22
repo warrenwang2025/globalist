@@ -204,7 +204,7 @@ class MediaUploadService {
   // Utility: Get video metadata
   private getVideoMetadata(filePath: string): Promise<{ width?: number; height?: number; duration?: number }> {
     return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(filePath, (err, metadata) => {
+      ffmpeg.ffprobe(filePath, (err: any, metadata: { streams: any[]; format: { duration: any; }; }) => {
         if (err) return reject(err);
         const stream = metadata.streams.find((s: any) => s.width && s.height);
         resolve({
@@ -288,7 +288,7 @@ class MediaUploadService {
   // Utility: Get audio metadata
   private getAudioMetadata(filePath: string): Promise<{ duration?: number }> {
     return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(filePath, (err, metadata) => {
+      ffmpeg.ffprobe(filePath, (err: any, metadata: { format: { duration: any; }; }) => {
         if (err) return reject(err);
         resolve({
           duration: metadata.format.duration,

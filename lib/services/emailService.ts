@@ -5,7 +5,8 @@ import { IUser } from '@/lib/models/User';
 import { EmailTemplates } from '@/lib/templates/emailTemplates';
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: ReturnType<typeof nodemailer.createTransport>;
+
 
   constructor() {
     // Create transporter based on environment
