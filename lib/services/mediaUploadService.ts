@@ -204,7 +204,7 @@ class MediaUploadService {
   // Utility: Get video metadata
   private getVideoMetadata(filePath: string): Promise<{ width?: number; height?: number; duration?: number }> {
     return new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(filePath, (err, metadata) => {
+      ffmpeg.ffprobe(filePath, (err: Error | null, metadata: any) => {
         if (err) return reject(err);
         const stream = metadata.streams.find((s: any) => s.width && s.height);
         resolve({
